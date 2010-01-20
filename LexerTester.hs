@@ -43,6 +43,6 @@ testPatterns = [("-- comment", LineComment "-- comment"),
                ]
 
 
-result = map (\(s, t) -> (head (lexer s) == t) && (length (lexer s) == 1)) testPatterns
+result = map (\(s, t) -> (snd (head (lexer s)) == t) && (length (lexer s) == 1)) testPatterns
 
 testLexer = foldl (&&) True result

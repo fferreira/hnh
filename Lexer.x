@@ -1,8 +1,8 @@
 {
-module Lexer(HasntToken(..), lexer) where
+module Lexer (Position, HasntToken(..), lexer) where
 }
 
-%wrapper "basic" -- change to later use "posn"
+%wrapper "posn"
 
 $space = \32 -- space character (TODO there must be a clean portable way to do this)
 
@@ -78,39 +78,41 @@ $singlequote	    = \'
 tokens :-
 
 $white+				;
-"--".*				{\s -> LineComment s}
---$symbol+			{\s -> Symbol s}
-@usedReservedWord		{\s -> ReservedWord s}
-@unUsedReservedWord		{\s -> UnusedReservedWord s}
-@reservedOp			{\s -> ReservedOp s}
-@varid				{\s -> VariableName s}
-@conid				{\s -> ConstructorName s}
-@varsym				{\s -> VariableSymbol s}
-@integer			{\s -> IntegerLiteral (read s)}
-@float				{\s -> FloatLiteral (read s)}
-@string				{\s -> StringLiteral s}
-@char				{\s -> CharLiteral s}
-
-
+"--".*				{\p s -> (pos p, LineComment s)}
+@usedReservedWord		{\p s -> (pos p, ReservedWord s)}
+@unUsedReservedWord		{\p s -> (pos p, UnusedReservedWord s)}
+@reservedOp			{\p s -> (pos p, ReservedOp s)}
+@varid				{\p s -> (pos p, VariableName s)}
+@conid				{\p s -> (pos p, ConstructorName s)}
+@varsym				{\p s -> (pos p, VariableSymbol s)}
+@integer			{\p s -> (pos p, IntegerLiteral (read s))}
+@float				{\p s -> (pos p, FloatLiteral (read s))}
+@string				{\p s -> (pos p, StringLiteral s)}
+@char				{\p s -> (pos p, CharLiteral s)}
 
 {
+
+type Position = (Int, Int) -- (line, col)
+
 data HasntToken =
-     LineComment String		|
-     ReservedWord String	|
-     UnusedReservedWord String	|
-     ReservedOp String		|
-     VariableName String	|
-     ConstructorName String	|
-     VariableSymbol String	|
-     IntegerLiteral Integer	|
-     FloatLiteral Double	|
-     StringLiteral String	|
-     CharLiteral   String	| -- TODO should change to Char ?
-     Symbol String
+     LineComment		String	|
+     ReservedWord		String	|
+     UnusedReservedWord		String	|
+     ReservedOp 		String	|
+     VariableName 		String |
+     ConstructorName		String	|
+     VariableSymbol 		String |
+     IntegerLiteral 		Integer |
+     FloatLiteral 		Double |
+     StringLiteral 		String |
+     CharLiteral   		String	-- TODO should change to Char ?
      deriving (Eq, Show)
 
-lexer :: String -> [HasntToken]
+lexer :: String -> [(Position, HasntToken)]
 lexer = alexScanTokens
+
+pos :: AlexPosn -> Position
+pos (AlexPn _ line col) = (line, col)
 
 }
 
