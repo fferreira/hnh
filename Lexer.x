@@ -13,7 +13,7 @@ $hexit = [0-9A-Fa-f]
 $small   =     [a-z]
 $large   =     [A-Z]
 $symbol  =     [!\#\$\%\&\*\+\.\/\<\=\>\?\@\\\^\|\-\~] -- from haskell report !#$%&*+./<=>?@\^|-~
-$special =     [\(\(\,\;\[\]\'\{\}] -- from haskell report (),;[]'{}
+$special =     [\(\(\,\;\[\]\`\{\}] -- from haskell report (),;[]`{}
 $graphic =     [$small $large $symbol $digit $special \: \" \']
 $charesc =     [a b f n r t v \\ \" \' \&]
 
@@ -79,6 +79,7 @@ tokens :-
 
 $white+				;
 "--".*				{\p s -> (pos p, LineComment s)}
+$special			{\p s -> (pos p, SpecialChar s)}
 @usedReservedWord		{\p s -> (pos p, ReservedWord s)}
 @unUsedReservedWord		{\p s -> (pos p, UnusedReservedWord s)}
 @reservedOp			{\p s -> (pos p, ReservedOp s)}
@@ -96,15 +97,16 @@ type Position = (Int, Int) -- (line, col)
 
 data HasntToken =
      LineComment		String	|
+     SpecialChar		String	|
      ReservedWord		String	|
      UnusedReservedWord		String	|
      ReservedOp 		String	|
-     VariableName 		String |
+     VariableName 		String  |
      ConstructorName		String	|
-     VariableSymbol 		String |
+     VariableSymbol 		String  |
      IntegerLiteral 		Integer |
-     FloatLiteral 		Double |
-     StringLiteral 		String |
+     FloatLiteral 		Double  |
+     StringLiteral 		String  |
      CharLiteral   		String	-- TODO should change to Char ?
      deriving (Eq, Show)
 

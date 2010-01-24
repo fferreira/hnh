@@ -1,5 +1,6 @@
 
 import Lexer
+import Layout
 
 simpleFunction =" \
 \  adder :: Int -> Int \
