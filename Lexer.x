@@ -24,6 +24,7 @@ $quote		    = \"
 $singlequote	    = \'
 
 
+
 -- Reserved words as per Haskell '98 std, but several will be removed
 -- because we won't be needing them (probably it will be a good idea to
 -- have them anyways for compatibility. (Maybe separate a used and an 
@@ -52,12 +53,12 @@ $singlequote	    = \'
 @char	= $singlequote ($graphic_in_char | $space | $white | @escape)* $singlequote
 
 @usedReservedWord =
-	as | case | data | default | do | else | hiding | if |
+	case | data | default | do | else | if |
 	in | infix | infixl | infixr | let | newtype |
-	of | qualified | then | type | where
+	of | then | type | where
 
 @unUsedReservedWord =
-	class | deriving | import | instance | module
+	as | hiding | class | deriving | import | instance | module | qualified
 
 @reservedWord =
 	@usedReservedWord | @unUsedReservedWord
@@ -79,10 +80,53 @@ tokens :-
 
 $white+				;
 "--".*				{\p s -> (pos p, LineComment s)}
-$special			{\p s -> (pos p, SpecialChar s)}
-@usedReservedWord		{\p s -> (pos p, ReservedWord s)}
+
+--$special			{\p s -> (pos p, SpecialChar s)}
+\C				{\p _ -> (pos p, LeftParen)}
+\)				{\p _ -> (pos p, RightParen)}
+\,				{\p _ -> (pos p, Comma)}
+\;				{\p _ -> (pos p, SemiColon)}
+\[				{\p _ -> (pos p, LeftSq)}
+\]				{\p _ -> (pos p, RightSq)}
+\`				{\p _ -> (pos p, BackQuote)}
+\{				{\p _ -> (pos p, LeftCurly)}
+\}				{\p _ -> (pos p, RightCurly)}
+
+--@usedReservedWord		{\p s -> (pos p, ReservedWord s)}
+"case"				{\p _ -> (pos p, CaseToken)}
+"data"				{\p _ -> (pos p, DataToken)}
+"default"			{\p _ -> (pos p, DefaultToken)}
+"do"				{\p _ -> (pos p, DoToken)}
+"else"				{\p _ -> (pos p, ElseToken)}
+"if"				{\p _ -> (pos p, IfToken)}
+"in"				{\p _ -> (pos p, InToken)}
+"infix"				{\p _ -> (pos p, InfixToken)}
+"infixl"			{\p _ -> (pos p, InfixlToken)}
+"infixr"			{\p _ -> (pos p, InfixrToken)}
+"let"				{\p _ -> (pos p, LetToken)}
+"newtype"			{\p _ -> (pos p, NewtypeToken)}
+"of"				{\p _ -> (pos p, OfToken)}
+"then"				{\p _ -> (pos p, ThenToken)}
+"type"				{\p _ -> (pos p, TypeToken)}
+"where"				{\p _ -> (pos p, WhereToken)}
+
 @unUsedReservedWord		{\p s -> (pos p, UnusedReservedWord s)}
-@reservedOp			{\p s -> (pos p, ReservedOp s)}
+
+--@reservedOp			{\p s -> (pos p, ReservedOp s)}
+".."				{\p _ -> (pos p, DoubleDotOp)}
+":"				{\p _ -> (pos p, ColonOp)}
+"::"				{\p _ -> (pos p, DoubleColonOp)}
+"="				{\p _ -> (pos p, EqualsOp)}
+"\\"				{\p _ -> (pos p, BackSlashOp)}
+"|"				{\p _ -> (pos p, BarOp)}
+"<-"				{\p _ -> (pos p, LeftArrowOp)}
+"->"				{\p _ -> (pos p, RightArrowOp)}
+"@"				{\p _ -> (pos p, AtOp)}
+"~"				{\p _ -> (pos p, TildeOp)}
+"=>"				{\p _ -> (pos p, DoubleArrowOp)}
+
+
+
 @varid				{\p s -> (pos p, VariableName s)}
 @conid				{\p s -> (pos p, ConstructorName s)}
 @varsym				{\p s -> (pos p, VariableSymbol s)}
@@ -95,19 +139,70 @@ $special			{\p s -> (pos p, SpecialChar s)}
 
 type Position = (Int, Int) -- (line, col)
 
-data HasntToken =
-     LineComment		String	|
-     SpecialChar		String	|
-     ReservedWord		String	|
-     UnusedReservedWord		String	|
-     ReservedOp 		String	|
-     VariableName 		String  |
-     ConstructorName		String	|
-     VariableSymbol 		String  |
-     IntegerLiteral 		Integer |
-     FloatLiteral 		Double  |
-     StringLiteral 		String  |
-     CharLiteral   		String	-- TODO should change to Char ?
+data HasntToken 
+     = LineComment		String
+--     | SpecialChar		String
+
+-- Special Characters
+
+     | LeftParen	-- (
+     | RightParen	-- )
+     | Comma		-- ,
+     | SemiColon	-- ;
+     | LeftSq		-- [
+     | RightSq		-- ]
+     | BackQuote	-- `
+     | LeftCurly	-- {
+     | RightCurly	-- }
+      
+-- Reserved Words
+--     | ReservedWord		String
+     | CaseToken
+     | DataToken
+     | DefaultToken
+     | DoToken
+     | ElseToken
+     | IfToken
+     | InToken
+     | InfixToken
+     | InfixlToken
+     | InfixrToken
+     | LetToken
+     | NewtypeToken
+     | OfToken
+     | ThenToken
+     | TypeToken
+     | WhereToken
+     | UnusedReservedWord	String
+
+-- Reserved Operands
+
+--     | ReservedOp 		String
+     | DoubleDotOp
+     | ColonOp
+     | DoubleColonOp
+     | EqualsOp
+     | BackSlashOp
+     | BarOp
+     | LeftArrowOp
+     | RightArrowOp
+     | AtOp
+     | TildeOp
+     | DoubleArrowOp
+
+-- Variable and Contructor names
+
+     | VariableName 		String 
+     | ConstructorName		String
+
+-- Literals
+
+     | VariableSymbol 		String 
+     | IntegerLiteral 		Integer
+     | FloatLiteral 		Double 
+     | StringLiteral 		String 
+     | CharLiteral   		String	-- TODO should change to Char ?
+
      deriving (Eq, Show)
 
 lexer :: String -> [(Position, HasntToken)]

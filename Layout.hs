@@ -15,7 +15,9 @@ the position information from the list of tokens.
 
 layout :: [(Position, HasntToken)] -> [HasntToken]
 -- layout tokens = map (\(p, t) -> t) tokens -- trivial null implementation
-layout tokens = lay tokens [] [0] -- even if the columns are numbered from 1, we start with 0 because we, in the begining,  have no block to close
+
+-- even if the columns are numbered from 1, we start with 0 because in the begining there are no blocks to close.
+layout tokens = lay tokens [] [0] 
 
 {-
 
@@ -30,6 +32,8 @@ The layout rule has a special case for let expressions so that the keyword in al
 
 Note:
 Braces "{}" must not be added if there is already one (TODO IMPLEMENT THIS)
+Idea: use different "braces" for literal (inserted by the user) and those
+      inserted by this function
 
 Improvements to lay:
     * col should not be a stack, the call stack should be used
@@ -41,22 +45,22 @@ lay :: [(Position, HasntToken)] -> [HasntToken] -> [Int] -> [HasntToken]
 
 -- When there are no more tokens to process, we must close all remaining braces
 lay [] tokens col = 
-    (reverse tokens) ++ (replicate ((length col) - 1) (SpecialChar "}")) 
+    (reverse tokens) ++ (replicate ((length col) - 1) (LeftCurly)) 
 
 -- We open a new brace for the required keywords, as mentioned in the layout rules
 -- TODO avoid the "copy & paste" programming here
 
-lay ((pos, ReservedWord "let"):xs) tokens col = 
-    lay xs (SpecialChar "{" : ReservedWord "let" : tokens)  (push (getColOfFirstElement xs) col)
+lay ((pos, LetToken):xs) tokens col = 
+    lay xs (LeftCurly : LetToken : tokens)  (push (getColOfFirstElement xs) col)
 
 -- The special case for the in keyword
-lay ((_,  ReservedWord "in"):xs) tokens col = lay xs (ReservedWord "in" : SpecialChar "}" : tokens) (pop col)
+lay ((_,  InToken):xs) tokens col = lay xs (InToken : RightCurly : tokens) (pop col)
 
 -- Process all the tokens, adding ; and closing the braces where needed
 lay (((_, tokenCol), tok):xs) tokens col = 
     case (tokenCol `compare` (head col)) of
-      (LT) -> lay xs (SpecialChar "}" : tok : tokens) (pop col)
-      (EQ) -> lay xs (tok : SpecialChar ";" : tokens) col
+      (LT) -> lay xs (RightCurly : tok : tokens) (pop col)
+      (EQ) -> lay xs (tok : SemiColon : tokens) col
       (GT) -> lay xs (tok : tokens) col -- when the token doesn't change the layout
 
 

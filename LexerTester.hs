@@ -7,10 +7,10 @@ import Lexer
 
 testPatterns :: [(String, HasntToken)]
 testPatterns = [("-- comment", LineComment "-- comment"),
-                ("case"  , ReservedWord "case"),
+                ("case"  , CaseToken),
                 ("class" , UnusedReservedWord "class"),
                 
-                ("::"    , ReservedOp "::"),                                                      
+                ("::"    , DoubleDotOp),                                                      
 
                 ("var"   , VariableName "var"),
                 ("Type"  , ConstructorName "Type"),
