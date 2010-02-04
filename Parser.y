@@ -16,7 +16,7 @@ import Lexer(HasntToken(..))
 
 %token
 	comment		{ LineComment $$ }
-	special		{ SpecialChar $$ }
+--	special		{ SpecialChar $$ }
 
 %%
 
@@ -31,5 +31,5 @@ Foo : comment	{ 0 }
   parser = hasnt
 
   parserError :: [HasntToken] -> a
-  parserError _ = error "Parse error"
+  parserError tokens = error "Parse error"
 }

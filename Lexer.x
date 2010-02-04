@@ -53,12 +53,12 @@ $singlequote	    = \'
 @char	= $singlequote ($graphic_in_char | $space | $white | @escape)* $singlequote
 
 @usedReservedWord =
-	case | data | default | do | else | if |
+	case | data | default | else | if |
 	in | infix | infixl | infixr | let | newtype |
 	of | then | type | where
 
 @unUsedReservedWord =
-	as | hiding | class | deriving | import | instance | module | qualified
+	do | as | hiding | class | deriving | import | instance | module | qualified
 
 @reservedWord =
 	@usedReservedWord | @unUsedReservedWord
@@ -92,11 +92,11 @@ $white+				;
 \{				{\p _ -> (pos p, LeftCurly)}
 \}				{\p _ -> (pos p, RightCurly)}
 
---@usedReservedWord		{\p s -> (pos p, ReservedWord s)}
+-- Used reserved words
+
 "case"				{\p _ -> (pos p, CaseToken)}
 "data"				{\p _ -> (pos p, DataToken)}
 "default"			{\p _ -> (pos p, DefaultToken)}
-"do"				{\p _ -> (pos p, DoToken)}
 "else"				{\p _ -> (pos p, ElseToken)}
 "if"				{\p _ -> (pos p, IfToken)}
 "in"				{\p _ -> (pos p, InToken)}
@@ -110,9 +110,13 @@ $white+				;
 "type"				{\p _ -> (pos p, TypeToken)}
 "where"				{\p _ -> (pos p, WhereToken)}
 
+-- UnusedReservedWords, are Haskell reserved words
+-- currently not used in hasnt
+
 @unUsedReservedWord		{\p s -> (pos p, UnusedReservedWord s)}
 
---@reservedOp			{\p s -> (pos p, ReservedOp s)}
+-- Reserved operators
+
 ".."				{\p _ -> (pos p, DoubleDotOp)}
 ":"				{\p _ -> (pos p, ColonOp)}
 "::"				{\p _ -> (pos p, DoubleColonOp)}
@@ -135,13 +139,16 @@ $white+				;
 @string				{\p s -> (pos p, StringLiteral s)}
 @char				{\p s -> (pos p, CharLiteral s)}
 
+-- TODO add nested comments,(YES) add catch all rule to defer lexer errors to parser phase (MAYBE?)
+-- TODO check EOF handling
+
+
 {
 
 type Position = (Int, Int) -- (line, col)
 
 data HasntToken 
      = LineComment		String
---     | SpecialChar		String
 
 -- Special Characters
 
@@ -156,11 +163,10 @@ data HasntToken
      | RightCurly	-- }
       
 -- Reserved Words
---     | ReservedWord		String
+
      | CaseToken
      | DataToken
      | DefaultToken
-     | DoToken
      | ElseToken
      | IfToken
      | InToken
@@ -177,7 +183,6 @@ data HasntToken
 
 -- Reserved Operands
 
---     | ReservedOp 		String
      | DoubleDotOp
      | ColonOp
      | DoubleColonOp
@@ -194,10 +199,10 @@ data HasntToken
 
      | VariableName 		String 
      | ConstructorName		String
+     | VariableSymbol 		String 
 
 -- Literals
 
-     | VariableSymbol 		String 
      | IntegerLiteral 		Integer
      | FloatLiteral 		Double 
      | StringLiteral 		String 
