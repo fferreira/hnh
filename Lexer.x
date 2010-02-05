@@ -183,17 +183,17 @@ data HasntToken
 
 -- Reserved Operands
 
-     | DoubleDotOp
-     | ColonOp
-     | DoubleColonOp
-     | EqualsOp
-     | BackSlashOp
-     | BarOp
-     | LeftArrowOp
-     | RightArrowOp
-     | AtOp
-     | TildeOp
-     | DoubleArrowOp
+     | DoubleDotOp	-- ..
+     | ColonOp		-- :
+     | DoubleColonOp	-- ::
+     | EqualsOp		-- =
+     | BackSlashOp	-- \ One back slash
+     | BarOp		-- |
+     | LeftArrowOp	-- <-
+     | RightArrowOp	-- ->
+     | AtOp		-- @
+     | TildeOp		-- ~
+     | DoubleArrowOp	-- =>
 
 -- Variable and Contructor names
 

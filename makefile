@@ -11,7 +11,7 @@ Lexer.hs: Lexer.x
 	alex -o Lexer.hs Lexer.x
 
 Parser.hs: Parser.y
-	happy -o Parser.hs Parser.y
+	happy -o Parser.hs Parser.y -i
 
 clean:
 	rm Lexer.hs Parser.hs

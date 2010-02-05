@@ -1,10 +1,26 @@
 module Syntax
     (
-     HasntSyntax(..)
+     Program(..)
+    ,Declaration(..)
+    ,Name
+    ,Operator
+    ,LiteralValue(..)
+    ,Match(..)
+    ,Rhs(..)
+    ,Guard(..)
+    ,Precedence
+    ,Associativity(..)
+    ,Type(..)
+    ,ConstructorDeclaration(..)
+    ,Expr(..)
+    ,Pattern(..)
+    ,Alternative(..)
+    ,GuardedAlternatives(..)
+    ,GuardedAlternative(..)
     )
     where
 
-data HasntSyntax = HasntSyntax Int
+data Program = Program [Declaration] deriving(Show, Eq)
 
 --- Names & Literals
 
@@ -21,7 +37,7 @@ data LiteralValue
 --- Declarations
 
 data Declaration
-    = TypeDcl Name Type -- TODO the haskell report has a more complicated structure, REVISE
+    = TypeDcl Name Type -- TODO add the polymorphism specifications
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | NewTypeDcl Name [Name] ConstructorDeclaration
     | DefaultDcl [Type] -- TODO will this be implemented ?
@@ -66,7 +82,7 @@ data Type
       deriving(Show, Eq)
 
 data ConstructorDeclaration -- No support for named field types
-    = ConsDcl Name Type
+    = ConsDcl Name [Type]
       deriving(Show, Eq)
 
 --- Expressions & Patterns
