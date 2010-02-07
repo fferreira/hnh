@@ -12,7 +12,7 @@ import ParserMonad
 
 }
  
-%monad { P }  
+%monad { ParserM }  
 %name hasnt
 %tokentype { HasntToken }
 %error { parserError }
@@ -202,7 +202,7 @@ atypes : atypes atype			{ $2 : $1 }
 parser = hasnt
 
 -- TODO use the location information for the error report
-parserError :: [HasntToken] -> P a
+parserError :: [HasntToken] -> ParserM a
 parserError (token:_) = returnError ("Parse Error" ++ (show token))
 
 }

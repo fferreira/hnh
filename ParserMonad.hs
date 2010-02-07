@@ -5,7 +5,7 @@ module ParserMonad
     , LayoutContext(..)
     , ParseState
     , ParseResult(..)
-    , P
+    , ParserM
     , runParser , runParserWithFileName
     , returnOk , returnError
     )
@@ -40,32 +40,32 @@ data ParseResult a = Ok ParseState a
                      deriving Show
 
 --  Monad for parsing
-newtype P a = P { runP ::
-                     String     -- Input string
-                  -> Position   -- Current postion
-                  -> Position   -- Location of the last token read
-                  -> ParseState -- layout info
-                  -> ParseResult a
-                }
+newtype ParserM a = ParserM { runP ::
+                              String     -- Input string
+                              -> Position   -- Current postion
+                              -> Position   -- Location of the last token read
+                              -> ParseState -- layout info
+                              -> ParseResult a
+                            }
 
-runParserWithFileName :: String -> P a -> String -> ParseResult a
-runParserWithFileName fileName (P parse) program = parse program start start []
+runParserWithFileName :: String -> ParserM a -> String -> ParseResult a
+runParserWithFileName fileName (ParserM parse) program = parse program start start []
     where
       start = (fileName, 1, 0)
 
-runParser :: P a -> String -> ParseResult a
+runParser :: ParserM a -> String -> ParseResult a
 runParser = runParserWithFileName defaultName
 
-returnOk :: a -> P a
-returnOk a = P $ \_ _ _ state -> Ok state a
+returnOk :: a -> ParserM a
+returnOk a = ParserM $ \_ _ _ state -> Ok state a
 
-returnError :: String -> P a
-returnError msg = P $ \_ pos _ _ -> Failed pos msg
+returnError :: String -> ParserM a
+returnError msg = ParserM $ \_ pos _ _ -> Failed pos msg
 
-instance Monad P where
-    return a = P $ \_ _ _ {-input currPos lastPos-} state -> Ok state a 
-    P m >>= k = P $ \input currPos lastPos state -> 
+instance Monad ParserM where
+    return a = ParserM $ \_ _ _ {-input currPos lastPos-} state -> Ok state a 
+    ParserM m >>= k = ParserM $ \input currPos lastPos state -> 
                 case m input currPos lastPos state of
                   Failed pos msg -> Failed pos msg
                   Ok state' a -> runP (k a) input currPos lastPos state' -- continue the call 'chain'
-    fail msg = P $ \_ _ pos _ -> Failed pos msg
+    fail msg = ParserM $ \_ _ pos _ -> Failed pos msg
