@@ -11,10 +11,9 @@ import Parser
 
 import SamplePrograms -- DEBUG only
 
-
 compile input = (parser . layout . lexer) input
 
-compileDeclaration = map compile sampleDeclarations
+compileDeclaration =  map compile sampleDeclarations
 
 main = do
   interact (show . compile)

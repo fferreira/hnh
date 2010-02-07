@@ -6,7 +6,7 @@ module Parser
   )
 where
 
-import Lexer(HasntToken(..))
+import Token
 import Syntax
 
 }
@@ -34,7 +34,6 @@ import Syntax
 
    'case'		{ CaseToken }
    'data'		{ DataToken }
-   'defualt'		{ DefaultToken }
    'if'			{ IfToken }
    'then'		{ ThenToken }
    'else'		{ ElseToken }
@@ -43,7 +42,6 @@ import Syntax
    'infixl' 		{ InfixlToken }
    'infixr'		{ InfixrToken }
    'let'		{ LetToken }
-   'newtype'		{ NewtypeToken }
    'of'			{ OfToken }
    'type'		{ TypeToken }
    'where'		{ WhereToken }
@@ -88,19 +86,65 @@ import Syntax
 -- Program
 
 program :: { Program }
-program : declarations			{ Program (reverse $1) } --TODO is reverse correct?
+program : topdecls			{ Program (reverse $1) }
 
 -- Declarations
 
-declarations :: { [Declaration] }
-declarations : declaration		{ [$1] }
-	     | declarations declaration	{ $2 : $1 }
+topdecls :: { [Declaration] }
+topdecls : topdecl		{ [$1] }
+	     | topdecls topdecl	{ $2 : $1 }
 
-declaration :: { Declaration }
-declaration : 'type' simpletype '=' type
-	      	     			{ TypeDcl $2 $4 }
-declaration : 'data' CONID '=' constrs	{ DataDcl $2 [] $4 } 
+topdecl :: { Declaration }
+topdecl : 'type' simpletype '=' type	  { TypeDcl $2 $4 }
+topdecl : 'data' CONID '=' constrs	  { DataDcl $2 [] $4 }    -- TODO fill the empty list param
 
+topdecl : decl	    	      		  { $1 }
+
+
+-- Non-type declarations
+
+decl :: { Declaration }
+delc : gendecl				{ $1 }
+
+gendecl :: { Declaration }
+gendecl : typeSigDecl			{ $1 }
+	| fixityDecl			{ $1 }
+--	| valdef			{ $1 }
+
+typeSigDecl :: { Declaration}
+typeSigDecl : vars '::' type		{ TypeSigDcl $1 $3 }
+
+vars :: { [Name] }
+vars : vars ',' var			{ $3 : $1 }
+     | var  				{ [$1] } -- TODO que joraca pongo aca ?
+
+var :: { Name }
+var : VARID				{ $1 }
+    | '(' VARSYM ')'			{ $2 }
+
+fixityDecl :: { Declaration }
+fixityDecl : assocFix precedence ops	{ FixityDcl $1 $2 $3 }
+
+assocFix :: { Associativity }
+assocFix : 'infix'			{ NonAssoc }
+	 | 'infixl'			{ LeftAssoc }
+	 | 'infixr'			{ RightAssoc }
+
+precedence :: { Int }
+precedence : INT			{ $1 } -- Should be 0-9 --TODO should we check the range here?
+	   | 				{ 9 } -- default precedence
+
+ops :: { [Operator] }
+ops : ops ',' op			{ $3 : $1 }
+    | op      				{ [$1] }
+
+op :: { Operator }
+op : VARSYM				{ $1 }
+   | '`' VARID '`'			{ $2 }
+{-
+valdef :: { Declaration }
+valdef : exp0b rhs {- optwhere -}	{ }
+-}
 -- Types
 
 simpletype :: { Name }
@@ -114,6 +158,16 @@ type :: { Type }
 type : btype '->' type			{ FuncType $1 $3 }
      | btype 	  			{ $1 }
 
+{-
+Two shift reduce conflicts when parsing btype atpye
+when finding a ( the parser can:
+
+* shift the ( and continue with the a type CORRECT!
+* reduce the btype before the ( WRONG!
+
+One conflict is introduced when type -> btype . '->' type
+The other one is introduced when atypes -> atypes . atype
+-}
 btype :: { Type }
 btype : btype atype			{ AppType $1 $2 }
       | atype 				{ $1 }
@@ -135,7 +189,6 @@ constr :  CONID atypes			{ ConsDcl $1 $2 }
 
 atypes :: { [Type] }
 atypes : atypes atype			{ $2 : $1 }
---       | atype				{ [$1] }
        | 				{ [] }  
 
 -- Code

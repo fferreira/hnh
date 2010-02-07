@@ -4,9 +4,9 @@ module Layout
     )
     where
 
-import Lexer(HasntToken(..), Position)
+-- import Lexer(HasntToken(..), Position) -- TODO remove the comment or the line
 
-import SamplePrograms -- DEBUG only import to have already defined programs
+import Token
 
 {-
 The layout function returns a layout-insensitive translation of tokens and removes

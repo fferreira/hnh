@@ -25,10 +25,10 @@ data Program = Program [Declaration] deriving(Show, Eq)
 --- Names & Literals
 
 type Name = String
-type Operator = String -- TODO should be something more specific
+type Operator = String -- TODO should be something more specific ?
 
 data LiteralValue
-    = LiteralInt Integer
+    = LiteralInt Int
     | LiteralFloat Double
     | LiteralString String
     | LiteralChar String -- this is a string instead of a char as per the lexer
@@ -60,7 +60,7 @@ data Guard
     = Guard Expr Expr -- first Expr evaluates to Bool, the second is the function body
       deriving(Show, Eq)
 
-type Precedence  = Int -- TODO Integer MAYBE?
+type Precedence  = Int
 
 data Associativity -- TODO change name to fixity ?
     = NonAssoc
