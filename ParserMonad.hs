@@ -7,6 +7,7 @@ module ParserMonad
     , ParseResult(..)
     , P(..)
     , runParser , runParserWithFileName
+    , returnOk , returnError
     )
     where
 
@@ -54,6 +55,12 @@ runParserWithFileName fileName (P parse) program = parse program start start []
 
 runParser :: P a -> String -> ParseResult a
 runParser = runParserWithFileName defaultName
+
+returnOk :: a -> P a
+returnOk a = P $ \_ _ _ state -> Ok state a
+
+returnError :: String -> P a
+returnError msg = P $ \_ pos _ _ -> Failed pos msg
 
 instance Monad P where
     return a = P $ \_ _ _ {-input currPos lastPos-} state -> Ok state a 

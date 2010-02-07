@@ -133,7 +133,10 @@ assocFix : 'infix'			{ NonAssoc }
 	 | 'infixr'			{ RightAssoc }
 
 precedence :: { Int }
-precedence : INT			{ $1 } -- Should be 0-9 --TODO should we check the range here?
+precedence : INT			{% if $1 < 0 || $1 > 9 
+	     				      then returnError "Wrong fixity specified"
+					      else returnOk $1
+	     				} -- Should be 0-9
 	   | 				{ 9 } -- default precedence
 
 ops :: { [Operator] }
@@ -200,6 +203,6 @@ parser = hasnt
 
 -- TODO use the location information for the error report
 parserError :: [HasntToken] -> P a
-parserError (token:_) = P (\_ p _ _ -> (Failed p ("Parse Error" ++ (show token))))
+parserError (token:_) = returnError ("Parse Error" ++ (show token))
 
 }
