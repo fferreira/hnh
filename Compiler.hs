@@ -16,9 +16,6 @@ compile input = runParser (parser ((layout . lexer) input)) ""
 
 compileDeclaration = map compile sampleDeclarations
 
-{-
 main = do
   interact (show . compile)
--}
 
-main = 1
