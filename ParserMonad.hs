@@ -5,7 +5,7 @@ module ParserMonad
     , LayoutContext(..)
     , ParseState
     , ParseResult(..)
-    , P(..)
+    , P
     , runParser , runParserWithFileName
     , returnOk , returnError
     )
