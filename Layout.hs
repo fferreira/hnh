@@ -4,9 +4,8 @@ module Layout
     )
     where
 
--- import Lexer(HasntToken(..), Position) -- TODO remove the comment or the line
-
 import Token
+import ParserMonad(Position)
 
 {-
 The layout function returns a layout-insensitive translation of tokens and removes
@@ -57,7 +56,7 @@ lay ((pos, LetToken):xs) tokens col =
 lay ((_,  InToken):xs) tokens col = lay xs (InToken : RightCurly : tokens) (pop col)
 
 -- Process all the tokens, adding ; and closing the braces where needed
-lay (((_, tokenCol), tok):xs) tokens col = 
+lay (((_, _, tokenCol), tok):xs) tokens col = 
     case (tokenCol `compare` (head col)) of
       (LT) -> lay xs (RightCurly : tok : tokens) (pop col)
       (EQ) -> lay xs (tok : SemiColon : tokens) col
@@ -72,7 +71,7 @@ push e l = e:l
 pop :: [a] -> [a]
 pop = tail 
 
-getColOfFirstElement (((_, col), _):_) = col
+getColOfFirstElement (((_, _, col), _):_) = col
 
 
 

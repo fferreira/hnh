@@ -8,9 +8,11 @@ where
 
 import Token
 import Syntax
+import ParserMonad
 
 }
-  
+ 
+%monad { P }  
 %name hasnt
 %tokentype { HasntToken }
 %error { parserError }
@@ -196,6 +198,8 @@ atypes : atypes atype			{ $2 : $1 }
 {
 parser = hasnt
 
-parserError :: [HasntToken] -> a
-parserError tokens = error ( "Parse error:" ++ (show (head tokens)))
+-- TODO use the location information for the error report
+parserError :: [HasntToken] -> P a
+parserError (token:_) = P (\_ p _ _ -> (Failed p ("Parse Error" ++ (show token))))
+
 }

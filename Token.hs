@@ -1,12 +1,8 @@
 module Token
     (
      HasntToken(..)
-    ,Position
     )
     where
-
-
-type Position = (Int, Int) -- (line, col)
 
 data HasntToken 
      = LineComment		String

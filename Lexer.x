@@ -2,6 +2,7 @@
 module Lexer (lexer) where
 
 import Token
+import ParserMonad (Position)
 }
 
 %wrapper "posn"
@@ -152,7 +153,7 @@ lexer :: String -> [(Position, HasntToken)]
 lexer = alexScanTokens
 
 pos :: AlexPosn -> Position
-pos (AlexPn _ line col) = (line, col)
+pos (AlexPn _ line col) = ("input", line, col)
 
 }
 
