@@ -69,3 +69,11 @@ instance Monad ParserM where
                   Failed pos msg -> Failed pos msg
                   Ok state' a -> runP (k a) input currPos lastPos state' -- continue the call 'chain'
     fail msg = ParserM $ \_ _ pos _ -> Failed pos msg
+
+
+-- Monad for lexing (a 'continuation passing' monad)
+newtype LexerM r a = LexerM { runL :: (a -> ParserM r) -> ParserM r }
+
+instance Monad (LexerM r) where
+    return a = LexerM $ \k -> k a
+    LexerM v >>= f = LexerM $ \k -> v (\a -> runL (f a) k) 

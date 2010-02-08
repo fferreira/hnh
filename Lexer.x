@@ -3,9 +3,9 @@ module Lexer (lexer) where
 
 import Token
 import ParserMonad (Position)
-}
+import LexerHelper
 
-%wrapper "posn"
+}
 
 $space = \32 -- space character (TODO there must be a clean portable way to do this)
 
@@ -152,8 +152,20 @@ $white+				;
 lexer :: String -> [(Position, HasntToken)]
 lexer = alexScanTokens
 
-pos :: AlexPosn -> Position
-pos (AlexPn _ line col) = ("input", line, col)
+pos :: AlexInput -> Position
+pos (AlexInput p _) = p
+
+alexScanTokens str = go startPos
+  where go inp@(AlexInput pos str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act inp (take len str) : go inp'
+        startPos = AlexInput ("", 1, 1) str
+
+		     	     	  
+extractPosInput (AlexInput p _) = p
 
 }
 

@@ -1,8 +1,10 @@
 module Compiler
+{- DEBUG Only
     (
      compile,
      main
     )
+-}
     where
 
 import Lexer
