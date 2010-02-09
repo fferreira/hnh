@@ -1,13 +1,15 @@
 {
-module Lexer (lexer) where
+module Lexer (lexer, getToken) where  --TODO remove the comments and export the right thing
 
 import Token
-import ParserMonad (Position)
+import ParserMonad -- (Position, ParserM(..), showPosition) -- TODO check what to import
 import LexerHelper
+
+import Control.Monad.State (StateT, get)
 
 }
 
-$space = \32 -- space character (TODO there must be a clean portable way to do this)
+$space = \32 -- space character
 
 $digit = [0-9]
 $octit = [0-7]
@@ -83,89 +85,80 @@ $singlequote	    = \'
 tokens :-
 
 $white+				;
-"--".*				{\p s -> (pos p, LineComment s)}
+"--".*				{\s -> mkT (LineComment s) }
 
---$special			{\p s -> (pos p, SpecialChar s)}
-\(				{\p _ -> (pos p, LeftParen)}
-\)				{\p _ -> (pos p, RightParen)}
-\,				{\p _ -> (pos p, Comma)}
-\;				{\p _ -> (pos p, SemiColon)}
-\[				{\p _ -> (pos p, LeftSq)}
-\]				{\p _ -> (pos p, RightSq)}
-\`				{\p _ -> (pos p, BackQuote)}
-\{				{\p _ -> (pos p, LeftCurly)}
-\}				{\p _ -> (pos p, RightCurly)}
+\(				{\s -> mkT LeftParen }
+\)				{\s -> mkT RightParen }
+\,				{\s -> mkT Comma }
+\;				{\s -> mkT SemiColon }
+\[				{\s -> mkT LeftSq }
+\]				{\s -> mkT RightSq }
+\`				{\s -> mkT BackQuote }
+\{				{\s -> mkT LeftCurly }
+\}				{\s -> mkT RightCurly }
 
 -- Used reserved words
 
-"case"				{\p _ -> (pos p, CaseToken)}
-"data"				{\p _ -> (pos p, DataToken)}
-"else"				{\p _ -> (pos p, ElseToken)}
-"if"				{\p _ -> (pos p, IfToken)}
-"in"				{\p _ -> (pos p, InToken)}
-"infix"				{\p _ -> (pos p, InfixToken)}
-"infixl"			{\p _ -> (pos p, InfixlToken)}
-"infixr"			{\p _ -> (pos p, InfixrToken)}
-"let"				{\p _ -> (pos p, LetToken)}
-"of"				{\p _ -> (pos p, OfToken)}
-"then"				{\p _ -> (pos p, ThenToken)}
-"type"				{\p _ -> (pos p, TypeToken)}
-"where"				{\p _ -> (pos p, WhereToken)}
+"case"				{\s -> mkT CaseToken }
+"data"				{\s -> mkT DataToken }
+"else"				{\s -> mkT ElseToken }
+"if"				{\s -> mkT IfToken }
+"in"				{\s -> mkT InToken }
+"infix"				{\s -> mkT InfixToken }
+"infixl"			{\s -> mkT InfixlToken }
+"infixr"			{\s -> mkT InfixrToken }
+"let"				{\s -> mkT LetToken }
+"of"				{\s -> mkT OfToken }
+"then"				{\s -> mkT ThenToken }
+"type"				{\s -> mkT TypeToken }
+"where"				{\s -> mkT WhereToken }
 
 -- UnusedReservedWords, are Haskell reserved words
 -- currently not used in hasnt
 
-@unUsedReservedWord		{\p s -> (pos p, UnusedReservedWord s)}
+--@unUsedReservedWord		{ mkT UnusedReservedWord s }
 
 -- Reserved operators
 
-".."				{\p _ -> (pos p, DoubleDotOp)}
-":"				{\p _ -> (pos p, ColonOp)}
-"::"				{\p _ -> (pos p, DoubleColonOp)}
-"="				{\p _ -> (pos p, EqualsOp)}
-"\\"				{\p _ -> (pos p, BackSlashOp)}
-"|"				{\p _ -> (pos p, BarOp)}
-"<-"				{\p _ -> (pos p, LeftArrowOp)}
-"->"				{\p _ -> (pos p, RightArrowOp)}
-"@"				{\p _ -> (pos p, AtOp)}
-"~"				{\p _ -> (pos p, TildeOp)}
-"=>"				{\p _ -> (pos p, DoubleArrowOp)}
+".."				{\s -> mkT DoubleDotOp }
+":"				{\s -> mkT ColonOp }
+"::"				{\s -> mkT DoubleColonOp }
+"="				{\s -> mkT EqualsOp }
+"\\"				{\s -> mkT BackSlashOp }
+"|"				{\s -> mkT BarOp }
+"<-"				{\s -> mkT LeftArrowOp }
+"->"				{\s -> mkT RightArrowOp }
+"@"				{\s -> mkT AtOp }
+"~"				{\s -> mkT TildeOp }
+"=>"				{\s -> mkT DoubleArrowOp }
 
+@varid				{\s -> mkT $ VariableName s }
+@conid				{\s -> mkT $ ConstructorName s }
+@varsym				{\s -> mkT $ VariableSymbol s }
+@integer			{\s -> mkT $ IntegerLiteral (read s) }
+@float				{\s -> mkT $ FloatLiteral (read s) }
+@string				{\s -> mkT $ StringLiteral s }
+@char				{\s -> mkT $ CharLiteral s }
 
+.				{\s -> mkT $ Unexpected s }
 
-@varid				{\p s -> (pos p, VariableName s)}
-@conid				{\p s -> (pos p, ConstructorName s)}
-@varsym				{\p s -> (pos p, VariableSymbol s)}
-@integer			{\p s -> (pos p, IntegerLiteral (read s))}
-@float				{\p s -> (pos p, FloatLiteral (read s))}
-@string				{\p s -> (pos p, StringLiteral s)}
-@char				{\p s -> (pos p, CharLiteral s)}
-
-.				{\p s -> (pos p, Unexpected s)}
-
--- TODO add nested comments,(YES)
--- TODO check EOF handling
-
+-- TODO add nested comments
 
 {
 
-lexer :: String -> [(Position, HasntToken)]
-lexer = alexScanTokens
+lexer :: (HasntToken -> ParserM a) -> ParserM a
+lexer = runL $ do getToken
 
-pos :: AlexInput -> Position
-pos (AlexInput p _) = p
+getToken :: LexerM a HasntToken
+getToken = do i <- getInput
+	      case alexScan (sai i) 0 of
+	      	   AlexEOF -> return EOFToken
+		   AlexError e -> fail $ "Lexical error at " ++ (show e) ++ "||" ++ showPosition (position (sai i))
+		   AlexSkip i' l -> (discard l) >> getToken
+		   AlexToken i' l a -> (discard l) >> (return $ a (take l i) (i', take l i))
 
-alexScanTokens str = go startPos
-  where go inp@(AlexInput pos str) =
-          case alexScan inp 0 of
-                AlexEOF -> []
-                AlexError _ -> error "lexical error"
-                AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act inp (take len str) : go inp'
-        startPos = AlexInput ("", 1, 1) str
-
-		     	     	  
-extractPosInput (AlexInput p _) = p
+sai :: String -> AlexInput
+sai s = AlexInput ("", 14, 14) s --TODO UGLY HACK !! what about this??
 
 }
 

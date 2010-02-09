@@ -68,4 +68,7 @@ data HasntToken
 
      | Unexpected               String
 
+-- EOF token
+     | EOFToken
+
      deriving (Eq, Show)

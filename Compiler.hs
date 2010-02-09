@@ -1,5 +1,5 @@
 module Compiler
-{- DEBUG Only
+{- TODO Debug only    
     (
      compile,
      main
@@ -14,10 +14,13 @@ import ParserMonad
 
 import SamplePrograms -- DEBUG only
 
-compile input = runParser (parser ((layout . lexer) input)) ""
+compile program = runParser parser program
+
 
 compileDeclaration = map compile sampleDeclarations
 
+
 main = do
   interact (show . compile)
+
 

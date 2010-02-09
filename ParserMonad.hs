@@ -1,18 +1,34 @@
 module ParserMonad 
     (
       Position
+    , showPosition
     , startingPosition -- TODO is this really needed?
     , LayoutContext(..)
     , ParseState
     , ParseResult(..)
-    , ParserM
+    , ParserM(..)     -- TODO check if this should be exported
     , runParser , runParserWithFileName
     , returnOk , returnError
+    , LexerM(..)      -- TODO check if this should be exported
+    , getInput
+    , discard
     )
     where
 
 -- Position identifies a location in the source
 type Position = (String, Int, Int) -- (File, line, col)
+
+showPosition :: Position -> String
+showPosition (file, line, col) = "line " ++ show line 
+                                 ++ ", column " ++ show col 
+                                 ++ ", in file " ++ file
+
+moveCol :: Int -> Position -> Position
+moveCol n (f, l, c) = (f, l, c + n)
+
+moveRow :: Int -> Position -> Position
+moveRow  n (f, l, c) =(f, l + n, c)
+
 
 -- default input stream (aka fileName) name
 defaultName :: String
@@ -41,7 +57,7 @@ data ParseResult a = Ok ParseState a
 
 --  Monad for parsing
 newtype ParserM a = ParserM { runP ::
-                              String     -- Input string
+                              String     -- Input string  --TODO shouldn't we use an AlexInput
                               -> Position   -- Current postion
                               -> Position   -- Location of the last token read
                               -> ParseState -- layout info
@@ -67,13 +83,23 @@ instance Monad ParserM where
     ParserM m >>= k = ParserM $ \input currPos lastPos state -> 
                 case m input currPos lastPos state of
                   Failed pos msg -> Failed pos msg
-                  Ok state' a -> runP (k a) input currPos lastPos state' -- continue the call 'chain'
+                  Ok state' a -> runP (k a) input currPos lastPos state' 
+                                 -- ^ continue the call 'chain'
     fail msg = ParserM $ \_ _ pos _ -> Failed pos msg
 
 
 -- Monad for lexing (a 'continuation passing' monad)
+
 newtype LexerM r a = LexerM { runL :: (a -> ParserM r) -> ParserM r }
 
 instance Monad (LexerM r) where
     return a = LexerM $ \k -> k a
     LexerM v >>= f = LexerM $ \k -> v (\a -> runL (f a) k) 
+
+getInput :: LexerM r String
+getInput = LexerM $ \cont -> ParserM $ \r -> runP (cont r) r
+
+-- | Discard some input characters (these must not include tabs or newlines).
+
+discard :: Int -> LexerM r ()
+discard n = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (drop n r) (moveCol n x)
