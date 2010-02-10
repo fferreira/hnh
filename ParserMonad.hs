@@ -11,7 +11,9 @@ module ParserMonad
     , returnOk , returnError
     , LexerM(..)      -- TODO check if this should be exported
     , getInput
-    , discard
+    , skip
+    , skipNewLine
+    , skipTab
     )
     where
 
@@ -26,8 +28,9 @@ showPosition (file, line, col) = "line " ++ show line
 moveCol :: Int -> Position -> Position
 moveCol n (f, l, c) = (f, l, c + n)
 
-moveRow :: Int -> Position -> Position
-moveRow  n (f, l, c) =(f, l + n, c)
+-- move down n lines, and go to the first column
+moveRow :: Int -> Position -> Position 
+moveRow  n (f, l, c) = (f, l + n, 1)
 
 
 -- default input stream (aka fileName) name
@@ -99,7 +102,26 @@ instance Monad (LexerM r) where
 getInput :: LexerM r String
 getInput = LexerM $ \cont -> ParserM $ \r -> runP (cont r) r
 
--- | Discard some input characters (these must not include tabs or newlines).
+-- skip some input characters (these must not include tabs or newlines).
 
-discard :: Int -> LexerM r ()
-discard n = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (drop n r) (moveCol n x)
+skip :: Int -> LexerM r ()
+skip n = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (drop n r) (moveCol n x)
+
+-- skip the next character, which must be a newline.
+
+--skipNewline :: LexerM  r ()
+skipNewLine = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (drop 1 r) (moveRow 1 x)
+
+
+-- skip the next character, which must be a tab.
+
+skipTab :: LexerM r ()
+skipTab = LexerM $ 
+          \cont -> ParserM $ 
+                   \r x -> runP (cont ()) (drop (nextTab x) r) (moveCol (nextTab x) x)
+
+nextTab :: Position -> Int
+nextTab (_, _, x) = (tAB_LENGTH - (x-1) `mod` tAB_LENGTH)
+
+tAB_LENGTH :: Int
+tAB_LENGTH = 8

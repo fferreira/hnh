@@ -3,7 +3,9 @@ module LexerHelper
      AlexInput(..)
     ,LexerState(..)
     ,StartCode
+    ,LexerA(..)
     ,mkT
+    ,mkA
     ,alexGetChar
     ,alexInputPrevChar
     )
@@ -19,11 +21,18 @@ data AlexInput = AlexInput {position :: !Position, input :: String} deriving (Sh
 data LexerState = LexerState {startCode :: !StartCode}
 type StartCode = Int
 --type LexerAction = (AlexInput, String) -> StateT LexerState (Either String) (HasntToken, AlexInput)
---type LexerAction = LexerM _ HasntToken
+
+data LexerA a = RegularAction a
+              | Skip Int
+              | SkipNewLine
+              | SkipTab
 
 --mkT :: HasntToken -> LexerAction
-mkT :: Monad m => HasntToken -> m HasntToken  
-mkT t = do return t
+mkT :: Monad m => HasntToken -> m (LexerA HasntToken)  
+mkT t = return (RegularAction t)
+
+mkA :: Monad m => m (Maybe HasntToken)
+mkA = error "no mkA"
 
 alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (AlexInput p (x:xs)) = Just (x, AlexInput (alexAdvance p x) xs)
@@ -38,3 +47,5 @@ alexAdvance :: Position -> Char -> Position
 alexAdvance (f, l, _) '\n' = (f, l + 1, 1)
 alexAdvance (f, l, c) '\t' = (f, l, (c+8) `div` 8 * 8)
 alexAdvance (f, l, c)  _   =  (f, l, c + 1)
+
+

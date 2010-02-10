@@ -84,8 +84,9 @@ $singlequote	    = \'
 
 tokens :-
 
+\n				{\s -> return SkipNewLine  }
 $white+				;
-"--".*				{\s -> mkT (LineComment s) }
+"--".*				{\s -> mkT (LineComment s) } --TODO avoid lambda mkt . LineComment
 
 \(				{\s -> mkT LeftParen }
 \)				{\s -> mkT RightParen }
@@ -116,7 +117,7 @@ $white+				;
 -- UnusedReservedWords, are Haskell reserved words
 -- currently not used in hasnt
 
---@unUsedReservedWord		{ mkT UnusedReservedWord s }
+@unUsedReservedWord		{ mkT . UnusedReservedWord }
 
 -- Reserved operators
 
@@ -153,9 +154,14 @@ getToken :: LexerM a HasntToken
 getToken = do i <- getInput
 	      case alexScan (sai i) 0 of
 	      	   AlexEOF -> return EOFToken
-		   AlexError e -> fail $ "Lexical error at " ++ (show e) ++ "||" ++ showPosition (position (sai i))
-		   AlexSkip i' l -> (discard l) >> getToken
-		   AlexToken i' l a -> (discard l) >> (return $ a (take l i) (i', take l i))
+		   AlexError e -> fail $ "Lexical error at " ++ (show e)	
+		   	       	       ++ "||" ++ showPosition (position (sai i))
+		   AlexSkip i' l -> (skip l) >> getToken
+		   AlexToken i' l a -> case (a (take l i) (i', take l i)) of
+                                           RegularAction act -> (skip l) >> (return $ act)
+					   SkipNewLine -> {-skipNewLine >>-} getToken
+                                           otherwise -> error "agregar lo que falta"
+
 
 sai :: String -> AlexInput
 sai s = AlexInput ("", 14, 14) s --TODO UGLY HACK !! what about this??
