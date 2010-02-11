@@ -2,10 +2,7 @@
 module Lexer (lexer, getToken) where  --TODO remove the comments and export the right thing
 
 import Token
-import ParserMonad -- (Position, ParserM(..), showPosition) -- TODO check what to import
-import LexerHelper
-
-import Control.Monad.State (StateT, get)
+import ParserMonad
 
 }
 
@@ -152,19 +149,18 @@ lexer = runL $ do getToken
 
 getToken :: LexerM a HasntToken
 getToken = do i <- getInput
-	      case alexScan (sai i) 0 of
+	      case alexScan i 0 of
 	      	   AlexEOF -> return EOFToken
 		   AlexError e -> fail $ "Lexical error at " ++ (show e)	
-		   	       	       ++ "||" ++ showPosition (position (sai i))
+		   	       	       ++ "||" ++ showPosition (position i)
 		   AlexSkip i' l -> (skip l) >> getToken
-		   AlexToken i' l a -> case (a (take l i) (i', take l i)) of
+		   AlexToken i' l a -> case (a (takeInput l i) undefined {-(i', take l i)-}) of
                                            RegularAction act -> (skip l) >> (return $ act)
 					   SkipNewLine -> {-skipNewLine >>-} getToken
                                            otherwise -> error "agregar lo que falta"
 
-
-sai :: String -> AlexInput
-sai s = AlexInput ("", 14, 14) s --TODO UGLY HACK !! what about this??
+takeInput :: Int -> AlexInput -> String
+takeInput l (AlexInput p s) = take l s --AlexInput p (take l s)
 
 }
 
