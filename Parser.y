@@ -203,8 +203,7 @@ atypes : atypes atype			{ $2 : $1 }
 {
 parser = hasnt
 
--- TODO use the location information for the error report
 parserError :: HasntToken -> ParserM a
-parserError token = returnError ("Parse Error" ++ (show token))
+parserError token = returnError ("Parse Error:" ++ (show token))
 
 }

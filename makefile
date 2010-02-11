@@ -14,4 +14,4 @@ Parser.hs: Parser.y
 	happy -o Parser.hs Parser.y -i
 
 clean:
-	rm Lexer.hs Parser.hs
+	rm Lexer.hs Parser.hs *.hi *.o

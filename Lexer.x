@@ -1,5 +1,5 @@
 {
-module Lexer (lexer, getToken) where  --TODO remove the comments and export the right thing
+module Lexer (lexer) where 
 
 import Token
 import ParserMonad
@@ -81,90 +81,81 @@ $singlequote	    = \'
 
 tokens :-
 
-\n				{\s -> return SkipNewLine  }
 $white+				;
-"--".*				{\s -> mkT (LineComment s) } --TODO avoid lambda mkt . LineComment
+"--".*				{\(i, s) -> return $ (LineComment s, i) }
 
-\(				{\s -> mkT LeftParen }
-\)				{\s -> mkT RightParen }
-\,				{\s -> mkT Comma }
-\;				{\s -> mkT SemiColon }
-\[				{\s -> mkT LeftSq }
-\]				{\s -> mkT RightSq }
-\`				{\s -> mkT BackQuote }
-\{				{\s -> mkT LeftCurly }
-\}				{\s -> mkT RightCurly }
+\(				{\(i, s) -> return $ (LeftParen, i)}
+\)				{\(i, s) -> return $ (RightParen, i)}
+\,				{\(i, s) -> return $ (Comma, i)}
+\;				{\(i, s) -> return $ (SemiColon, i)}
+\[				{\(i, s) -> return $ (LeftSq, i)}
+\]				{\(i, s) -> return $ (RightSq, i)}
+\`				{\(i, s) -> return $ (BackQuote, i)}
+\{				{\(i, s) -> return $ (LeftCurly, i)}
+\}				{\(i, s) -> return $ (RightCurly, i)}
 
 -- Used reserved words
 
-"case"				{\s -> mkT CaseToken }
-"data"				{\s -> mkT DataToken }
-"else"				{\s -> mkT ElseToken }
-"if"				{\s -> mkT IfToken }
-"in"				{\s -> mkT InToken }
-"infix"				{\s -> mkT InfixToken }
-"infixl"			{\s -> mkT InfixlToken }
-"infixr"			{\s -> mkT InfixrToken }
-"let"				{\s -> mkT LetToken }
-"of"				{\s -> mkT OfToken }
-"then"				{\s -> mkT ThenToken }
-"type"				{\s -> mkT TypeToken }
-"where"				{\s -> mkT WhereToken }
+"case"				{\(i, s) -> return $ (CaseToken, i)}
+"data"				{\(i, s) -> return $ (DataToken, i)}
+"else"				{\(i, s) -> return $ (ElseToken, i)}
+"if"				{\(i, s) -> return $ (IfToken, i)}
+"in"				{\(i, s) -> return $ (InToken, i)}
+"infix"				{\(i, s) -> return $ (InfixToken, i)}
+"infixl"			{\(i, s) -> return $ (InfixlToken, i)}
+"infixr"			{\(i, s) -> return $ (InfixrToken, i)}
+"let"				{\(i, s) -> return $ (LetToken, i)}
+"of"				{\(i, s) -> return $ (OfToken, i)}
+"then"				{\(i, s) -> return $ (ThenToken, i)}
+"type"				{\(i, s) -> return $ (TypeToken, i)}
+"where"				{\(i, s) -> return $ (WhereToken, i)}
 
 -- UnusedReservedWords, are Haskell reserved words
 -- currently not used in hasnt
 
-@unUsedReservedWord		{ mkT . UnusedReservedWord }
+@unUsedReservedWord		{\(i, s) -> return $ (UnusedReservedWord s, i)}
 
 -- Reserved operators
 
-".."				{\s -> mkT DoubleDotOp }
-":"				{\s -> mkT ColonOp }
-"::"				{\s -> mkT DoubleColonOp }
-"="				{\s -> mkT EqualsOp }
-"\\"				{\s -> mkT BackSlashOp }
-"|"				{\s -> mkT BarOp }
-"<-"				{\s -> mkT LeftArrowOp }
-"->"				{\s -> mkT RightArrowOp }
-"@"				{\s -> mkT AtOp }
-"~"				{\s -> mkT TildeOp }
-"=>"				{\s -> mkT DoubleArrowOp }
+".."				{\(i, s) -> return $ (DoubleDotOp, i)}
+":"				{\(i, s) -> return $ (ColonOp, i)}
+"::"				{\(i, s) -> return $ (DoubleColonOp, i)}
+"="				{\(i, s) -> return $ (EqualsOp, i)}
+"\\"				{\(i, s) -> return $ (BackSlashOp, i)}
+"|"				{\(i, s) -> return $ (BarOp, i)}
+"<-"				{\(i, s) -> return $ (LeftArrowOp, i)}
+"->"				{\(i, s) -> return $ (RightArrowOp, i)}
+"@"				{\(i, s) -> return $ (AtOp, i)}
+"~"				{\(i, s) -> return $ (TildeOp, i)}
+"=>"				{\(i, s) -> return $ (DoubleArrowOp, i)}
 
-@varid				{\s -> mkT $ VariableName s }
-@conid				{\s -> mkT $ ConstructorName s }
-@varsym				{\s -> mkT $ VariableSymbol s }
-@integer			{\s -> mkT $ IntegerLiteral (read s) }
-@float				{\s -> mkT $ FloatLiteral (read s) }
-@string				{\s -> mkT $ StringLiteral s }
-@char				{\s -> mkT $ CharLiteral s }
+@varid				{\(i, s) -> return $ (VariableName s, i)}
+@conid				{\(i, s) -> return $ (ConstructorName s, i)}
+@varsym				{\(i, s) -> return $ (VariableSymbol s, i)}
+@integer			{\(i, s) -> return $ (IntegerLiteral (read s), i)}
+@float				{\(i, s) -> return $ (FloatLiteral (read s), i)}
+@string				{\(i, s) -> return $ (StringLiteral s, i)}
+@char				{\(i, s) -> return $ (CharLiteral s, i)}
 
-.				{\s -> mkT $ Unexpected s }
+.				{\(i, s) -> return $ (Unexpected s, i)}
+
 
 -- TODO add nested comments
 
 {
-
 lexer :: (HasntToken -> ParserM a) -> ParserM a
-lexer = runL $ do getToken
+lexer cont = ParserM $ \i ->
+   do (token, i') <- getToken i
+      case cont token of
+          ParserM x -> x i'
 
-getToken :: LexerM a HasntToken
-getToken = do i <- getInput
-	      case alexScan i 0 of
-	      	   AlexEOF -> return EOFToken
-		   AlexError e -> fail $ "Lexical error at " ++ (show e)	
-		   	       	       ++ "||" ++ showPosition (position i)
-		   AlexSkip i' l -> (skip l) >> getToken
-		   AlexToken i' l a -> let 
-		   	     	       	 --a' :: String -> LexerM (LexerA HasntToken) (LexerA HasntToken)
-					 -- ^ ????
-                                         a' = a
-		   	     	       in case (a' (takeInput l i) (i', takeInput l i)) of
-                                           RegularAction act -> (skip l) >> (return $ act)
-					   SkipNewLine -> {-skipNewLine >>-} getToken
-                                           otherwise -> error "agregar lo que falta"
-
-takeInput :: Int -> AlexInput -> String
-takeInput l (AlexInput p s) = take l s --AlexInput p (take l s)
+getToken :: AlexInput -> Position -> (HasntToken, AlexInput)
+getToken = \i ->
+      do case alexScan i 0 of
+          AlexEOF -> return (EOFToken, i)
+          AlexError _ -> fail $ "Lexical error at " ++ (show (position i))
+          AlexSkip i' _ -> getToken i'
+          AlexToken i' l a -> a (i', take l (input i))
 
 }
 

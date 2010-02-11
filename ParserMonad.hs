@@ -11,12 +11,11 @@ module ParserMonad
     , LexerM(..)      -- TODO check if this should be exported
     , getInput
     , skip
-    , skipNewLine
-    , skipTab
+--    , skipNewLine
+--    , skipTab
     , AlexInput(..)
-    , LexerState(..)
-    , StartCode -- TODO is this really used?
-    , LexerA(..)
+--    , LexerState(..)
+--    , StartCode -- TODO is this really used?
     , mkT
     , alexGetChar
     , alexInputPrevChar
@@ -114,6 +113,7 @@ skip n = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (dropAI n r) (moveCo
 dropAI :: Int -> AlexInput -> AlexInput
 dropAI n (AlexInput p i) = AlexInput p (drop n i) 
 
+{-
 -- skip the next character, which must be a newline.
 
 --skipNewline :: LexerM  r ()
@@ -125,7 +125,7 @@ skipNewLine = error "implement skipNewLine" -- TODO
 
 skipTab :: LexerM r ()
 skipTab = error "implement skipTab" -- TODO
-{-
+
 skipTab = LexerM $ 
           \cont -> ParserM $ 
                    \r x -> runP (cont ()) (drop (nextTab x) r) (moveCol (nextTab x) x)
@@ -140,18 +140,13 @@ tAB_LENGTH = 8
 -------------------- Lexer Part -- TODO correct this
 
 data AlexInput = AlexInput {position :: !Position, input :: String} deriving (Show, Eq)
-data LexerState = LexerState {startCode :: !StartCode}
-type StartCode = Int
+--data LexerState = LexerState {startCode :: !StartCode}
+--type StartCode = Int
 --type LexerAction = (AlexInput, String) -> StateT LexerState (Either String) (HasntToken, AlexInput)
 
-data LexerA a = RegularAction a
-              | Skip Int
-              | SkipNewLine
-              | SkipTab
-
 --mkT :: HasntToken -> LexerAction
-mkT :: Monad m => HasntToken -> m (LexerA HasntToken)  
-mkT t = return (RegularAction t)
+mkT :: Monad m => HasntToken -> m  HasntToken
+mkT t = return t
 
 alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (AlexInput p (x:xs)) = Just (x, AlexInput (alexAdvance p x) xs)
