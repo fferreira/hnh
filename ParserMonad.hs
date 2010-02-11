@@ -2,18 +2,19 @@ module ParserMonad
     (
       Position
     , showPosition
-    , startingPosition -- TODO is this really needed?
     , LayoutContext(..)
     , ParseState
     , ParseResult(..)
-    , ParserM(..)     -- TODO check if this should be exported
+    , ParserM(..)
     , runParser , runParserWithFileName
     , returnOk , returnError
-    , LexerM(..)      -- TODO check if this should be exported
-    , getInput
-    , discard
+    , AlexInput(..)
+    , alexGetChar
+    , alexInputPrevChar
     )
     where
+
+import Token
 
 -- Position identifies a location in the source
 type Position = (String, Int, Int) -- (File, line, col)
@@ -23,21 +24,9 @@ showPosition (file, line, col) = "line " ++ show line
                                  ++ ", column " ++ show col 
                                  ++ ", in file " ++ file
 
-moveCol :: Int -> Position -> Position
-moveCol n (f, l, c) = (f, l, c + n)
-
-moveRow :: Int -> Position -> Position
-moveRow  n (f, l, c) =(f, l + n, c)
-
-
 -- default input stream (aka fileName) name
 defaultName :: String
 defaultName = "input stream"
-
--- startingPosition is the begining of a file
-startingPosition :: Position
-startingPosition = (defaultName, 1, 0)
-
 
 data LayoutContext = NoLayout 
                    | LayoutLevel Int
@@ -45,61 +34,64 @@ data LayoutContext = NoLayout
 
 type ParseState = [LayoutContext]
 
-{- TODO indentOfParseState
-topLayoutLevel :: ParseState -> Int
-topLayoutLevel (LayoutLevel n :_) = n
-topLayoutLevel _ = 0
--}
-
 data ParseResult a = Ok ParseState a 
                    | Failed Position String -- TODO add ParseState to error message?
                      deriving Show
 
 --  Monad for parsing
 newtype ParserM a = ParserM { runP ::
-                              String     -- Input string  --TODO shouldn't we use an AlexInput
-                              -> Position   -- Current postion
+                              AlexInput
+                              -- v-- are we using this as we should ??
                               -> Position   -- Location of the last token read
                               -> ParseState -- layout info
                               -> ParseResult a
                             }
 
 runParserWithFileName :: String -> ParserM a -> String -> ParseResult a
-runParserWithFileName fileName (ParserM parse) program = parse program start start []
+runParserWithFileName fileName (ParserM parse) program = parse (AlexInput start program) start2 []
     where
       start = (fileName, 1, 0)
+      start2 =("none", -1, -1) 
 
 runParser :: ParserM a -> String -> ParseResult a
 runParser = runParserWithFileName defaultName
 
 returnOk :: a -> ParserM a
-returnOk a = ParserM $ \_ _ _ state -> Ok state a
+returnOk a = ParserM $ \_ _ state -> Ok state a
 
 returnError :: String -> ParserM a
-returnError msg = ParserM $ \_ pos _ _ -> Failed pos msg
+returnError msg = ParserM $ \input _ _ -> Failed (position input) msg
 
 instance Monad ParserM where
-    return a = ParserM $ \_ _ _ {-input currPos lastPos-} state -> Ok state a 
-    ParserM m >>= k = ParserM $ \input currPos lastPos state -> 
-                case m input currPos lastPos state of
+    return a = ParserM $ \_ _ {-input lastPos-} state -> Ok state a 
+    ParserM m >>= k = ParserM $ \input lastPos state -> 
+                case m input lastPos state of
                   Failed pos msg -> Failed pos msg
-                  Ok state' a -> runP (k a) input currPos lastPos state' 
+                  Ok state' a -> runP (k a) input lastPos state' 
                                  -- ^ continue the call 'chain'
-    fail msg = ParserM $ \_ _ pos _ -> Failed pos msg
+    fail msg = ParserM $ \input _ _ -> Failed (position input) msg
 
+-- Lexer Part
 
--- Monad for lexing (a 'continuation passing' monad)
+data AlexInput =
+    AlexInput 
+    {
+      position :: !Position
+    , input :: String 
+    } 
+    deriving (Show, Eq)
 
-newtype LexerM r a = LexerM { runL :: (a -> ParserM r) -> ParserM r }
+alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+alexGetChar (AlexInput p (x:xs)) = Just (x, AlexInput (alexAdvance p x) xs)
+alexGetChar (AlexInput _ []) = Nothing
 
-instance Monad (LexerM r) where
-    return a = LexerM $ \k -> k a
-    LexerM v >>= f = LexerM $ \k -> v (\a -> runL (f a) k) 
+alexInputPrevChar :: AlexInput -> Char -- TODO do we need this ?
+alexInputPrevChar _ = error "Lexer doesn't implement alexInputPrevChar"
 
-getInput :: LexerM r String
-getInput = LexerM $ \cont -> ParserM $ \r -> runP (cont r) r
+-- Internal functions
 
--- | Discard some input characters (these must not include tabs or newlines).
+alexAdvance :: Position -> Char -> Position
+alexAdvance (f, l, _) '\n' = (f, l + 1, 1)
+alexAdvance (f, l, c) '\t' = (f, l, (c+8) `div` 8 * 8)
+alexAdvance (f, l, c)  _   =  (f, l, c + 1)
 
-discard :: Int -> LexerM r ()
-discard n = LexerM $ \cont -> ParserM $ \r x -> runP (cont ()) (drop n r) (moveCol n x)
