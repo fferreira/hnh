@@ -139,7 +139,6 @@ $white+				;
 
 .				{\(i, s) -> return $ (Unexpected s, i)}
 
-
 -- TODO add nested comments
 
 {
@@ -153,7 +152,7 @@ getToken :: AlexInput -> Position -> (HasntToken, AlexInput)
 getToken = \i ->
       do case alexScan i 0 of
           AlexEOF -> return (EOFToken, i)
-          AlexError _ -> fail $ "Lexical error at " ++ (show (position i))
+          AlexError _ -> fail $ "Lexical error at " ++ (showPosition (position i))
           AlexSkip i' _ -> getToken i'
           AlexToken i' l a -> a (i', take l (input i))
 
