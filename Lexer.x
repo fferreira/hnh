@@ -154,7 +154,11 @@ getToken = do i <- getInput
 		   AlexError e -> fail $ "Lexical error at " ++ (show e)	
 		   	       	       ++ "||" ++ showPosition (position i)
 		   AlexSkip i' l -> (skip l) >> getToken
-		   AlexToken i' l a -> case (a (takeInput l i) undefined {-(i', take l i)-}) of
+		   AlexToken i' l a -> let 
+		   	     	       	 --a' :: String -> LexerM (LexerA HasntToken) (LexerA HasntToken)
+					 -- ^ ????
+                                         a' = a
+		   	     	       in case (a' (takeInput l i) (i', takeInput l i)) of
                                            RegularAction act -> (skip l) >> (return $ act)
 					   SkipNewLine -> {-skipNewLine >>-} getToken
                                            otherwise -> error "agregar lo que falta"
