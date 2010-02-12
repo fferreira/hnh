@@ -9,7 +9,6 @@ where
 import Token
 import Syntax
 import ParserMonad
-import ParserUtils
 import Lexer(lexer)
 
 
