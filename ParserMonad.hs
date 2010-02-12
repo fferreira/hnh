@@ -85,7 +85,7 @@ alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (AlexInput p (x:xs)) = Just (x, AlexInput (alexAdvance p x) xs)
 alexGetChar (AlexInput _ []) = Nothing
 
-alexInputPrevChar :: AlexInput -> Char -- TODO do we need this ?
+alexInputPrevChar :: AlexInput -> Char 
 alexInputPrevChar _ = error "Lexer doesn't implement alexInputPrevChar"
 
 -- Internal functions

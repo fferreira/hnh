@@ -5,11 +5,10 @@ module Token
     where
 
 data HasntToken 
-     = LineComment		String
-
+     = 
 -- Special Characters
 
-     | LeftParen	-- (
+       LeftParen	-- (
      | RightParen	-- )
      | Comma		-- ,
      | SemiColon	-- ;

@@ -21,8 +21,6 @@ import Lexer(lexer)
 %error { parserError }
 
 %token
-	comment		{ LineComment $$ }
-
 -- Special Characters
 
    '('			{ LeftParen }

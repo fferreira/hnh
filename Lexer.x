@@ -82,7 +82,7 @@ $singlequote	    = \'
 tokens :-
 
 $white+				;
-"--".*				{\(i, s) -> return $ (LineComment s, i) }
+"--".*				;
 
 \(				{\(i, s) -> return $ (LeftParen, i)}
 \)				{\(i, s) -> return $ (RightParen, i)}
