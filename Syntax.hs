@@ -48,7 +48,7 @@ data Declaration
       deriving(Show, Eq)
 
 data Match
-    = Match Name [Pattern] [Rhs] {- where -} [Declaration]
+    = Match Name [Pattern] Rhs {- where -} [Declaration]
       deriving(Show, Eq)
 
 data Rhs

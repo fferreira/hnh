@@ -9,7 +9,9 @@ where
 import Token
 import Syntax
 import ParserMonad
+import ParserUtils
 import Lexer(lexer)
+
 
 }
  
@@ -148,10 +150,18 @@ ops : ops ',' op			{ $3 : $1 }
 op :: { Operator }
 op : VARSYM				{ $1 }
    | '`' VARID '`'			{ $2 }
+
+-- Value definitions
 {-
 valdef :: { Declaration }
-valdef : exp0b rhs {- optwhere -}	{ }
--}
+valdef : exp0b rhs {- optwhere -}	{% checkValDef $1 $2 []}
+
+rhs :: { Rhs }
+rhs :					{ undefined }
+
+exp0b :: { Expr }
+exp0b :					{ undefined }
+ -}
 -- Types
 
 simpletype :: { Name }

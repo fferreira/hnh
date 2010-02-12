@@ -41,7 +41,7 @@ data ParseResult a = Ok ParseState a
 --  Monad for parsing
 newtype ParserM a = ParserM { runP ::
                               AlexInput
-                              -- v-- are we using this as we should ??
+                              -- v-- TODO neither position nor state are working!
                               -> Position   -- Location of the last token read
                               -> ParseState -- layout info
                               -> ParseResult a
