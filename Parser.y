@@ -47,7 +47,6 @@ import Lexer(lexer)
    'let'		{ LetToken }
    'of'			{ OfToken }
    'type'		{ TypeToken }
-   'where'		{ WhereToken }
 
 -- Unused Reserved Word
 

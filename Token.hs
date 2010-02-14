@@ -33,7 +33,6 @@ data HasntToken
      | OfToken
      | ThenToken
      | TypeToken
-     | WhereToken
      | UnusedReservedWord	String
 
 -- Reserved Operands

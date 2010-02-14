@@ -57,10 +57,10 @@ $singlequote	    = \'
 @usedReservedWord =
 	case | data | else | if |
 	in | infix | infixl | infixr | let
-	of | then | type | where
+	of | then | type
 
 @unUsedReservedWord =
-	do | as | hiding | class | deriving | import |
+	do | as | hiding | class | deriving | import | where
 	instance | module | qualified | default | newtype
 
 @reservedWord =
@@ -108,7 +108,6 @@ $white+				;
 "of"				{\(i, s) -> return $ (OfToken, i)}
 "then"				{\(i, s) -> return $ (ThenToken, i)}
 "type"				{\(i, s) -> return $ (TypeToken, i)}
-"where"				{\(i, s) -> return $ (WhereToken, i)}
 
 -- UnusedReservedWords, are Haskell reserved words
 -- currently not used in hasnt
