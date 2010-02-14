@@ -37,7 +37,7 @@ data LiteralValue
 --- Declarations
 
 data Declaration
-    = TypeDcl Name Type -- TODO add the polymorphism specifications
+    = TypeDcl Name [Name] Type 
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | NewTypeDcl Name [Name] ConstructorDeclaration
     | DefaultDcl [Type] -- TODO will this be implemented ?

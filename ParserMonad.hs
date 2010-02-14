@@ -2,9 +2,9 @@ module ParserMonad
     (
       Position
     , showPosition
-    , LayoutContext(..)
-    , ParseState
-    , ParseResult(..)
+    , LayoutContext(..) --TODO is it used?
+    , ParseState       --TODO is it used ?
+    , ParseResult(..) 
     , ParserM(..)
     , runParser , runParserWithFileName
     , returnOk , returnError

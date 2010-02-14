@@ -97,8 +97,8 @@ topdecls : topdecl		{ [$1] }
 	     | topdecls topdecl	{ $2 : $1 }
 
 topdecl :: { Declaration }
-topdecl : 'type' simpletype '=' type	  { TypeDcl $2 $4 }
-topdecl : 'data' CONID '=' constrs	  { DataDcl $2 [] $4 }    -- TODO fill the empty list param
+topdecl : 'type' simpletype '=' type	  { TypeDcl (fst $2) (snd $2) $4 }
+topdecl : 'data' simpletype '=' constrs	  { DataDcl (fst $2) (snd $2) $4 }
 
 topdecl : decl	    	      		  { $1 }
 
@@ -160,8 +160,8 @@ exp0b :					{ undefined }
  -}
 -- Types
 
-simpletype :: { Name }
-simpletype : CONID			{ $1 } -- TODO add polymorphic types !!
+simpletype :: { (Name, [Name]) }
+simpletype : CONID tyvars		{ ($1, reverse $2) } -- TODO add polymorphic types !!
 
 types :: { [Type] }
 types : types ',' type			{ $3 : $1 }
@@ -170,6 +170,13 @@ types : types ',' type			{ $3 : $1 }
 type :: { Type }
 type : btype '->' type			{ FuncType $1 $3 }
      | btype 	  			{ $1 }
+
+tyvars :: { [Name] }
+tyvars : tyvars tyvar			{ $2 : $1 }
+       | 				{ [] }
+
+tyvar :: { Name }
+tyvar : VARID				{ $1 }
 
 {-
 Two shift reduce conflicts when parsing btype atpye
@@ -186,7 +193,8 @@ btype : btype atype			{ AppType $1 $2 }
       | atype 				{ $1 }
 
 atype :: { Type }
-atype : CONID				{ ConsType $1 } -- tyvar in the report (TODO something mising?)
+atype : CONID				{ ConsType $1 } 
+      | VARID				{ VarType $1 }
       | '(' types ')'			{ TupleType $2 } -- TODO Reverse $2 ??
       | '[' type ']'			{ $2 } -- TODO COMPLETE List type
       | '(' type ')'			{ $2 } -- One uple does not exist
