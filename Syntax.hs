@@ -82,9 +82,9 @@ data Expr
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
-    | InfixOp Expr Operator Expr Type -- the use of an operator as a function
+    | InfixOpExp Expr Operator Expr Type -- the use of an operator as a function
     | FExp Expr Expr Type -- function application expression          
-    | UnaryMinusExp Expr Type
+    | MinusExp Expr Type
     | LambdaExp [Pattern] Expr Type
     | LetExp [Declaration] Expr Type
     | IfExp Expr Expr Expr Type
@@ -94,7 +94,7 @@ data Expr
     | ListExp [Expr] Type  -- a list of expresions
     | LeftSectionExp Expr Operator Type  -- TODO check if doing an in-fix expr datatype
     | RightSectionExp Operator Expr Type
-    | ArithSeqExp Expr Expr Expr Type -- from, increment, to (no infinite sequences)
+    | ArithSeqExp Expr (Maybe Expr) Expr Type -- from, increment, to (no infinite sequences)
       deriving (Show, Eq)
 
 data Pattern

@@ -10,7 +10,7 @@ import Token
 import Syntax
 import ParserMonad
 import Lexer(lexer)
-import Types(addType)
+import Types(addType, litToExp)
 
 }
  
@@ -80,9 +80,6 @@ import Types(addType)
    STRING		{ StringLiteral $$ }
    CHAR			{ CharLiteral $$ }
 
--- Debugging tokens
- 'joker'		{ Joker }
-
 -- Precedences
    
 -- TODO fill preferences
@@ -112,8 +109,12 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
-     | VARID aPats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
+     | VARID apats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
      | pat rhs				{ PatBind $1 $2 }
+
+decls :: { [Declaration] }  -- one or more declarations
+decls : decls optsc decl		{ $3 : $1 }
+      | decl optsc  			{ [$1] }
 
 gendecl :: { Declaration }
 gendecl : typeSigDecl			{ $1 }
@@ -172,12 +173,42 @@ gd : '|' exp				{ $2 }
 
 -- Expressions
 
-exp :: { Expr }
-exp : exp0 '::' type			{ addType $1 $3 } 
-    | exp0 				{ $1 }
+exp :: { Expr } -- TODO add optsc ?
+exp : expi '::' type			{ addType $1 $3 } 
+    | expi 				{ $1 }
 
-exp0 :: { Expr }
-exp0 :	'joker'				{ VarExp "joker" UnknownType }
+expi :: { Expr }
+expi : expi op expi			{ InfixOpExp $1 $2 $3 ut }
+     | '~' expi				{ MinusExp $2 ut }
+     | exp10   				{ $1 }
+
+exp10 :: { Expr }
+exp10 :	fexp				{ $1 }
+      | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
+      | 'let' optlcurly decls optrcurly 'in' exp    { LetExp $3 $6 ut }
+      | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 ut }
+
+fexp :: { Expr }
+fexp : fexp aexp			{ FExp $1 $2 ut }
+     | aexp 				{ $1 }
+
+aexp :: { Expr }
+aexp : VARID				{ VarExp $1 ut }
+     | CONID				{ ConExp $1 ut }
+     | literal				{ litToExp $1 }
+     | '(' exp ')'			{ $2 }
+     | '(' tupleexps ')'		{ TupleExp (reverse $2) ut } -- TODO add (ut, ut..) as type?
+     | '[' listexps ']'			{ ListExp (reverse $2) ut }
+     | '[' exp ',' exp '..' exp ']'	{ ArithSeqExp $2 (Just $4) $6 ut }
+     | '[' exp '..' exp ']'		{ ArithSeqExp $2 Nothing $4 ut }
+
+tupleexps :: { [Expr] }
+tupleexps : tupleexps ',' exp		{ $3 : $1 }
+	  | exp ',' exp	  		{ [$3, $1] }
+
+listexps :: { [Expr] }
+listexps : listexps ',' exp		{ $3 : $1 }
+	 | exp	    			{ [$1] }
 
 -- Patterns
 
@@ -193,21 +224,21 @@ pati : pat10				{ $1 }
      | pati op pati			{ InfixPat $1 $2 $3 }
 
 pat10 :: { Pattern }
-pat10 : aPat				{ $1 }
+pat10 : apat				{ $1 }
       | CONID pats			{ConsPat $1 $2}
 
-aPat :: { Pattern }
-aPat : VARID				{ VarPat $1 }
-     | VARID '@' aPat			{ AsPat $1 $3 } 
+apat :: { Pattern }
+apat : VARID				{ VarPat $1 }
+     | VARID '@' apat			{ AsPat $1 $3 } 
      | literal				{ LitPat $1 }
      | '_'				{ WildcardPat }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{ TuplePat (reverse $2) }  -- it has to be >= 2 to be a tuple
      | '[' listpats ']'			{ ListPat (reverse $2) }
 
-aPats :: { [Pattern] }
-aPats : aPats aPat			{ $2 : $1 }
-      | aPat  				{ [$1] }
+apats :: { [Pattern] }
+apats : apats apat			{ $2 : $1 }
+      | apat  				{ [$1] }
 
 tuplepats :: { [Pattern] }  -- two or more
 tuplepats : tuplepats pat		{ $2 : $1 }
@@ -265,7 +296,7 @@ atypes : atypes atype			{ $2 : $1 }
 
 -- literal handling
 
-literal :: { LiteralValue}
+literal :: { LiteralValue }
 literal : INT				{ LiteralInt $1 }
 	| FLOAT				{ LiteralFloat $1 }
 	| STRING			{ LiteralString $1 }
@@ -280,7 +311,21 @@ optsc :: { () }  -- optional semicolons
 semicolons :: { () }
 	   : optsc ';'			{ () }
 
+-- curly brace handling
+
+optlcurly :: { () } -- optional curly braces
+optlcurly : '{'				{ () }
+	  | 				{ () }
+
+optrcurly :: { () }
+optrcurly : '}'				{ () }
+	  | 				{ () }
+
 {
+
+ut :: Type
+ut = UnknownType
+
 parser = hasnt
 
 parserError :: HasntToken -> ParserM a

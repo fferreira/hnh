@@ -129,8 +129,6 @@ $white+				;
 "~"				{\(i, s) -> return $ (TildeOp, i)}
 "=>"				{\(i, s) -> return $ (DoubleArrowOp, i)}
 
-"joker"				{\(i, s) -> return $ (Joker, i)}
-
 @varid				{\(i, s) -> return $ (VariableName s, i)}
 @conid				{\(i, s) -> return $ (ConstructorName s, i)}
 @varsym				{\(i, s) -> return $ (VariableSymbol s, i)}
