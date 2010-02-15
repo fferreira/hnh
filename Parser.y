@@ -321,11 +321,11 @@ semicolons :: { () }
 
 lcb :: { () } -- optional curly braces
 lcb : '{'				{ () }
-	  | 				{ () }
+    |  					{ () }
 
 rcb :: { () } -- optional curly braches
 rcb : '}'				{ () }
-	  | 				{ () }
+    | 					{ () }
 
 {
 
