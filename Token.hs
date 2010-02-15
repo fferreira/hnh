@@ -17,6 +17,7 @@ data HasntToken
      | BackQuote	-- `
      | LeftCurly	-- {
      | RightCurly	-- }
+     | Underscore       -- _
       
 -- Reserved Words
 
@@ -68,5 +69,8 @@ data HasntToken
 
 -- EOF token
      | EOFToken
+
+-- Special debugging tokens -- TODO remove?
+     | Joker
 
      deriving (Eq, Show)

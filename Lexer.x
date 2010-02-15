@@ -93,6 +93,7 @@ $white+				;
 \`				{\(i, s) -> return $ (BackQuote, i)}
 \{				{\(i, s) -> return $ (LeftCurly, i)}
 \}				{\(i, s) -> return $ (RightCurly, i)}
+\_				{\(i, s) -> return $ (Underscore, i)}
 
 -- Used reserved words
 
@@ -127,6 +128,8 @@ $white+				;
 "@"				{\(i, s) -> return $ (AtOp, i)}
 "~"				{\(i, s) -> return $ (TildeOp, i)}
 "=>"				{\(i, s) -> return $ (DoubleArrowOp, i)}
+
+"joker"				{\(i, s) -> return $ (Joker, i)}
 
 @varid				{\(i, s) -> return $ (VariableName s, i)}
 @conid				{\(i, s) -> return $ (ConstructorName s, i)}

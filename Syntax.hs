@@ -44,11 +44,11 @@ data Declaration
     | TypeSigDcl [Name] Type -- TODO ??? how will this be used?
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl [Match]
-    | PatBind Pattern Rhs {-where-} [Declaration]
+    | PatBind Pattern Rhs {-where [Declaration] -}
       deriving(Show, Eq)
 
 data Match
-    = Match Name [Pattern] Rhs {- where -} [Declaration]
+    = Match Name [Pattern] Rhs {- where [Declaration] -}
       deriving(Show, Eq)
 
 data Rhs
@@ -109,8 +109,9 @@ data Expr
 data Pattern
     = VarPat Name
     | AsPat Name Pattern
+    | ConsPat Name -- a type constructor with arity=0 --TODO what is this for?
     | LitPat LiteralValue
---    | NegPat Pattern  -- TODO does this exist?
+--    | NegPat Pattern  -- TODO does this exist? irrefutable pattern?
     | ListPat [Pattern]
     | TuplePat [Pattern]
     | ParenPat (Pattern)  -- TODO is this support important? (MAYBE?)

@@ -32,6 +32,7 @@ import Lexer(lexer)
    '`'			{ BackQuote }
    '{'			{ LeftCurly }
    '}'			{ RightCurly }
+   '_'			{ Underscore }
 
 -- Reserved Words
 
@@ -79,11 +80,15 @@ import Lexer(lexer)
    STRING		{ StringLiteral $$ }
    CHAR			{ CharLiteral $$ }
 
+-- Debugging tokens
+ 'joker'		{ Joker }
+
 -- Precedences
    
 -- TODO fill preferences
 
 %% -- Rules
+
 
 -- Program
 
@@ -106,12 +111,13 @@ topdecl : decl	    	      		  { $1 }
 -- Non-type declarations
 
 decl :: { Declaration }
-delc : gendecl				{ $1 }
+decl : gendecl				{ $1 }
+--     | funlhs rhs			{ undefined } -- TODO add this case
+     | pat rhs				{ PatBind $1 $2 }
 
 gendecl :: { Declaration }
 gendecl : typeSigDecl			{ $1 }
 	| fixityDecl			{ $1 }
---	| valdef			{ $1 }
 
 typeSigDecl :: { Declaration}
 typeSigDecl : vars '::' type		{ TypeSigDcl $1 $3 }
@@ -147,17 +153,46 @@ op :: { Operator }
 op : VARSYM				{ $1 }
    | '`' VARID '`'			{ $2 }
 
--- Value definitions
-{-
-valdef :: { Declaration }
-valdef : exp0b rhs {- optwhere -}	{% checkValDef $1 $2 []}
+-- Expressions
 
 rhs :: { Rhs }
-rhs :					{ undefined }
+rhs :  '=' 'joker'			{ UnGuardedRhs $ VarExp "joker" }
 
+{-
 exp0b :: { Expr }
-exp0b :					{ undefined }
- -}
+exp0b :	'joker'				{ VarExp "joker" }
+-}
+
+-- Patterns
+
+pat :: { Pattern }
+pat : pat0				{ $1 }
+
+pat0 :: { Pattern }
+pat0 : pat10				{ $1 }
+
+pat10 :: { Pattern }
+pat10 : aPat				{ $1 }
+
+
+aPat :: { Pattern }
+aPat : VARID				{ VarPat $1 }
+     | VARID '@' aPat			{ AsPat $1 $3 } 
+     | CONID 	 			{ ConsPat $1 }
+     | literal				{ LitPat $1 }
+     | '_'				{ WildcardPat }
+     | '(' pat ')'			{ $2 }
+     | '(' tuplepats ')'		{ TuplePat (reverse $2) }  -- it has to be >= 2 to be a tuple
+     | '[' listpats ']'			{ ListPat (reverse $2) }
+
+tuplepats :: { [Pattern] }  -- two or more
+tuplepats : tuplepats pat		{ $2 : $1 }
+	  | pat ',' pat			{ [$3, $1] }
+
+listpats :: { [Pattern] }  -- one or more
+listpats: listpats ',' pat		{ $3 : $1 } 
+	| pat	   			{ [$1] }  	   
+
 -- Types
 
 simpletype :: { (Name, [Name]) }
@@ -178,16 +213,8 @@ tyvars : tyvars tyvar			{ $2 : $1 }
 tyvar :: { Name }
 tyvar : VARID				{ $1 }
 
-{-
-Two shift reduce conflicts when parsing btype atpye
-when finding a ( the parser can:
+-- TODO see shift/reduce conflicts that seem to be introduced around 
 
-* shift the ( and continue with the a type CORRECT!
-* reduce the btype before the ( WRONG!
-
-One conflict is introduced when type -> btype . '->' type
-The other one is introduced when atypes -> atypes . atype
--}
 btype :: { Type }
 btype : btype atype			{ AppType $1 $2 }
       | atype 				{ $1 }
@@ -212,7 +239,22 @@ atypes :: { [Type] }
 atypes : atypes atype			{ $2 : $1 }
        | 				{ [] }  
 
--- Code
+-- literal handling
+
+literal :: { LiteralValue}
+literal : INT				{ LiteralInt $1 }
+	| FLOAT				{ LiteralFloat $1 }
+	| STRING			{ LiteralString $1 }
+	| CHAR				{ LiteralChar $1 }
+
+-- semicolon handling
+
+optsc :: { () }  -- optional semicolons
+      : semicolons			{ () }
+      |					{ () }
+
+semicolons :: { () }
+	   : optsc ';'			{ () }
 
 {
 parser = hasnt
