@@ -167,20 +167,19 @@ exp0b :	'joker'				{ VarExp "joker" }
 -- Patterns
 
 pat :: { Pattern }
-pat : pat0				{ $1 }
+pat : pati				{ $1 }
 
 pats :: { [Pattern] }
 pats : pats pat				{ $2 : $1 }
      | 	    				{ [] }
 
-pat0 :: { Pattern } -- TODO isn't really a pati?
-pat0 : pat10				{ $1 }
-     | pat0 op pat0			{ InfixPat $1 $2 $3 }
+pati :: { Pattern } -- pat0 to pat9
+pati : pat10				{ $1 }
+     | pati op pati			{ InfixPat $1 $2 $3 }
 
 pat10 :: { Pattern }
 pat10 : aPat				{ $1 }
       | CONID pats			{ConsPat $1 $2}
-
 
 aPat :: { Pattern }
 aPat : VARID				{ VarPat $1 }

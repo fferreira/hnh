@@ -1,5 +1,5 @@
 # Simplistic makefile (can easily be improved, but suffices for now.
-complete: Lexer.hs Layout.hs Parser.hs Compiler.hs SamplePrograms.hs
+complete: compile
 
 compile: Lexer.hs Parser.hs
 	ghc --make Compiler
@@ -14,4 +14,4 @@ Parser.hs: Parser.y
 	happy -o Parser.hs Parser.y -i
 
 clean:
-	rm Lexer.hs Parser.hs *.hi *.o
+	rm Lexer.hs Parser.hs *.hi *.o Parser.info
