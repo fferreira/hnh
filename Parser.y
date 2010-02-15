@@ -152,6 +152,7 @@ ops : ops ',' op			{ $3 : $1 }
 op :: { Operator }
 op : VARSYM				{ $1 }
    | '`' VARID '`'			{ $2 }
+   | ':'       				{ ":" } -- TODO are there other operators missing?
 
 -- Expressions
 
@@ -168,17 +169,22 @@ exp0b :	'joker'				{ VarExp "joker" }
 pat :: { Pattern }
 pat : pat0				{ $1 }
 
-pat0 :: { Pattern }
+pats :: { [Pattern] }
+pats : pats pat				{ $2 : $1 }
+     | 	    				{ [] }
+
+pat0 :: { Pattern } -- TODO isn't really a pati?
 pat0 : pat10				{ $1 }
+     | pat0 op pat0			{ InfixPat $1 $2 $3 }
 
 pat10 :: { Pattern }
 pat10 : aPat				{ $1 }
+      | CONID pats			{ConsPat $1 $2}
 
 
 aPat :: { Pattern }
 aPat : VARID				{ VarPat $1 }
      | VARID '@' aPat			{ AsPat $1 $3 } 
-     | CONID 	 			{ ConsPat $1 }
      | literal				{ LitPat $1 }
      | '_'				{ WildcardPat }
      | '(' pat ')'			{ $2 }

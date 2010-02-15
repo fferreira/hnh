@@ -109,13 +109,13 @@ data Expr
 data Pattern
     = VarPat Name
     | AsPat Name Pattern
-    | ConsPat Name -- a type constructor with arity=0 --TODO what is this for?
+    | ConsPat Name [Pattern] -- a type constructor 
     | LitPat LiteralValue
 --    | NegPat Pattern  -- TODO does this exist? irrefutable pattern?
     | ListPat [Pattern]
     | TuplePat [Pattern]
     | ParenPat (Pattern)  -- TODO is this support important? (MAYBE?)
--- TODO Add consym pattern (x:xs)
+    | InfixPat Pattern Operator Pattern --TODO which operators shall be supported?
     | WildcardPat
       deriving (Show, Eq)
 
