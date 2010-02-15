@@ -112,7 +112,7 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
-     | funlhs rhs			{ FunBindDcl (fst $1) (snd $1) $2 }
+     | VARID aPats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
      | pat rhs				{ PatBind $1 $2 }
 
 gendecl :: { Declaration }
@@ -124,7 +124,7 @@ typeSigDecl : vars '::' type		{ TypeSigDcl $1 $3 }
 
 vars :: { [Name] }
 vars : vars ',' var			{ $3 : $1 }
-     | var  				{ [$1] } -- TODO que joraca pongo aca ?
+     | var  				{ [$1] } 
 
 var :: { Name }
 var : VARID				{ $1 }
@@ -164,12 +164,6 @@ exp0b :: { Expr }
 exp0b :	'joker'				{ VarExp "joker" }
 -}
 
--- Functions
-
-funlhs :: { (Name, [Pattern]) }
-funlhs : VARID pats			{ ($1, $2) }
-       | pat op pat			{ ($2, [$1, $3]) }
-
 -- Patterns
 
 pat :: { Pattern }
@@ -196,6 +190,10 @@ aPat : VARID				{ VarPat $1 }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{ TuplePat (reverse $2) }  -- it has to be >= 2 to be a tuple
      | '[' listpats ']'			{ ListPat (reverse $2) }
+
+aPats :: { [Pattern] }
+aPats : aPats aPat			{ $2 : $1 }
+      | aPat  				{ [$1] }
 
 tuplepats :: { [Pattern] }  -- two or more
 tuplepats : tuplepats pat		{ $2 : $1 }
