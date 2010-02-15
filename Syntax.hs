@@ -63,17 +63,13 @@ data Associativity -- TODO change name to fixity ?
     | RightAssoc
       deriving(Show, Eq)
 
-{- TODO should we keep this definition, or the simpler above ?
-data Operator
-    = Operator Name -- consisting of VariableSymbol(s) 
--}
-
 data Type
     = FuncType Type Type
     | TupleType [Type]
     | AppType Type Type -- ??
     | VarType Name      -- for parametric types
     | ConsType Name     -- the constructor of the type
+    | UnknownType
       deriving(Show, Eq)
 
 data ConstructorDeclaration -- No support for named field types
@@ -83,22 +79,22 @@ data ConstructorDeclaration -- No support for named field types
 --- Expressions & Patterns
 
 data Expr
-    = VarExp Name
-    | ConExp Name
-    | LitExp LiteralValue
-    | InfixOp Expr Operator Expr -- the use of an operator as a function
-    | FExp Expr Expr -- function application expression          
-    | UnaryMinusExp Expr
-    | LambdaExp [Pattern] Expr
-    | LetExp [Declaration] Expr
-    | IfExp Expr Expr Expr
-    | CaseExp Expr [Alternative]
-    | ParensExp Expr
-    | TupleExp [Expr]  -- a tuple of expresions
-    | ListExp [Expr]  -- a list of expresions
-    | LeftSectionExp Expr Operator  -- TODO check if doing an in-fix expr datatype
-    | RightSectionExp Operator Expr
-    | ArithSeqExp Expr Expr Expr -- from, increment, to (no infinite sequences)
+    = VarExp Name Type
+    | ConExp Name Type
+    | LitExp LiteralValue Type
+    | InfixOp Expr Operator Expr Type -- the use of an operator as a function
+    | FExp Expr Expr Type -- function application expression          
+    | UnaryMinusExp Expr Type
+    | LambdaExp [Pattern] Expr Type
+    | LetExp [Declaration] Expr Type
+    | IfExp Expr Expr Expr Type
+    | CaseExp Expr [Alternative] Type
+    | ParensExp Expr Type
+    | TupleExp [Expr] Type -- a tuple of expresions
+    | ListExp [Expr] Type  -- a list of expresions
+    | LeftSectionExp Expr Operator Type  -- TODO check if doing an in-fix expr datatype
+    | RightSectionExp Operator Expr Type
+    | ArithSeqExp Expr Expr Expr Type -- from, increment, to (no infinite sequences)
       deriving (Show, Eq)
 
 data Pattern

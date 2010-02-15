@@ -10,7 +10,7 @@ import Token
 import Syntax
 import ParserMonad
 import Lexer(lexer)
-
+import Types(addType)
 
 }
  
@@ -154,15 +154,30 @@ op : VARSYM				{ $1 }
    | '`' VARID '`'			{ $2 }
    | ':'       				{ ":" } -- TODO are there other operators missing?
 
--- Expressions
+-- Right Hand Side
 
 rhs :: { Rhs }
-rhs :  '=' 'joker'			{ UnGuardedRhs $ VarExp "joker" }
+rhs : '=' exp				{ UnGuardedRhs $2 }
+    | gdrhss				{ GuardedRhs (reverse $1) }
 
-{-
-exp0b :: { Expr }
-exp0b :	'joker'				{ VarExp "joker" }
--}
+gdrhss :: { [Guard] }
+gdrhss : gdrhss gdrhs			{ $2 : $1 }
+       | gdrhs				{ [$1] }
+
+gdrhs :: { Guard }
+gdrhs : gd '=' exp optsc		{ Guard $1 $3 }
+
+gd :: { Expr }
+gd : '|' exp				{ $2 }
+
+-- Expressions
+
+exp :: { Expr }
+exp : exp0 '::' type			{ addType $1 $3 } 
+    | exp0 				{ $1 }
+
+exp0 :: { Expr }
+exp0 :	'joker'				{ VarExp "joker" UnknownType }
 
 -- Patterns
 

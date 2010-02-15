@@ -21,7 +21,5 @@ compileDeclaration = map compile sampleDeclarations
 
 fileCompiler = do contents <- readFile "program.hasnt"
                   return $ compile contents
-main = do
-  interact (show . compile)
 
 
