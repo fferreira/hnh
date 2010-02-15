@@ -123,11 +123,9 @@ $white+				;
 "="				{\(i, s) -> return $ (EqualsOp, i)}
 "\\"				{\(i, s) -> return $ (BackSlashOp, i)}
 "|"				{\(i, s) -> return $ (BarOp, i)}
-"<-"				{\(i, s) -> return $ (LeftArrowOp, i)}
 "->"				{\(i, s) -> return $ (RightArrowOp, i)}
 "@"				{\(i, s) -> return $ (AtOp, i)}
 "~"				{\(i, s) -> return $ (TildeOp, i)}
-"=>"				{\(i, s) -> return $ (DoubleArrowOp, i)}
 
 @varid				{\(i, s) -> return $ (VariableName s, i)}
 @conid				{\(i, s) -> return $ (ConstructorName s, i)}

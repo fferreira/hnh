@@ -14,8 +14,6 @@ module Syntax
     ,Expr(..)
     ,Pattern(..)
     ,Alternative(..)
-    ,GuardedAlternatives(..)
-    ,GuardedAlternative(..)
     )
     where
 
@@ -111,14 +109,6 @@ data Pattern
       deriving (Show, Eq)
 
 data Alternative
-    = Alternative Pattern GuardedAlternatives [Declaration] 
-      deriving (Show, Eq)
+    = Alternative Pattern Expr
+    deriving (Show, Eq)
 
-data GuardedAlternatives
-    = GuardedAlternatives [GuardedAlternative]
-    | UnGuardedAlternative Expr
-      deriving (Show, Eq)
-
-data GuardedAlternative
-    = GuardedAlternative Expr Expr
-      deriving (Show, Eq)

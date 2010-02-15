@@ -44,11 +44,9 @@ data HasntToken
      | EqualsOp		-- =
      | BackSlashOp	-- \ One back slash
      | BarOp		-- |
-     | LeftArrowOp	-- <-
      | RightArrowOp	-- ->
      | AtOp		-- @
      | TildeOp		-- ~
-     | DoubleArrowOp	-- =>
 
 -- Variable and Contructor names
 

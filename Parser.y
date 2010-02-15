@@ -61,11 +61,9 @@ import Types(addType, litToExp)
    '='			{ EqualsOp }
    '\\'			{ BackSlashOp }
    '|'			{ BarOp }
-   '<-'			{ LeftArrowOp }
    '->'			{ RightArrowOp }
    '@'			{ AtOp }
    '~'			{ TildeOp }
-   '=>'			{ DoubleArrowOp }
 
 -- Variable and Constructor Names
 
@@ -185,8 +183,16 @@ expi : expi op expi			{ InfixOpExp $1 $2 $3 ut }
 exp10 :: { Expr }
 exp10 :	fexp				{ $1 }
       | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
-      | 'let' optlcurly decls optrcurly 'in' exp    { LetExp $3 $6 ut }
+      | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 ut }
       | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 ut }
+      | 'case' exp 'of' lcb alts rcb   	{ CaseExp $2 (reverse $5) ut }
+
+alts :: { [Alternative] }
+alts : alts alt				{ $2 : $1 }
+     | alt  			       	{ [$1] }
+
+alt :: { Alternative }
+alt : pat '->' exp ';'			{ Alternative $1 $3 }
 
 fexp :: { Expr }
 fexp : fexp aexp			{ FExp $1 $2 ut }
@@ -313,12 +319,12 @@ semicolons :: { () }
 
 -- curly brace handling
 
-optlcurly :: { () } -- optional curly braces
-optlcurly : '{'				{ () }
+lcb :: { () } -- optional curly braces
+lcb : '{'				{ () }
 	  | 				{ () }
 
-optrcurly :: { () }
-optrcurly : '}'				{ () }
+rcb :: { () } -- optional curly braches
+rcb : '}'				{ () }
 	  | 				{ () }
 
 {
