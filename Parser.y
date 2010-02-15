@@ -98,8 +98,8 @@ program : topdecls			{ Program (reverse $1) }
 -- Declarations
 
 topdecls :: { [Declaration] }
-topdecls : topdecl		{ [$1] }
-	     | topdecls topdecl	{ $2 : $1 }
+topdecls : topdecl optsc	{ [$1] }
+	 | topdecls topdecl	{ $2 : $1 }
 
 topdecl :: { Declaration }
 topdecl : 'type' simpletype '=' type	  { TypeDcl (fst $2) (snd $2) $4 }
@@ -112,7 +112,7 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
---     | funlhs rhs			{ undefined } -- TODO add this case
+     | funlhs rhs			{ FunBindDcl (fst $1) (snd $1) $2 }
      | pat rhs				{ PatBind $1 $2 }
 
 gendecl :: { Declaration }
@@ -163,6 +163,12 @@ rhs :  '=' 'joker'			{ UnGuardedRhs $ VarExp "joker" }
 exp0b :: { Expr }
 exp0b :	'joker'				{ VarExp "joker" }
 -}
+
+-- Functions
+
+funlhs :: { (Name, [Pattern]) }
+funlhs : VARID pats			{ ($1, $2) }
+       | pat op pat			{ ($2, [$1, $3]) }
 
 -- Patterns
 

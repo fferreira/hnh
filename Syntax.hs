@@ -5,7 +5,6 @@ module Syntax
     ,Name
     ,Operator
     ,LiteralValue(..)
-    ,Match(..)
     ,Rhs(..)
     ,Guard(..)
     ,Precedence
@@ -43,17 +42,13 @@ data Declaration
     | DefaultDcl [Type] -- TODO will this be implemented ?
     | TypeSigDcl [Name] Type -- TODO ??? how will this be used?
     | FixityDcl Associativity Precedence [Operator]
-    | FunBindDcl [Match]
+    | FunBindDcl Name [Pattern] Rhs
     | PatBind Pattern Rhs {-where [Declaration] -}
-      deriving(Show, Eq)
-
-data Match
-    = Match Name [Pattern] Rhs {- where [Declaration] -}
       deriving(Show, Eq)
 
 data Rhs
     = UnGuardedRhs Expr
-    | GuardedRhs [Guard] -- TODO name ?
+    | GuardedRhs [Guard]
       deriving(Show, Eq)
 
 data Guard
