@@ -8,7 +8,6 @@ module Compiler
     where
 
 import Lexer
-import Layout
 import Parser
 import ParserMonad
 
