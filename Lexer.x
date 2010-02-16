@@ -2,7 +2,6 @@
 module Lexer (getToken) where 
 
 import Token
---import ParserMonad
 import LexerUtils
 
 }

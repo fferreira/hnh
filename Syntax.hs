@@ -37,7 +37,6 @@ data Declaration
     = TypeDcl Name [Name] Type 
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | NewTypeDcl Name [Name] ConstructorDeclaration
-    | DefaultDcl [Type] -- TODO will this be implemented ?
     | TypeSigDcl [Name] Type -- TODO ??? how will this be used?
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl Name [Pattern] Rhs
