@@ -5,7 +5,7 @@ module Layout
     where
 
 import Token
-import ParserMonad(Position)
+import LexerUtils(Position)
 
 {-
 The layout function returns a layout-insensitive translation of tokens and removes

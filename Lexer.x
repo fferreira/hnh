@@ -1,12 +1,11 @@
 {
-module Lexer (lexer) where 
+module Lexer (getToken) where 
 
 import Token
-import ParserMonad
+--import ParserMonad
+import LexerUtils
 
 }
-
-$space = \32 -- space character
 
 $digit = [0-9]
 $octit = [0-7]
@@ -25,15 +24,6 @@ $graphic_in_char    = [$graphic # [\' \\]]
 $quote		    = \"
 $singlequote	    = \'
 
-
-
--- Reserved words as per Haskell '98 std, but several will be removed
--- because we won't be needing them (probably it will be a good idea to
--- have them anyways for compatibility. (Maybe separate a used and an 
--- unused category). `
-
--- decide the status of infix|infixl|infixr
-
 @integer =
 	 $digit+ |
 	 0o$octit+ | 0O$octit+ |
@@ -47,27 +37,8 @@ $singlequote	    = \'
 @escape =
 	\\ ($charesc | $digit+ | (o$octit+) | (x$hexit+))
 
--- $space and $white are redundant, but
--- but were added for "compatibility"
--- with the Haskell 98 report
-
-@string = $quote ($graphic_in_string | $space | $white | @escape)* $quote
-@char	= $singlequote ($graphic_in_char | $space | $white | @escape)* $singlequote
-
-@usedReservedWord =
-	case | data | else | if |
-	in | infix | infixl | infixr | let
-	of | then | type
-
-@unUsedReservedWord =
-	do | as | hiding | class | deriving | import | where
-	instance | module | qualified | default | newtype
-
-@reservedWord =
-	@usedReservedWord | @unUsedReservedWord
-
-@reservedOp =
-	\.\. | :: | : | = | \| | \<\- | \-\> | @ | \~ | \=\>
+@string = $quote ($graphic_in_string | $white | @escape)* $quote
+@char	= $singlequote ($graphic_in_char | $white | @escape)* $singlequote
 
 @varid = 
        $small ($small | $large | $digit | \')*
@@ -95,7 +66,7 @@ $white+				;
 \}				{\(i, s) -> return $ (RightCurly, i)}
 \_				{\(i, s) -> return $ (Underscore, i)}
 
--- Used reserved words
+-- Reserved words
 
 "case"				{\(i, s) -> return $ (CaseToken, i)}
 "data"				{\(i, s) -> return $ (DataToken, i)}
@@ -109,11 +80,6 @@ $white+				;
 "of"				{\(i, s) -> return $ (OfToken, i)}
 "then"				{\(i, s) -> return $ (ThenToken, i)}
 "type"				{\(i, s) -> return $ (TypeToken, i)}
-
--- UnusedReservedWords, are Haskell reserved words
--- currently not used in hasnt
-
-@unUsedReservedWord		{\(i, s) -> return $ (UnusedReservedWord s, i)}
 
 -- Reserved operators
 
@@ -140,11 +106,7 @@ $white+				;
 -- TODO add nested comments
 
 {
-lexer :: (HasntToken -> ParserM a) -> ParserM a
-lexer cont = ParserM $ \i ->
-   do (token, i') <- getToken i
-      case cont token of
-          ParserM x -> x i'
+
 
 getToken :: AlexInput -> Position -> (HasntToken, AlexInput)
 getToken = \i ->

@@ -1,28 +1,25 @@
 module ParserMonad 
     (
-      Position
-    , showPosition
-    , LayoutContext(..) --TODO is it used?
+--      Position
+--    , showPosition
+      LayoutContext(..) --TODO is it used?
     , ParseState       --TODO is it used ?
     , ParseResult(..) 
     , ParserM(..)
     , runParser , runParserWithFileName
     , returnOk , returnError
-    , AlexInput(..)
-    , alexGetChar
-    , alexInputPrevChar
+--    , AlexInput(..)
+--    , alexGetChar
+--    , alexInputPrevChar
+    , lexer
     )
     where
 
 import Token
+import LexerUtils(AlexInput(..), Position)
+import Lexer(getToken)
 
--- Position identifies a location in the source
-type Position = (String, Int, Int) -- (File, line, col)
 
-showPosition :: Position -> String
-showPosition (file, line, col) = "line " ++ show line 
-                                 ++ ", column " ++ show col 
-                                 ++ ", in file " ++ file
 
 -- default input stream (aka fileName) name
 defaultName :: String
@@ -71,27 +68,10 @@ instance Monad ParserM where
                                  -- ^ continue the call 'chain'
     fail msg = ParserM $ \input _ _ -> Failed (position input) msg
 
--- Lexer Part
+-- Lexer
 
-data AlexInput =
-    AlexInput 
-    {
-      position :: !Position
-    , input :: String 
-    } 
-    deriving (Show, Eq)
-
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (AlexInput p (x:xs)) = Just (x, AlexInput (alexAdvance p x) xs)
-alexGetChar (AlexInput _ []) = Nothing
-
-alexInputPrevChar :: AlexInput -> Char 
-alexInputPrevChar _ = error "Lexer doesn't implement alexInputPrevChar"
-
--- Internal functions
-
-alexAdvance :: Position -> Char -> Position
-alexAdvance (f, l, _) '\n' = (f, l + 1, 1)
-alexAdvance (f, l, c) '\t' = (f, l, (c+8) `div` 8 * 8)
-alexAdvance (f, l, c)  _   =  (f, l, c + 1)
-
+lexer :: (HasntToken -> ParserM a) -> ParserM a
+lexer cont = ParserM $ \i ->
+   do (token, i') <- getToken i
+      case cont token of
+          ParserM x -> x i'

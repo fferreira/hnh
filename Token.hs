@@ -34,7 +34,6 @@ data HasntToken
      | OfToken
      | ThenToken
      | TypeToken
-     | UnusedReservedWord	String
 
 -- Reserved Operands
 
@@ -67,8 +66,5 @@ data HasntToken
 
 -- EOF token
      | EOFToken
-
--- Special debugging tokens -- TODO remove?
-     | Joker
 
      deriving (Eq, Show)

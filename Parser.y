@@ -8,8 +8,7 @@ where
 
 import Token
 import Syntax
-import ParserMonad
-import Lexer(lexer)
+import ParserMonad(ParserM, returnError, returnOk, lexer)
 import Types(addType, litToExp)
 
 }
@@ -48,10 +47,6 @@ import Types(addType, litToExp)
    'let'		{ LetToken }
    'of'			{ OfToken }
    'type'		{ TypeToken }
-
--- Unused Reserved Word
-
-   UNUSEDWORD		{ UnusedReservedWord $$ }
 
 -- Reserved operands
 
@@ -325,7 +320,7 @@ lcb : '{'				{ () }
 
 rcb :: { () } -- optional curly braches
 rcb : '}'				{ () }
-    | 					{ () }
+    | 					  { () }
 
 {
 
