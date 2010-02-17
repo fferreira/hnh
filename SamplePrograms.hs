@@ -37,6 +37,6 @@ patternDeclarations = [ "a = joker"
                       , "(a) = joker"
                       , "(a, b) = joker"
                       , "[a] = joker"
-                      , "a+2 = joker"
+                      , "a:xs = joker"
                       , "Type _ a = joker"
                       ]

@@ -98,11 +98,10 @@ data Pattern
     | AsPat Name Pattern
     | ConsPat Name [Pattern] -- a type constructor 
     | LitPat LiteralValue
---    | NegPat Pattern  -- TODO does this exist? 
     | ListPat [Pattern]
+    | HeadTailPat Name Name -- x:xs pattern type
     | TuplePat [Pattern]
-    | ParenPat (Pattern)  -- TODO is this support important? (MAYBE?)
-    | InfixPat Pattern Operator Pattern --TODO which operators shall be supported?
+--    | InfixPat Pattern Operator Pattern --TODO which operators shall be supported?
     | WildcardPat
       deriving (Show, Eq)
 
@@ -113,7 +112,8 @@ data Alternative
 -- Pretty printing support (very important for debugability)
 
 instance Pretty Program where
-    pretty (Program d) = vsep ((map pretty d) ++ [pretty "Fin."])
+    pretty (Program d) = vsep (map pretty d)
+    prettyList ps = vsep (map pretty ps) 
 
 instance Pretty LiteralValue where
     pretty (LiteralInt i) = pretty i
@@ -125,7 +125,9 @@ instance Pretty Declaration where
     pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
     pretty (DataDcl n ns ts) = pretty "data " <> pretty n <> pretty ns <> equals <!> pretty ts
     pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
-    pretty (FixityDcl NonAssoc p ops) = pretty "infix "<> pretty p <//> pretty ops
+    pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
+    pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
+    pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
     pretty (FunBindDcl n ps r) = pretty n <> pretty ps <> equals <> pretty r
     pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
 
@@ -175,8 +177,8 @@ instance Pretty Pattern where
     pretty (LitPat lit)  = pretty lit
     pretty (TuplePat t)  = pretty "#" <> pretty t
     pretty (ListPat l)   = pretty l
-    pretty (ParenPat p)  = pretty '(' <> pretty p <> pretty ')'
-    pretty (InfixPat p1 op p2) = pretty p1 <//> pretty op <//> pretty p2
+    pretty (HeadTailPat n1 n2) = pretty n1 <> colon <> pretty n2
+--    pretty (InfixPat p1 op p2) = pretty p1 <//> pretty op <//> pretty p2
     pretty (WildcardPat) = pretty '_'
 
 instance Pretty Alternative where

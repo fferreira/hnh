@@ -93,7 +93,7 @@ topdecls : topdecl optsc	{ [$1] }
 
 topdecl :: { Declaration }
 topdecl : 'type' simpletype '=' type	  { TypeDcl (fst $2) (snd $2) $4 }
-topdecl : 'data' simpletype '=' constrs	  { DataDcl (fst $2) (snd $2) $4 }
+topdecl : 'data' simpletype '=' constrs	  { DataDcl (fst $2) (snd $2) (reverse $4) }
 
 topdecl : decl	    	      		  { $1 }
 
@@ -213,33 +213,24 @@ listexps : listexps ',' exp		{ $3 : $1 }
 
 -- Patterns
 
-pat :: { Pattern }
-pat : pati				{ $1 }
-
-pats :: { [Pattern] }
+pats :: { [Pattern] } -- zero or more patterns
 pats : pats pat				{ $2 : $1 }
      | 	    				{ [] }
 
-pati :: { Pattern } -- pat0 to pat9
-pati : pat10				{ $1 }
-     | pati op pati			{ InfixPat $1 $2 $3 }
-
-pat10 :: { Pattern }
-pat10 : apat				{ $1 }
-      | CONID pats			{ConsPat $1 $2}
-
-apat :: { Pattern }
-apat : VARID				{ VarPat $1 }
-     | VARID '@' apat			{ AsPat $1 $3 } 
+pat :: { Pattern }
+pat : VARID				{ VarPat $1 }
+     | VARID '@' pat			{ AsPat $1 $3 }
+     | VARID ':' VARID			{ HeadTailPat $1 $3 } 
+     | CONID pats			{ ConsPat $1 $2 }
      | literal				{ LitPat $1 }
      | '_'				{ WildcardPat }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{ TuplePat (reverse $2) }  -- it has to be >= 2 to be a tuple
      | '[' listpats ']'			{ ListPat (reverse $2) }
 
-apats :: { [Pattern] }
-apats : apats apat			{ $2 : $1 }
-      | apat  				{ [$1] }
+apats :: { [Pattern] } -- one or more patterns
+apats : apats pat			{ $2 : $1 }
+      | pat  				{ [$1] }
 
 tuplepats :: { [Pattern] }  -- two or more
 tuplepats : tuplepats pat		{ $2 : $1 }

@@ -7,10 +7,10 @@ compile: Lexer.hs Parser.hs
 run: complete
 	ghci Lexer.hs Parser.hs
 
-Lexer.hs: Lexer.x
+Lexer.hs: Lexer.x Token.hs LexerUtils.hs
 	alex -o Lexer.hs Lexer.x
 
-Parser.hs: Parser.y
+Parser.hs: Parser.y Token.hs Syntax.hs ParserMonad.hs Types.hs
 	happy -o Parser.hs Parser.y -i
 
 clean:

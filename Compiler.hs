@@ -19,7 +19,7 @@ compile program = case runParser parser program of
                     (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
 
 
-compileDeclaration = map compile sampleDeclarations
+compileDeclaration = vsep $  map compile sampleDeclarations
 
 fileCompiler = do contents <- readFile "program.hasnt"
                   return $ compile contents
