@@ -76,7 +76,7 @@ data ConstructorDeclaration -- No support for named field types
 
 --- Expressions & Patterns
 
-data Expr
+data Expr -- TODO add a switch statement with expressions?
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
