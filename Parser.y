@@ -9,7 +9,7 @@ where
 import Token
 import Syntax
 import ParserMonad(ParserM, returnError, returnOk, lexer)
-import Types(addType, litToExp)
+import Types(addType, litToExp, assembleInfixOperator)
 
 }
  
@@ -159,7 +159,7 @@ gdrhss : gdrhss gdrhs			{ $2 : $1 }
        | gdrhs				{ [$1] }
 
 gdrhs :: { Guard }
-gdrhs : gd '=' exp optsc		{ Guard $1 $3 }
+gdrhs : gd '=' exp optsc		{ Guard $1 $3 }  -- TODO add type bool to the first
 
 gd :: { Expr }
 gd : '|' exp				{ $2 }
@@ -171,7 +171,7 @@ exp : expi '::' type			{ addType $1 $3 }
     | expi 				{ $1 }
 
 expi :: { Expr }
-expi : expi op expi			{ InfixOpExp $1 $2 $3 ut }
+expi : expi op expi			{ assembleInfixOperator $1 $2 $3 }
      | '~' expi				{ MinusExp $2 ut }
      | exp10   				{ $1 }
 

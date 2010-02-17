@@ -16,6 +16,9 @@ import ExprTransformer
 
 import SamplePrograms -- DEBUG only
 
+
+rawparse program = runParser parser program
+
 compile program = case runParser parser program of
                     (Ok _ r) -> pretty r
                     (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)

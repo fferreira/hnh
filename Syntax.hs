@@ -11,6 +11,7 @@ module Syntax
     ,Associativity(..)
     ,Type(..)
     ,ConstructorDeclaration(..)
+    ,OpExpr(..)
     ,Expr(..)
     ,Pattern(..)
     ,Alternative(..)
@@ -76,11 +77,17 @@ data ConstructorDeclaration -- No support for named field types
 
 --- Expressions & Patterns
 
+data OpExpr
+    = LeafExp Expr
+    | Op Operator OpExpr OpExpr
+      deriving (Show, Eq)
+
 data Expr -- TODO add a switch statement with expressions?
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
-    | InfixOpExp Expr Operator Expr Type -- the use of an operator as a function
+--    | InfixOpExp Expr Operator Expr Type
+    | InfixOpExp OpExpr Type
     | FExp Expr Expr Type -- function application expression          
     | MinusExp Expr Type
     | LambdaExp [Pattern] Expr Type
@@ -101,7 +108,6 @@ data Pattern
     | ListPat [Pattern]
     | HeadTailPat Name Name -- x:xs pattern type
     | TuplePat [Pattern]
---    | InfixPat Pattern Operator Pattern --TODO which operators shall be supported?
     | WildcardPat
       deriving (Show, Eq)
 
@@ -149,26 +155,31 @@ instance Pretty Type where
 instance Pretty ConstructorDeclaration where
     pretty (ConsDcl n t) = pretty n <!> pretty t
 
+instance Pretty OpExpr where
+    pretty (LeafExp e) = pretty e
+    pretty (Op o e1 e2) = parens $ pretty e1 <> pretty o <> pretty e2
+
 instance Pretty Expr where
-    pretty (VarExp n t) = parens $ pretty n <> pretty ", " <> pretty t
-    pretty (ConExp n t) = parens $ pretty n <> pretty ", " <> pretty t
-    pretty (LitExp v t) = parens $ pretty v <> pretty ", " <> pretty t
-    pretty (InfixOpExp e1 op e2 t) = parens $ 
+    pretty (VarExp n t) = parens $ pretty n <> comma <+> pretty t
+    pretty (ConExp n t) = parens $ pretty n <> comma <+> pretty t
+    pretty (LitExp v t) = parens $ pretty v <> comma <+> pretty t
+    {-pretty (InfixOpExp e1 op e2 t) = parens $ 
                                      pretty e1 
                                                 <> pretty op 
                                                 <> pretty e2 
-                                                <> pretty ", " <> pretty t
-    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 <> pretty ", " <> pretty t
-    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> pretty ", " <> pretty t
+                                                <> comma <+> pretty t-}
+    pretty (InfixOpExp e t) = parens $ pretty e <> comma <+> pretty t
+    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 <> comma <+> pretty t
+    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> comma <+> pretty t
     pretty (LambdaExp p e t) = parens $ 
                             pretty "\\" 
                                        <> pretty p <> pretty "->"
-                                       <> pretty e <> pretty ", " <> pretty t
-    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> pretty ", " <> pretty t
-    pretty (ListExp e t) = parens $ pretty e <> pretty ", " <> pretty t
+                                       <> pretty e <> comma <+> pretty t
+    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> comma <+> pretty t
+    pretty (ListExp e t) = parens $ pretty e <> comma <+> pretty t
     pretty (ArithSeqExp e1 e2 e3 t) = parens $ brackets $ pretty e1
                                       <> comma <> pretty e2 <> dot <> dot 
-                                      <> pretty e3 <> pretty ", " <> pretty t
+                                      <> pretty e3 <> comma <+> pretty t
 
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n
@@ -178,7 +189,6 @@ instance Pretty Pattern where
     pretty (TuplePat t)  = pretty "#" <> pretty t
     pretty (ListPat l)   = pretty l
     pretty (HeadTailPat n1 n2) = pretty n1 <> colon <> pretty n2
---    pretty (InfixPat p1 op p2) = pretty p1 <//> pretty op <//> pretty p2
     pretty (WildcardPat) = pretty '_'
 
 instance Pretty Alternative where
