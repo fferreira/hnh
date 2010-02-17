@@ -103,7 +103,7 @@ topdecl : decl	    	      		  { $1 }
 decl :: { Declaration }
 decl : gendecl				{ $1 }
      | VARID apats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
-     | pat rhs				{ PatBind $1 $2 }
+     | pat rhs				{ PatBindDcl $1 $2 }
 
 decls :: { [Declaration] }  -- one or more declarations
 decls : decls optsc decl		{ $3 : $1 }

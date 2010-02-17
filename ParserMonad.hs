@@ -19,21 +19,22 @@ import Token
 import LexerUtils(AlexInput(..), Position)
 import Lexer(getToken)
 
-
-
 -- default input stream (aka fileName) name
 defaultName :: String
 defaultName = "input stream"
 
 data LayoutContext = NoLayout 
                    | LayoutLevel Int
-                     deriving (Show, Eq) -- TODO Ord too?
+                     deriving (Show, Eq)
 
 type ParseState = [LayoutContext]
 
 data ParseResult a = Ok ParseState a 
                    | Failed Position String -- TODO add ParseState to error message?
-                     deriving Show
+
+instance (Show a) => Show (ParseResult a) where
+    show (Ok _ a) = show a
+    show (Failed p s) = "Error at:" ++ (show p) ++ "\nMessage: " ++ s
 
 --  Monad for parsing
 newtype ParserM a = ParserM { runP ::

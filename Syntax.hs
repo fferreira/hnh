@@ -17,6 +17,8 @@ module Syntax
     )
     where
 
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+
 data Program = Program [Declaration] deriving(Show, Eq)
 
 --- Names & Literals
@@ -36,11 +38,10 @@ data LiteralValue
 data Declaration
     = TypeDcl Name [Name] Type 
     | DataDcl Name [Name] [ConstructorDeclaration] 
-    | NewTypeDcl Name [Name] ConstructorDeclaration
-    | TypeSigDcl [Name] Type -- TODO ??? how will this be used?
+    | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl Name [Pattern] Rhs
-    | PatBind Pattern Rhs {-where [Declaration] -}
+    | PatBindDcl Pattern Rhs
       deriving(Show, Eq)
 
 data Rhs
@@ -63,7 +64,7 @@ data Associativity -- TODO change name to fixity ?
 data Type
     = FuncType Type Type
     | TupleType [Type]
-    | AppType Type Type -- ??
+    | AppType Type Type -- TODO when is this??
     | VarType Name      -- for parametric types
     | ConsType Name     -- the constructor of the type
     | UnknownType
@@ -89,8 +90,6 @@ data Expr
     | ParensExp Expr Type
     | TupleExp [Expr] Type -- a tuple of expresions
     | ListExp [Expr] Type  -- a list of expresions
-    | LeftSectionExp Expr Operator Type  -- TODO check if doing an in-fix expr datatype
-    | RightSectionExp Operator Expr Type
     | ArithSeqExp Expr (Maybe Expr) Expr Type -- from, increment, to (no infinite sequences)
       deriving (Show, Eq)
 
@@ -99,7 +98,7 @@ data Pattern
     | AsPat Name Pattern
     | ConsPat Name [Pattern] -- a type constructor 
     | LitPat LiteralValue
---    | NegPat Pattern  -- TODO does this exist? irrefutable pattern?
+--    | NegPat Pattern  -- TODO does this exist? 
     | ListPat [Pattern]
     | TuplePat [Pattern]
     | ParenPat (Pattern)  -- TODO is this support important? (MAYBE?)
@@ -110,4 +109,81 @@ data Pattern
 data Alternative
     = Alternative Pattern Expr
     deriving (Show, Eq)
+
+-- Pretty printing support (very important for debugability)
+
+instance Pretty Program where
+    pretty (Program d) = vsep ((map pretty d) ++ [pretty "Fin."])
+
+instance Pretty LiteralValue where
+    pretty (LiteralInt i) = pretty i
+    pretty (LiteralFloat f) = pretty f
+    pretty (LiteralString s) = pretty s
+    pretty (LiteralChar c) = pretty c
+
+instance Pretty Declaration where
+    pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
+    pretty (DataDcl n ns ts) = pretty "data " <> pretty n <> pretty ns <> equals <!> pretty ts
+    pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
+    pretty (FixityDcl NonAssoc p ops) = pretty "infix "<> pretty p <//> pretty ops
+    pretty (FunBindDcl n ps r) = pretty n <> pretty ps <> equals <> pretty r
+    pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
+
+instance Pretty Rhs where
+    pretty (UnGuardedRhs e) = pretty e
+    pretty (GuardedRhs g) = pretty g
+
+instance Pretty Guard where
+    pretty (Guard e1 e2) = pretty e1 <> equals <> pretty e2
+
+instance Pretty Type where
+    pretty (FuncType t1 t2) = pretty t1 <> pretty "->" <> pretty t2
+    pretty (TupleType t) = pretty t
+    pretty (AppType t1 t2) = pretty t2 <> pretty "[ap]" <> pretty t2
+    pretty (VarType n) = pretty n
+    pretty (ConsType n) = pretty n
+    pretty (UnknownType) = pretty "?"
+
+instance Pretty ConstructorDeclaration where
+    pretty (ConsDcl n t) = pretty n <!> pretty t
+
+instance Pretty Expr where
+    pretty (VarExp n t) = parens $ pretty n <> pretty ", " <> pretty t
+    pretty (ConExp n t) = parens $ pretty n <> pretty ", " <> pretty t
+    pretty (LitExp v t) = parens $ pretty v <> pretty ", " <> pretty t
+    pretty (InfixOpExp e1 op e2 t) = parens $ 
+                                     pretty e1 
+                                                <> pretty op 
+                                                <> pretty e2 
+                                                <> pretty ", " <> pretty t
+    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 <> pretty ", " <> pretty t
+    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> pretty ", " <> pretty t
+    pretty (LambdaExp p e t) = parens $ 
+                            pretty "\\" 
+                                       <> pretty p <> pretty "->"
+                                       <> pretty e <> pretty ", " <> pretty t
+    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> pretty ", " <> pretty t
+    pretty (ListExp e t) = parens $ pretty e <> pretty ", " <> pretty t
+    pretty (ArithSeqExp e1 e2 e3 t) = parens $ brackets $ pretty e1
+                                      <> comma <> pretty e2 <> dot <> dot 
+                                      <> pretty e3 <> pretty ", " <> pretty t
+
+instance Pretty Pattern where
+    pretty (VarPat n)    = pretty n
+    pretty (AsPat n p)   = pretty n <> pretty "@" <> pretty p
+    pretty (ConsPat n p) = pretty n <!> pretty p
+    pretty (LitPat lit)  = pretty lit
+    pretty (TuplePat t)  = pretty "#" <> pretty t
+    pretty (ListPat l)   = pretty l
+    pretty (ParenPat p)  = pretty '(' <> pretty p <> pretty ')'
+    pretty (InfixPat p1 op p2) = pretty p1 <//> pretty op <//> pretty p2
+    pretty (WildcardPat) = pretty '_'
+
+instance Pretty Alternative where
+    pretty (Alternative p e) = pretty p <> pretty " -> " <!> pretty e
+
+
+
+
+(<!>) a b = a <> space <> (hang 4) b
 
