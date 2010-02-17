@@ -30,7 +30,7 @@ datatypeDeclarations = [ "type New = Old"
                        , "type A z = B z"
                        , "infix 6 +, -"
                        , "infixl **, +-"
-                       , "infix 2 `op`"
+                       , "infixr 2 `op`"
                        ]
 
 patternDeclarations = [ "a = joker"

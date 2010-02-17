@@ -12,6 +12,8 @@ import Parser
 import ParserMonad
 import Text.PrettyPrint.Leijen
 
+import ExprTransformer
+
 import SamplePrograms -- DEBUG only
 
 compile program = case runParser parser program of
@@ -21,6 +23,11 @@ compile program = case runParser parser program of
 
 compileDeclaration = vsep $  map compile sampleDeclarations
 
-fileCompiler = do contents <- readFile "program.hasnt"
+fileCompiler = do contents <- readFile "program.hnh"
                   return $ compile contents
+
+fileToProgram = do contents <- readFile "program.hnh"
+                   return $ case runParser parser contents of
+                              (Ok _ p) -> buildPrecedenceTable p
+                              othewise -> undefined
 

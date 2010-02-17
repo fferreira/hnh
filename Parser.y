@@ -125,7 +125,7 @@ var : VARID				{ $1 }
     | '(' VARSYM ')'			{ $2 }
 
 fixityDecl :: { Declaration }
-fixityDecl : assocFix precedence ops	{ FixityDcl $1 $2 $3 }
+fixityDecl : assocFix precedence ops	{ FixityDcl $1 $2 (reverse $3) }
 
 assocFix :: { Associativity }
 assocFix : 'infix'			{ NonAssoc }
