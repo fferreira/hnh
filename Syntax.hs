@@ -157,29 +157,28 @@ instance Pretty ConstructorDeclaration where
 
 instance Pretty OpExpr where
     pretty (LeafExp e) = pretty e
-    pretty (Op o e1 e2) = parens $ pretty e1 <> pretty o <> pretty e2
-
+    pretty (Op o e1 e2) = parens $ pretty o <+> pretty e1 <+> pretty e2
 instance Pretty Expr where
-    pretty (VarExp n t) = parens $ pretty n <> comma <+> pretty t
-    pretty (ConExp n t) = parens $ pretty n <> comma <+> pretty t
-    pretty (LitExp v t) = parens $ pretty v <> comma <+> pretty t
+    pretty (VarExp n t) = parens $ pretty n -- <> comma <+> pretty t
+    pretty (ConExp n t) = parens $ pretty n -- <> comma <+> pretty t
+    pretty (LitExp v t) = parens $ pretty v -- <> comma <+> pretty t
     {-pretty (InfixOpExp e1 op e2 t) = parens $ 
                                      pretty e1 
                                                 <> pretty op 
                                                 <> pretty e2 
                                                 <> comma <+> pretty t-}
-    pretty (InfixOpExp e t) = parens $ pretty e <> comma <+> pretty t
-    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 <> comma <+> pretty t
-    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> comma <+> pretty t
+    pretty (InfixOpExp e t) = parens $ pretty e -- <> comma <+> pretty t
+    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 -- <> comma <+> pretty t
+    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e -- <> comma <+> pretty t
     pretty (LambdaExp p e t) = parens $ 
                             pretty "\\" 
                                        <> pretty p <> pretty "->"
-                                       <> pretty e <> comma <+> pretty t
-    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> comma <+> pretty t
-    pretty (ListExp e t) = parens $ pretty e <> comma <+> pretty t
+                                       <> pretty e -- <> comma <+> pretty t
+    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e -- <> comma <+> pretty t
+    pretty (ListExp e t) = parens $ pretty e -- <> comma <+> pretty t
     pretty (ArithSeqExp e1 e2 e3 t) = parens $ brackets $ pretty e1
                                       <> comma <> pretty e2 <> dot <> dot 
-                                      <> pretty e3 <> comma <+> pretty t
+                                      <> pretty e3 -- <> comma <+> pretty t
 
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n

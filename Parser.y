@@ -151,7 +151,7 @@ op : VARSYM				{ $1 }
 -- Right Hand Side
 
 rhs :: { Rhs }
-rhs : '=' exp				{ UnGuardedRhs $2 }
+rhs : '=' exp optsc			{ UnGuardedRhs $2 }
     | gdrhss				{ GuardedRhs (reverse $1) }
 
 gdrhss :: { [Guard] }
@@ -166,8 +166,8 @@ gd : '|' exp				{ $2 }
 
 -- Expressions
 
-exp :: { Expr } -- TODO add optsc ?
-exp : expi '::' type			{ addType $1 $3 } 
+exp :: { Expr }
+exp : expi '::' type 			{ addType $1 $3 } 
     | expi 				{ $1 }
 
 expi :: { Expr }
