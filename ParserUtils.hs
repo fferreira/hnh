@@ -8,6 +8,7 @@ module ParserUtils
 
 import Syntax
 
+-- addType adds type information to an expression
 addType :: Expr -> Type -> Expr
 addType (VarExp n _) t = VarExp n t
 addType (ConExp n _) t = ConExp n t
@@ -23,12 +24,14 @@ addType (ParensExp e _) t = ParensExp e t
 addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
 
+-- litToExp creates an Expresion from a literal (with the right type)
 litToExp :: LiteralValue -> Expr
 litToExp val@(LiteralInt _) = LitExp val (ConsType "Int")
 litToExp val@(LiteralFloat _) = LitExp val (ConsType "Float")
 litToExp val@(LiteralString _) = LitExp val (ConsType "String") -- TODO should this be [Char]??
 litToExp val@(LiteralChar _) = LitExp val (ConsType "Char")
 
+-- assembleInfixOperator builds an infix operator structure (for fixity adaptation later)
 assembleInfixOperator :: Expr -> Operator -> Expr -> Expr
 assembleInfixOperator (InfixOpExp opEx1 _) op (InfixOpExp opEx2 _) = InfixOpExp 
                                                                      (Op op opEx1 opEx2)
