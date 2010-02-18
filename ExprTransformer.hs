@@ -17,18 +17,18 @@ import Syntax
 type FixityDesc = (Operator, Precedence, Associativity)
 
 correctPrecedence :: Program -> Program
-correctPrecedence prog@(Program decls) = (Program (map adaptDeclaration decls))
+correctPrecedence prog@(Program decls) = Program (map adaptDeclaration decls)
     where
-      adaptDeclaration (FunBindDcl n pats rhs) = (FunBindDcl n pats (adaptRhs rhs))
-      adaptDeclaration (PatBindDcl pat rhs) = (PatBindDcl pat (adaptRhs rhs))
+      adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
+      adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
       adaptDeclaration d = d
 
-      adaptRhs (UnGuardedRhs e) = (UnGuardedRhs (adaptExpr e))
-      adaptRhs (GuardedRhs guards) = (GuardedRhs (map adaptGuard guards))
+      adaptRhs (UnGuardedRhs e) = UnGuardedRhs (adaptExpr e)
+      adaptRhs (GuardedRhs guards) = GuardedRhs (map adaptGuard guards)
 
-      adaptGuard (Guard e1 e2) = (Guard (adaptExpr e1) (adaptExpr e2))
+      adaptGuard (Guard e1 e2) = Guard (adaptExpr e1) (adaptExpr e2)
 
-      adaptExpr (InfixOpExp e t) = (InfixOpExp (transform precedences e) t)
+      adaptExpr (InfixOpExp e t) = InfixOpExp (transform precedences e) t
       adaptExpr e = e
 
       precedences = buildPrecedenceTable prog
@@ -63,17 +63,17 @@ compPrecedence table o1 o2 =
         -- if o1 binds tighter than o2, or for equal precedence, if o1 is left associative
         res = (o1p > o2p) || ((o1p == o2p) && (o1a == LeftAssoc)) 
     in
-      if res then True else 
-          if (o1p == o2p) && (o1a == NonAssoc) then
+      (res || 
+          (if (o1p == o2p) && (o1a == NonAssoc) then
               error "Non associative operator used without ()" --TODO improve error handling
           else
-              False
+              False))
 
 -- Left Subordinate Transform 
 
 lst :: [FixityDesc] -> OpExpr -> OpExpr
 lst tbl t@(Op p t1 (Op q t2 t3)) =
-    if compPrecedence tbl p q then (Op q (Op p t1 t2) t3)  else t
+    if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
 lst _ t = t
 
 {-  Testing data

@@ -16,7 +16,7 @@ import ExprTransformer
 import SamplePrograms -- DEBUG only
 
 
-rawparse program = runParser parser program
+rawparse = runParser parser
 
 compile program = case runParser parser program of
                     (Ok _ r) -> pretty $ correctPrecedence r
