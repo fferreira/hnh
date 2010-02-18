@@ -28,12 +28,12 @@ compileDeclaration = vsep $  map compile sampleDeclarations
 fileCompiler = do contents <- readFile "program.hnh"
                   return $ compile contents
 
-fileToProgram = do contents <- readFile "program.hnh"
-                   return $ case runParser parser contents of
-                              (Ok _ p) -> pretty "No correction"
-                                          <$> pretty p 
-                                          <$> pretty "-----------------" <$> pretty "Corrected" 
-                                          <$> pretty ( correctPrecedence p )
-                              (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
+fileToProgram file = do contents <- readFile file -- "program.hnh"
+                        return $ case runParser parser contents of
+                                   (Ok _ p) -> pretty "No correction"
+                                               <$> pretty p 
+                                              <$> pretty "-----------------" <$> pretty "Corrected" 
+                                              <$> pretty ( correctPrecedence p )
+                                   (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
                               
 

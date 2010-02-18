@@ -88,8 +88,8 @@ program : topdecls			{ Program (reverse $1) }
 -- Declarations
 
 topdecls :: { [Declaration] }
-topdecls : topdecl optsc	{ [$1] }
-	 | topdecls topdecl	{ $2 : $1 }
+topdecls : topdecl optsc		  { [$1] }
+	 | topdecls topdecl optsc	  { $2 : $1 }
 
 topdecl :: { Declaration }
 topdecl : 'type' simpletype '=' type	  { TypeDcl (fst $2) (snd $2) $4 }
@@ -233,7 +233,7 @@ apats : apats pat			{ $2 : $1 }
       | pat  				{ [$1] }
 
 tuplepats :: { [Pattern] }  -- two or more
-tuplepats : tuplepats pat		{ $2 : $1 }
+tuplepats : tuplepats ',' pat		{ $3 : $1 }
 	  | pat ',' pat			{ [$3, $1] }
 
 listpats :: { [Pattern] }  -- one or more

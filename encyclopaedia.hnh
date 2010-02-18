@@ -1,0 +1,47 @@
+-- Declarations
+
+type Sin = Int
+type List a = [a]
+
+data Bool = True | False
+
+data Stack a = Stack [a] | Empty ;
+
+fun :: Int -> Int -> Int ;
+fun = undefined
+
+infixl 6 +, -
+infixl 7 *, /
+infixr 8 ^
+infix 4 ==, <, >
+
+-- Some test expressions (for the fixity)
+
+a = 2 + 3 * 4 + 5 ;
+b = 4 == 5 + 3 ;
+c = 2 ^ 3 ^ 4 ^ 5 ;
+
+
+--- Function binding & pattern
+
+fun a b c = joker ;
+fun a@a b c = joker ;
+fun Cons a = joker ;
+fun a 2 = joker ;
+fun [a, b, c] = joker;
+fun a:xs = joker;
+fun (a,b,c) = joker;
+fun _ = joker;
+fun [(a, b), a:xs, List a, _, Cons _, a@(x:xs)] = joker ;
+
+--- Pattern Binding
+
+c = joker ;
+a@b = joker ;
+Cons a = joker ;
+a 2 = joker ;
+[a, b, c] = joker;
+a:xs = joker;
+(a,b,c) = joker;
+_ = joker;
+[(a, b), a:xs, List a, _, Cons _, a@(x:xs)] = joker ;
