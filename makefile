@@ -10,7 +10,7 @@ run: complete
 Lexer.hs: Lexer.x Token.hs LexerUtils.hs
 	alex -o Lexer.hs Lexer.x
 
-Parser.hs: Parser.y Token.hs Syntax.hs ParserMonad.hs Types.hs
+Parser.hs: Parser.y Token.hs Syntax.hs ParserMonad.hs ParserUtils.hs
 	happy -o Parser.hs Parser.y -i
 
 clean:

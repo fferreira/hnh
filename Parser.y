@@ -9,7 +9,7 @@ where
 import Token
 import Syntax
 import ParserMonad(ParserM, returnError, returnOk, lexer)
-import Types(addType, litToExp, assembleInfixOperator)
+import ParserUtils(addType, litToExp, assembleInfixOperator)
 
 }
  
