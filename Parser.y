@@ -15,7 +15,7 @@ import ParserUtils(addType, litToExp, assembleInfixOperator)
  
 %monad { ParserM }
 %lexer { lexer } { EOFToken }  
-%name hasnt
+%name parser
 %tokentype { HasntToken }
 %error { parserError }
 
@@ -315,8 +315,6 @@ rcb : '}'				{ () }
 
 ut :: Type
 ut = UnknownType
-
-parser = hasnt
 
 parserError :: HasntToken -> ParserM a
 parserError token = returnError ("Parse Error:" ++ (show token))
