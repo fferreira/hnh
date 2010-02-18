@@ -12,7 +12,6 @@ addType :: Expr -> Type -> Expr
 addType (VarExp n _) t = VarExp n t
 addType (ConExp n _) t = ConExp n t
 addType (LitExp v _) t = LitExp v t
---addType (InfixOpExp e o e' _) t = InfixOpExp e o e' t
 addType (InfixOpExp e _) t = InfixOpExp e t
 addType (FExp e e' _) t = FExp e e' t
 addType (MinusExp e _) t = MinusExp e t
@@ -23,7 +22,6 @@ addType (CaseExp e a _) t = CaseExp e a t
 addType (ParensExp e _) t = ParensExp e t
 addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
-addType (ArithSeqExp e1 e2 e3 _) t = ArithSeqExp e1 e2 e3 t
 
 litToExp :: LiteralValue -> Expr
 litToExp val@(LiteralInt _) = LitExp val (ConsType "Int")

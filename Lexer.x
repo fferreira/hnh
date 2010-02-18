@@ -86,7 +86,7 @@ $white+				;
 ":"				{\(i, s) -> return $ (ColonOp, i)}
 "::"				{\(i, s) -> return $ (DoubleColonOp, i)}
 "="				{\(i, s) -> return $ (EqualsOp, i)}
-"\\"				{\(i, s) -> return $ (BackSlashOp, i)}
+"\"				{\(i, s) -> return $ (BackSlashOp, i)}
 "|"				{\(i, s) -> return $ (BarOp, i)}
 "->"				{\(i, s) -> return $ (RightArrowOp, i)}
 "@"				{\(i, s) -> return $ (AtOp, i)}

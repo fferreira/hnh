@@ -197,11 +197,9 @@ aexp :: { Expr }
 aexp : VARID				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
-     | '(' exp ')'			{ $2 }
+     | '(' exp ')'			{ ParensExp $2 ut }
      | '(' tupleexps ')'		{ TupleExp (reverse $2) ut } -- TODO add (ut, ut..) as type?
      | '[' listexps ']'			{ ListExp (reverse $2) ut }
-     | '[' exp ',' exp '..' exp ']'	{ ArithSeqExp $2 (Just $4) $6 ut }
-     | '[' exp '..' exp ']'		{ ArithSeqExp $2 Nothing $4 ut }
 
 tupleexps :: { [Expr] }
 tupleexps : tupleexps ',' exp		{ $3 : $1 }

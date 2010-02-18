@@ -86,7 +86,6 @@ data Expr -- TODO add a switch statement with expressions?
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
---    | InfixOpExp Expr Operator Expr Type
     | InfixOpExp OpExpr Type
     | FExp Expr Expr Type -- function application expression          
     | MinusExp Expr Type
@@ -97,7 +96,6 @@ data Expr -- TODO add a switch statement with expressions?
     | ParensExp Expr Type
     | TupleExp [Expr] Type -- a tuple of expresions
     | ListExp [Expr] Type  -- a list of expresions
-    | ArithSeqExp Expr (Maybe Expr) Expr Type -- from, increment, to (no infinite sequences)
       deriving (Show, Eq)
 
 data Pattern
@@ -162,11 +160,6 @@ instance Pretty Expr where
     pretty (VarExp n t) = parens $ pretty n -- <> comma <+> pretty t
     pretty (ConExp n t) = parens $ pretty n -- <> comma <+> pretty t
     pretty (LitExp v t) = parens $ pretty v -- <> comma <+> pretty t
-    {-pretty (InfixOpExp e1 op e2 t) = parens $ 
-                                     pretty e1 
-                                                <> pretty op 
-                                                <> pretty e2 
-                                                <> comma <+> pretty t-}
     pretty (InfixOpExp e t) = parens $ pretty e -- <> comma <+> pretty t
     pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 -- <> comma <+> pretty t
     pretty (MinusExp e t) = parens $ pretty "~" <> pretty e -- <> comma <+> pretty t
@@ -174,11 +167,18 @@ instance Pretty Expr where
                             pretty "\\" 
                                        <> pretty p <> pretty "->"
                                        <> pretty e -- <> comma <+> pretty t
+    pretty (LetExp ds e t) = parens $ pretty "let" <!> pretty ds 
+                             <+> pretty "in" <!> pretty e -- <> comma <+> pretty t
+    pretty (IfExp e1 e2 e3 t) = parens $ pretty "if" <!> pretty e1 
+                                <+> pretty "then" <!> pretty e2 
+                                <+> pretty "else" <!> pretty e3
+                                -- <> comma <+> pretty t
+    pretty (CaseExp e alts t) = parens $ pretty "case" <!> pretty e 
+                                <!> pretty "of" <!> pretty alts
+                                -- <> comma <+>  pretty t
+    pretty (ParensExp e t) = pretty e -- <> comma <+> pretty t -- No parens needed here
     pretty (TupleExp e t) = parens $ pretty "#" <> pretty e -- <> comma <+> pretty t
     pretty (ListExp e t) = parens $ pretty e -- <> comma <+> pretty t
-    pretty (ArithSeqExp e1 e2 e3 t) = parens $ brackets $ pretty e1
-                                      <> comma <> pretty e2 <> dot <> dot 
-                                      <> pretty e3 -- <> comma <+> pretty t
 
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n

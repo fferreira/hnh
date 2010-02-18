@@ -45,3 +45,32 @@ a:xs = joker;
 (a,b,c) = joker;
 _ = joker;
 [(a, b), a:xs, List a, _, Cons _, a@(x:xs)] = joker ;
+
+-- literal 
+
+lit = 42;
+lit = 1.6180339887;
+lit = 100E100;
+lit = 100E-100;
+lit = "hola";
+lit = 'a';
+lit = "hola\nchau";
+
+-- Expression
+
+a = b;
+a = Cons;
+a = 1 + 1;
+a = 2 * 2 + 3;
+a = 2 + 2 * 3;
+a = (2 + 2) * 3;
+a = 2 * (2 + 3); 
+a = f x;
+a = ~a;
+a = \a -> a;
+a = let b = 14; a =c in c b;
+a = if 1 == 1 then 1 else 0;
+a = case exp of { a -> a; Cons a -> b; };
+a = 1;
+a = [1, 2, 4];
+a = (1, 2, 4);
