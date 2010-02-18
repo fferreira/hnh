@@ -25,14 +25,14 @@ c = 2 ^ 3 ^ 4 ^ 5 ;
 --- Function binding & pattern
 
 fun a b c = joker ;
-fun a@a b c = joker ;
+fun a@d b c = joker ;
 fun Cons a = joker ;
 fun a 2 = joker ;
 fun [a, b, c] = joker;
 fun a:xs = joker;
 fun (a,b,c) = joker;
 fun _ = joker;
-fun [(a, b), a:xs, List a, _, Cons _, a@(x:xs)] = joker ;
+fun [(a, b), x:xs, List s, _, Cons _, p@(r:rs)] = joker ;
 
 --- Pattern Binding
 
@@ -44,7 +44,7 @@ a 2 = joker ;
 a:xs = joker;
 (a,b,c) = joker;
 _ = joker;
-[(a, b), a:xs, List a, _, Cons _, a@(x:xs)] = joker ;
+[(a, b), x:xs, List s, _, Cons _, p@(r:rs)] = joker ;
 
 -- literal 
 

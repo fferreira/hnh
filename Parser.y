@@ -9,7 +9,7 @@ where
 import Token
 import Syntax
 import ParserMonad(ParserM, returnError, returnOk, lexer)
-import ParserUtils(addType, litToExp, assembleInfixOperator)
+import ParserUtils(addType, litToExp, assembleInfixOperator, checkPat)
 
 }
  
@@ -215,16 +215,18 @@ pats :: { [Pattern] } -- zero or more patterns
 pats : pats pat				{ $2 : $1 }
      | 	    				{ [] }
 
+-- checkPat is checked redundantly -- TODO improve this
 pat :: { Pattern }
 pat : VARID				{ VarPat $1 }
-     | VARID '@' pat			{ AsPat $1 $3 }
-     | VARID ':' VARID			{ HeadTailPat $1 $3 } 
-     | CONID pats			{ ConsPat $1 $2 }
+     | VARID '@' pat			{% checkPat (AsPat $1 $3) }
+     | VARID ':' VARID			{% checkPat (HeadTailPat $1 $3) } 
+     | CONID pats			{% checkPat (ConPat $1 $2) }
      | literal				{ LitPat $1 }
-     | '_'				{ WildcardPat }
-     | '(' pat ')'			{ $2 }
-     | '(' tuplepats ')'		{ TuplePat (reverse $2) }  -- it has to be >= 2 to be a tuple
-     | '[' listpats ']'			{ ListPat (reverse $2) }
+     | '_'				{% checkPat (WildcardPat) }
+     | '(' pat ')'			{% checkPat ($2) }
+     | '(' tuplepats ')'		{% checkPat (TuplePat (reverse $2)) }  
+       	   	     			  	   -- ^ it has to be >= 2 to be a tuple
+     | '[' listpats ']'			{% checkPat (ListPat (reverse $2)) }
 
 apats :: { [Pattern] } -- one or more patterns
 apats : apats pat			{ $2 : $1 }

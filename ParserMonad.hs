@@ -1,16 +1,11 @@
 module ParserMonad 
     (
---      Position
---    , showPosition
       LayoutContext(..) --TODO is it used?
     , ParseState       --TODO is it used ?
     , ParseResult(..) 
     , ParserM(..)
     , runParser , runParserWithFileName
     , returnOk , returnError
---    , AlexInput(..)
---    , alexGetChar
---    , alexInputPrevChar
     , lexer
     )
     where

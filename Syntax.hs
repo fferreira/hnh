@@ -101,7 +101,7 @@ data Expr -- TODO add a switch statement with expressions?
 data Pattern
     = VarPat Name
     | AsPat Name Pattern
-    | ConsPat Name [Pattern] -- a type constructor 
+    | ConPat Name [Pattern] -- a type constructor 
     | LitPat LiteralValue
     | ListPat [Pattern]
     | HeadTailPat Name Name -- x:xs pattern type
@@ -183,7 +183,7 @@ instance Pretty Expr where
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n
     pretty (AsPat n p)   = pretty n <> pretty "@" <> pretty p
-    pretty (ConsPat n p) = pretty n <!> pretty p
+    pretty (ConPat n p) = pretty n <!> pretty p
     pretty (LitPat lit)  = pretty lit
     pretty (TuplePat t)  = pretty "#" <> pretty t
     pretty (ListPat l)   = pretty l

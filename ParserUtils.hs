@@ -3,10 +3,38 @@ module ParserUtils
      addType
     ,litToExp
     ,assembleInfixOperator
+    ,checkPat
     )
     where
 
 import Syntax
+import ParserMonad(returnOk, returnError)
+
+import Data.List(nub)
+
+import Text.PrettyPrint.Leijen(pretty)
+
+-- checkPat checks that no variable is used twice in a pattern 
+--          (aka it is a linear pattern)
+checkPat pat = 
+    let
+        varList = vars pat
+    in
+      if (length varList) == (length $ nub varList) then
+          returnOk pat
+      else
+          returnError $ "Non linear pattern: " ++ (show $ pretty pat)
+    where
+      vars :: Pattern -> [Name]
+      vars (VarPat n) = [n]
+      vars (AsPat n p) = [n] ++ vars p
+      vars (ConPat n ps) = [n] ++ concatMap vars ps
+      vars (LitPat _) = []
+      vars (ListPat ps) = concatMap vars ps
+      vars (HeadTailPat n1 n2) = [n1, n2]
+      vars (TuplePat ps) = concatMap vars ps
+      vars (WildcardPat) = []
+
 
 -- addType adds type information to an expression
 addType :: Expr -> Type -> Expr
