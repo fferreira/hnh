@@ -145,7 +145,7 @@ instance Pretty Guard where
 instance Pretty Type where
     pretty (FuncType t1 t2) = pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
-    pretty (AppType t1 t2) = pretty t2 <> pretty "[ap]" <> pretty t2
+    pretty (AppType t1 t2) = pretty t1 <> pretty " of " <> pretty t2
     pretty (VarType n) = pretty n
     pretty (ConsType n) = pretty n
     pretty (UnknownType) = pretty "?"
@@ -157,28 +157,28 @@ instance Pretty OpExpr where
     pretty (LeafExp e) = pretty e
     pretty (Op o e1 e2) = parens $ pretty o <+> pretty e1 <+> pretty e2
 instance Pretty Expr where
-    pretty (VarExp n t) = parens $ pretty n -- <> comma <+> pretty t
-    pretty (ConExp n t) = parens $ pretty n -- <> comma <+> pretty t
-    pretty (LitExp v t) = parens $ pretty v -- <> comma <+> pretty t
-    pretty (InfixOpExp e t) = parens $ pretty e -- <> comma <+> pretty t
-    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 -- <> comma <+> pretty t
-    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e -- <> comma <+> pretty t
+    pretty (VarExp n t) = parens $ pretty n <> colon <> pretty t
+    pretty (ConExp n t) = parens $ pretty n <> colon <> pretty t
+    pretty (LitExp v t) = parens $ pretty v <> colon <> pretty t
+    pretty (InfixOpExp e t) = parens $ pretty e <> colon <> pretty t
+    pretty (FExp e1 e2 t) = parens $ pretty e1 <//> pretty e2 <> colon <> pretty t
+    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> colon <> pretty t
     pretty (LambdaExp p e t) = parens $ 
                             pretty "\\" 
                                        <> pretty p <> pretty "->"
-                                       <> pretty e -- <> comma <+> pretty t
+                                       <> pretty e <> colon <> pretty t
     pretty (LetExp ds e t) = parens $ pretty "let" <!> pretty ds 
-                             <+> pretty "in" <!> pretty e -- <> comma <+> pretty t
+                             <+> pretty "in" <!> pretty e <> colon <> pretty t
     pretty (IfExp e1 e2 e3 t) = parens $ pretty "if" <!> pretty e1 
                                 <+> pretty "then" <!> pretty e2 
                                 <+> pretty "else" <!> pretty e3
-                                -- <> comma <+> pretty t
+                                <> colon <> pretty t
     pretty (CaseExp e alts t) = parens $ pretty "case" <!> pretty e 
                                 <!> pretty "of" <!> pretty alts
-                                -- <> comma <+>  pretty t
-    pretty (ParensExp e t) = pretty e -- <> comma <+> pretty t -- No parens needed here
-    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e -- <> comma <+> pretty t
-    pretty (ListExp e t) = parens $ pretty e -- <> comma <+> pretty t
+                                <> colon <>  pretty t
+    pretty (ParensExp e t) = pretty e <> colon <> pretty t -- No parens needed here
+    pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> colon <> pretty t
+    pretty (ListExp e t) = parens $ pretty e <> colon <> pretty t
 
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n

@@ -4,6 +4,7 @@ module ParserUtils
     ,litToExp
     ,assembleInfixOperator
     ,checkPat
+    ,getType
     )
     where
 
@@ -35,6 +36,20 @@ checkPat pat =
       vars (TuplePat ps) = concatMap vars ps
       vars (WildcardPat) = []
 
+getType :: Expr -> Type
+getType (VarExp _ t) = t
+getType (ConExp _ t) = t
+getType (LitExp _ t) = t
+getType (InfixOpExp _ t) = t
+getType (FExp _ _ t) = t
+getType (MinusExp _ t) = t
+getType (LambdaExp _ _ t) = t
+getType (LetExp _ _ t) = t
+getType (IfExp _ _ _ t) = t
+getType (CaseExp _ _ t) = t
+getType (ParensExp _ t) = t
+getType (TupleExp _ t) = t
+getType (ListExp _ t) = t
 
 -- addType adds type information to an expression
 addType :: Expr -> Type -> Expr

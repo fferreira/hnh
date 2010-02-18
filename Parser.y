@@ -9,7 +9,7 @@ where
 import Token
 import Syntax
 import ParserMonad(ParserM, returnError, returnOk, lexer)
-import ParserUtils(addType, litToExp, assembleInfixOperator, checkPat)
+import ParserUtils(addType, litToExp, assembleInfixOperator, checkPat, getType)
 
 }
  
@@ -197,7 +197,7 @@ aexp :: { Expr }
 aexp : VARID				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
-     | '(' exp ')'			{ ParensExp $2 ut }
+     | '(' exp ')'			{ ParensExp $2 (getType($2)) }
      | '(' tupleexps ')'		{ TupleExp (reverse $2) ut } -- TODO add (ut, ut..) as type?
      | '[' listexps ']'			{ ListExp (reverse $2) ut }
 
@@ -260,7 +260,7 @@ tyvars : tyvars tyvar			{ $2 : $1 }
 tyvar :: { Name }
 tyvar : VARID				{ $1 }
 
--- TODO see shift/reduce conflicts that seem to be introduced around 
+-- TODO see shift/reduce conflicts that are introduced around here
 
 btype :: { Type }
 btype : btype atype			{ AppType $1 $2 }
@@ -270,7 +270,7 @@ atype :: { Type }
 atype : CONID				{ ConsType $1 } 
       | VARID				{ VarType $1 }
       | '(' types ')'			{ TupleType $2 } -- TODO Reverse $2 ??
-      | '[' type ']'			{ $2 } -- TODO COMPLETE List type
+      | '[' type ']'			{ AppType (ConsType "List") $2 }
       | '(' type ')'			{ $2 } -- One uple does not exist
 
 -- 'data' declarations
