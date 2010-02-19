@@ -197,7 +197,8 @@ alt :: { Alternative }
 alt : pat '->' exp ';'			{ Alternative $1 $3 }
 
 fexp :: { Expr }
-fexp : fexp aexp			{ FExp $1 $2 (getType $1) }
+fexp : fexp aexp			{ FExp $1 $2 (getType $1) } 
+       	    				       	     -- ^ if type not unknown, probably an error!
      | aexp 				{ $1 }
 
 aexp :: { Expr }
@@ -220,34 +221,31 @@ listexps : listexps ',' exp		{ $3 : $1 }
 
 -- Patterns
 
-pats :: { [Pattern] } -- zero or more patterns
-pats : pats pat				{ $2 : $1 }
-     | 	    				{ [] }
+apats :: { [Pattern] } -- one or more patterns
+apats : apats pat			{ $2 : $1 }
+      | pat				{ [$1] }  
 
 -- checkPat is checked redundantly -- TODO improve this
 pat :: { Pattern }
-pat : VARID				{ VarPat $1 }
-     | VARID '@' pat			{% checkPat (AsPat $1 $3) }
-     | VARID ':' VARID			{% checkPat (HeadTailPat $1 $3) } 
-     | CONID pats			{% checkPat (ConPat $1 (reverse $2)) }
+pat : VARID				{ VarPat $1 } 
+     | VARID '@' pat			{% checkPat $ AsPat $1 $3 }
+     | VARID ':' VARID			{% checkPat $ HeadTailPat $1 $3 } 
+     | CONID tyvars			{% checkPat $ ConPat $1 (reverse $2) }
      | literal				{ LitPat $1 }
-     | '_'				{% checkPat (WildcardPat) }
-     | '(' pat ')'			{% checkPat ($2) }
-     | '(' tuplepats ')'		{% checkPat (TuplePat (reverse $2)) }  
-       	   	     			  	   -- ^ it has to be >= 2 to be a tuple
-     | '[' listpats ']'			{% checkPat (ListPat (reverse $2)) }
+     | '_'				{ WildcardPat }
+     | '(' pat ')'			{ $2 }
+     | '(' tuplepats ')'		{% checkPat $ TuplePat (reverse $2) }  
+       	   	     			  	      	    -- ^ it has to be >= 2 to be a tuple
+     | '[' listpats ']'			{% checkPat $ ListPat (reverse $2) }
 
-apats :: { [Pattern] } -- one or more patterns
-apats : apats pat			{ $2 : $1 }
-      | pat  				{ [$1] }
 
-tuplepats :: { [Pattern] }  -- two or more
-tuplepats : tuplepats ',' pat		{ $3 : $1 }
-	  | pat ',' pat			{ [$3, $1] }
+tuplepats :: { [Name] }  -- two or more
+tuplepats : tuplepats ',' VARID		{ $3 : $1 }
+	  | VARID ',' VARID		{ [$3, $1] }
 
-listpats :: { [Pattern] }  -- one or more
-listpats: listpats ',' pat		{ $3 : $1 } 
-	| pat	   			{ [$1] }  	   
+listpats :: { [Name] }  -- one or more
+listpats: listpats ',' VARID		{ $3 : $1 } 
+	| VARID	   			{ [$1] }  	   
 
 -- Types
 

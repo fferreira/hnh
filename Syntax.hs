@@ -101,11 +101,11 @@ data Expr -- TODO add a switch statement with expressions?
 data Pattern
     = VarPat Name
     | AsPat Name Pattern
-    | ConPat Name [Pattern] -- a type constructor 
+    | ConPat Name [Name] -- a type constructor 
     | LitPat LiteralValue
-    | ListPat [Pattern]
+    | ListPat [Name]
     | HeadTailPat Name Name -- x:xs pattern type
-    | TuplePat [Pattern]
+    | TuplePat [Name]
     | WildcardPat
       deriving (Show, Eq)
 

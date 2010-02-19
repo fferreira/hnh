@@ -10,7 +10,7 @@ module ParserUtils
     where
 
 import Syntax
-import ParserMonad(returnOk, returnError)
+import ParserMonad(ParserM, returnOk, returnError)
 
 import Data.List(nub)
 
@@ -18,23 +18,25 @@ import Text.PrettyPrint.Leijen(pretty)
 
 -- checkPat checks that no variable is used twice in a pattern 
 --          (aka it is a linear pattern)
-checkPat pat = 
+-- TODO is this check really needed?
+checkPat :: Pattern -> ParserM Pattern
+checkPat pat =
     let
         varList = vars pat
     in
       if (length varList) == (length $ nub varList) then
           returnOk pat
       else
-          returnError $ "Non linear pattern: " ++ (show $ pretty pat)
+          returnError $ "Duplicated variable in pattern: " ++ (show $ pretty pat)
     where
       vars :: Pattern -> [Name]
       vars (VarPat n) = [n]
       vars (AsPat n p) = [n] ++ vars p
-      vars (ConPat n ps) = concatMap vars ps
+      vars (ConPat n ps) = ps
       vars (LitPat _) = []
-      vars (ListPat ps) = concatMap vars ps
+      vars (ListPat ps) = ps
       vars (HeadTailPat n1 n2) = [n1, n2]
-      vars (TuplePat ps) = concatMap vars ps
+      vars (TuplePat ps) = ps
       vars (WildcardPat) = []
 
 getType :: Expr -> Type
