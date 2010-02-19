@@ -5,6 +5,7 @@ module ParserUtils
     ,assembleInfixOperator
     ,checkPat
     ,getType
+    ,typeFromAlternative
     )
     where
 
@@ -51,6 +52,9 @@ getType (ParensExp _ t) = t
 getType (TupleExp _ t) = t
 getType (ListExp _ t) = t
 
+typeFromAlternative :: Alternative -> Type
+typeFromAlternative (Alternative _ e) = getType e
+
 -- addType adds type information to an expression
 addType :: Expr -> Type -> Expr
 addType (VarExp n _) t = VarExp n t
@@ -69,10 +73,10 @@ addType (ListExp e _) t = ListExp e t
 
 -- litToExp creates an Expresion from a literal (with the right type)
 litToExp :: LiteralValue -> Expr
-litToExp val@(LiteralInt _) = LitExp val (ConsType "Int")
-litToExp val@(LiteralFloat _) = LitExp val (ConsType "Float")
-litToExp val@(LiteralString _) = LitExp val (ConsType "String") -- TODO should this be [Char]??
-litToExp val@(LiteralChar _) = LitExp val (ConsType "Char")
+litToExp val@(LiteralInt _) = LitExp val (ConType "Int")
+litToExp val@(LiteralFloat _) = LitExp val (ConType "Float")
+litToExp val@(LiteralString _) = LitExp val (ConType "String") -- TODO should this be [Char]??
+litToExp val@(LiteralChar _) = LitExp val (ConType "Char")
 
 -- assembleInfixOperator builds an infix operator structure (for fixity adaptation later)
 assembleInfixOperator :: Expr -> Operator -> Expr -> Expr

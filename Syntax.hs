@@ -25,7 +25,7 @@ data Program = Program [Declaration] deriving(Show, Eq)
 --- Names & Literals
 
 type Name = String
-type Operator = String -- TODO should be something more specific ?
+type Operator = String
 
 data LiteralValue
     = LiteralInt Int
@@ -56,7 +56,7 @@ data Guard
 
 type Precedence  = Int
 
-data Associativity -- TODO change name to fixity ?
+data Associativity
     = NonAssoc
     | LeftAssoc
     | RightAssoc
@@ -65,9 +65,9 @@ data Associativity -- TODO change name to fixity ?
 data Type
     = FuncType Type Type
     | TupleType [Type]
-    | AppType Type Type -- TODO when is this??
+    | AppType Type Type
     | VarType Name      -- for parametric types
-    | ConsType Name     -- the constructor of the type
+    | ConType Name     -- the constructor of the type
     | UnknownType
       deriving(Show, Eq)
 
@@ -147,7 +147,7 @@ instance Pretty Type where
     pretty (TupleType t) = pretty t
     pretty (AppType t1 t2) = pretty t1 <> pretty " of " <> pretty t2
     pretty (VarType n) = pretty n
-    pretty (ConsType n) = pretty n
+    pretty (ConType n) = pretty n
     pretty (UnknownType) = pretty "?"
 
 instance Pretty ConstructorDeclaration where

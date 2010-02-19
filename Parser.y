@@ -9,7 +9,13 @@ where
 import Token
 import Syntax
 import ParserMonad(ParserM, returnError, returnOk, lexer)
-import ParserUtils(addType, litToExp, assembleInfixOperator, checkPat, getType)
+import ParserUtils(addType 
+       	          ,litToExp
+		  ,assembleInfixOperator
+		  ,checkPat
+		  ,getType
+		  ,typeFromAlternative)
+import Builtins(listType)
 
 }
  
@@ -172,15 +178,17 @@ exp : expi '::' type 			{ addType $1 $3 }
 
 expi :: { Expr }
 expi : expi op expi			{ assembleInfixOperator $1 $2 $3 }
-     | '~' expi				{ MinusExp $2 ut }
+     | '~' expi				{ MinusExp $2 ut } --TODO add for flat?, add type?
      | exp10   				{ $1 }
 
 exp10 :: { Expr }
 exp10 :	fexp				{ $1 }
-      | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
-      | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 ut }
-      | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 ut }
-      | 'case' exp 'of' lcb alts rcb   	{ CaseExp $2 (reverse $5) ut }
+      | '\\' apats '->' exp		{ LambdaExp $2 $4 ut } -- TODO add type info
+      | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 (getType $6) }
+      | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 (getType $4) }
+      | 'case' exp 'of' lcb alts rcb   	{ CaseExp $2 
+      	       	   	    	 	  	  (reverse $5) 
+      	       	   	    	 	          (typeFromAlternative (head(reverse $5))) }
 
 alts :: { [Alternative] }
 alts : alts alt				{ $2 : $1 }
@@ -190,7 +198,7 @@ alt :: { Alternative }
 alt : pat '->' exp ';'			{ Alternative $1 $3 }
 
 fexp :: { Expr }
-fexp : fexp aexp			{ FExp $1 $2 ut }
+fexp : fexp aexp			{ FExp $1 $2 (getType $1) }
      | aexp 				{ $1 }
 
 aexp :: { Expr }
@@ -198,8 +206,10 @@ aexp : VARID				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
      | '(' exp ')'			{ ParensExp $2 (getType($2)) }
-     | '(' tupleexps ')'		{ TupleExp (reverse $2) ut } -- TODO add (ut, ut..) as type?
-     | '[' listexps ']'			{ ListExp (reverse $2) ut }
+     | '(' tupleexps ')'		{ TupleExp (reverse $2) (TupleType 
+       	   	     			  	   	           (map getType (reverse $2))) }
+     | '[' listexps ']'			{ ListExp (reverse $2) (AppType listType
+       	   	    			  	  	       		(getType (last $2))) }
 
 tupleexps :: { [Expr] }
 tupleexps : tupleexps ',' exp		{ $3 : $1 }
@@ -267,10 +277,10 @@ btype : btype atype			{ AppType $1 $2 }
       | atype 				{ $1 }
 
 atype :: { Type }
-atype : CONID				{ ConsType $1 } 
+atype : CONID				{ ConType $1 } 
       | VARID				{ VarType $1 }
-      | '(' types ')'			{ TupleType $2 } -- TODO Reverse $2 ??
-      | '[' type ']'			{ AppType (ConsType "List") $2 }
+      | '(' types ')'			{ TupleType (reverse $2) }
+      | '[' type ']'			{ AppType listType $2 }
       | '(' type ')'			{ $2 } -- One uple does not exist
 
 -- 'data' declarations
