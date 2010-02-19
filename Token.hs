@@ -37,7 +37,6 @@ data HasntToken
 
 -- Reserved Operands
 
-     | DoubleDotOp	-- ..
      | ColonOp		-- :
      | DoubleColonOp	-- ::
      | EqualsOp		-- =

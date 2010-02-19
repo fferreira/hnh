@@ -82,7 +82,6 @@ $white+				;
 
 -- Reserved operators
 
-".."				{\(i, s) -> return $ (DoubleDotOp, i)}
 ":"				{\(i, s) -> return $ (ColonOp, i)}
 "::"				{\(i, s) -> return $ (DoubleColonOp, i)}
 "="				{\(i, s) -> return $ (EqualsOp, i)}

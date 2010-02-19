@@ -56,7 +56,6 @@ import Builtins(listType)
 
 -- Reserved operands
 
-   '..'			{ DoubleDotOp }
    ':'			{ ColonOp }
    '::'			{ DoubleColonOp }
    '='			{ EqualsOp }
