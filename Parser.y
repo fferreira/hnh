@@ -230,7 +230,7 @@ pat :: { Pattern }
 pat : VARID				{ VarPat $1 }
      | VARID '@' pat			{% checkPat (AsPat $1 $3) }
      | VARID ':' VARID			{% checkPat (HeadTailPat $1 $3) } 
-     | CONID pats			{% checkPat (ConPat $1 $2) }
+     | CONID pats			{% checkPat (ConPat $1 (reverse $2)) }
      | literal				{ LitPat $1 }
      | '_'				{% checkPat (WildcardPat) }
      | '(' pat ')'			{% checkPat ($2) }
