@@ -23,6 +23,7 @@ import System.IO.Unsafe(unsafePerformIO)  -- DEBUG!!!! -- TODO remove!
 programTransform :: Program -> (TM.TransformResult Program, [Doc])
 programTransform p = 
     TM.runTransform (correctPrecedence p 
+                     >>= prefixer
                      >>= TM.nullTransform 
                      >>= return)
 

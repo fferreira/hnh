@@ -1,6 +1,7 @@
 module ExprTransformer
     (
      correctPrecedence
+    ,prefixer
     )
     where
 {-
@@ -17,8 +18,8 @@ import TransformMonad
 
 type FixityDesc = (Operator, Precedence, Associativity)
 
--- TODO add error proper handling
-correctPrecedence :: Program -> TransformM Program
+-- correctPrecedence corrects the OpExpr trees using the right fixity
+correctPrecedence :: Program -> TransformM Program -- TODO add error proper handling
 correctPrecedence prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
     where
       adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
@@ -78,4 +79,25 @@ lst tbl t@(Op p t1 (Op q t2 t3)) =
     if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
 lst _ t = t
 
+-- prefixer converts all the OpExpr to FExp calls (prefix syntax)
+prefixer :: Program -> TransformM Program
+prefixer prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
+    where
+      adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
+      adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
+      adaptDeclaration d = d
 
+      adaptRhs (UnGuardedRhs e) = UnGuardedRhs (adaptExpr e)
+      adaptRhs (GuardedRhs guards) = GuardedRhs (map adaptGuard guards)
+
+      adaptGuard (Guard e1 e2) = Guard (adaptExpr e1) (adaptExpr e2)
+
+      adaptExpr (InfixOpExp e _) = toPrefix e -- TODO add type?
+      adaptExpr e = e
+
+toPrefix :: OpExpr -> Expr
+toPrefix (LeafExp e) = e
+toPrefix (Op op e1 e2) = FExp 
+                         (VarExp op UnknownType) 
+                         (FExp (toPrefix e1) (toPrefix e2) UnknownType)
+                         UnknownType
