@@ -5,6 +5,7 @@ module TransformMonad
     ,transformOk
     ,transformError
     ,runTransform
+    ,nullTransform
     )
     where
 
@@ -30,3 +31,6 @@ instance Monad TransformM where
     (TaM l (Failed s)) >>= k = (TaM l (Failed s))
     
     fail msg = TaM [] (Failed msg)
+
+nullTransform ::Pretty a => a -> TransformM a
+nullTransform = transformOk

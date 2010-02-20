@@ -17,7 +17,7 @@ import TransformMonad
 
 type FixityDesc = (Operator, Precedence, Associativity)
 
--- TODO add error handling
+-- TODO add error proper handling
 correctPrecedence :: Program -> TransformM Program
 correctPrecedence prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
     where
@@ -78,24 +78,4 @@ lst tbl t@(Op p t1 (Op q t2 t3)) =
     if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
 lst _ t = t
 
-{-  Testing data
 
-tbl  :: [FixityDesc]
-tbl =
-    [
-     ("+" , 6, LeftAssoc)
-    ,("-" , 6, LeftAssoc)
-    ,("*" , 7, LeftAssoc)
-    ,("/" , 7, LeftAssoc)
-    ,("^" , 8, RightAssoc)
-    ,("==", 4, NonAssoc)
-    ,("<", 4, NonAssoc)
-    ,(">", 4, NonAssoc)
-    ];
-
-  
-testTree = (Op "^" (LeafExp (VarExp "a" UnknownType)) 
-                   (Op "*" (LeafExp (VarExp "b" UnknownType)) 
-                           (Op "^" (LeafExp (VarExp "c" UnknownType))
-                                   (LeafExp (VarExp "d" UnknownType)))))
--} 

@@ -20,14 +20,10 @@ import SamplePrograms -- DEBUG only
 
 import System.IO.Unsafe(unsafePerformIO)  -- DEBUG!!!! -- TODO remove!
 
-
-fakeTransform :: Program -> TM.TransformM Program
-fakeTransform p = TM.transformOk p
-
 programTransform :: Program -> (TM.TransformResult Program, [Doc])
 programTransform p = 
     TM.runTransform (correctPrecedence p 
-                     >>= fakeTransform 
+                     >>= TM.nullTransform 
                      >>= return)
 
 rawparse = runParser parser
@@ -35,7 +31,7 @@ rawparse = runParser parser
 compile program = case runParser parser program of
                     (Ok _ r) -> let (tran, hist) = programTransform r in
                                 case tran of
-                                  (TM.Ok t) -> pretty (length hist)
+                                  (TM.Ok t) -> pretty t
                                   (TM.Failed s) -> pretty "Error" <> colon <+> pretty s
                     (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
 
