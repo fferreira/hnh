@@ -1,58 +1,64 @@
 module Compiler
 {- TODO Debug only    
     (
-     compile,
-     main
+
     )
 -}
     where
 
 import Lexer
 import Parser
-import ParserMonad
 import Text.PrettyPrint.Leijen
 import Syntax
 
-import qualified TransformMonad as TM
+import qualified ParserMonad as P
+import qualified TransformMonad as T
 
 import ExprTransformer
-import SamplePrograms -- DEBUG only
 
-import System.IO.Unsafe(unsafePerformIO)  -- DEBUG!!!! -- TODO remove!
+import Data.List(intersperse)
 
-programTransform :: Program -> (TM.TransformResult Program, [Doc])
+programTransform :: Program -> (T.TransformResult Program, [Doc])
 programTransform p = 
-    TM.runTransform (correctPrecedence p 
-                     >>= toPrefix
-                     >>= return)
+    let (res, docs)  = T.runTransform (correctPrecedence p 
+                                       >>= toPrefix
+                                       >>= return)
+    in
+      (res, (pretty p):docs) -- adding the original to the list
 
-rawparse = runParser parser
+rawParse :: String -> P.ParseResult Program
+rawParse = P.runParser parser
 
-compile program = case runParser parser program of
-                    (Ok _ r) -> let (tran, hist) = programTransform r in
+
+fileToProgram :: String -> Bool -> IO Doc
+fileToProgram file showSteps = do contents <- readFile file 
+                                  parsed <- return $ rawParse contents
+                                  (programRes, docs) <- return $ runTransformations parsed
+                                  program <- return $ checkTransformation programRes 
+                                  doc <- return $ if showSteps then
+                                                      printSteps docs
+                                                  else
+                                                      pretty program
+                                  return doc
+
+printSteps :: [Doc] -> Doc
+printSteps docs = vsep $ intersperse (line <> pretty ">>> transforms to:" <> line) docs
+
+runTransformations :: P.ParseResult Program -> (T.TransformResult Program, [Doc])
+runTransformations (P.Ok _ p) = programTransform p
+runTransformations (P.Failed p s) = error $ show (pretty p <+> pretty s)
+
+checkTransformation :: T.TransformResult Program -> Program
+checkTransformation (T.Ok program) = program
+checkTransformation (T.Failed err) = error err
+
+--- simpler compiler
+
+compile program = case P.runParser parser program of
+                    (P.Ok _ r) -> let (tran, hist) = programTransform r in
                                 case tran of
-                                  (TM.Ok t) ->  pretty t
-                                  (TM.Failed s) -> pretty "Error" <> colon <+> pretty s
-                    (Failed p s) -> pretty "Error:" <+> pretty s <+> pretty (show p)
+                                  (T.Ok t) ->  pretty t
+                                  (T.Failed s) -> pretty "Error" <> colon <+> pretty s
+                    (P.Failed p s) -> pretty "Error:" <+> pretty s <+> pretty (show p)
 
 
-compileDeclaration = {-vsep $-}  map compile sampleDeclarations
-
-fileCompiler = do contents <- readFile "program.hnh"
-                  return $ compile contents
-
-fileToProgram :: String -> IO Doc
-fileToProgram file = do contents <- readFile file -- "program.hnh"
-                        return $ case runParser parser contents of
-                                   (Ok _ p) -> 
-                                       let 
-                                           (tran, hist) = programTransform p
-                                           p' = case tran of
-                                                  (TM.Ok t) -> t
-                                                  _ -> error "pum"
-                                       in pretty "No correction"
-                                                     <$> pretty p 
-                                                     <$> pretty "-----------------" <$> pretty "Corrected"
-                                                     <$> pretty p'
-                                   (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
-                              
