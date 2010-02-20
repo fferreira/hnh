@@ -14,17 +14,17 @@ Wilf Lalonde and Jum Des Rivieres, "Handling Operator Precedence in Artihmetic E
 -}
 
 import Syntax
-import TransformMonad
+import TransformMonad(TransformM)
 import TransformUtils(transformExpressions)
 
 type FixityDesc = (Operator, Precedence, Associativity)
 
 
 correctPrecedence:: Program -> TransformM Program
-correctPrecedence prog = transformExpressions
-                         "correctPrecedence: Non Associative operator used associatively"
-                         adaptExpr
-                         prog
+correctPrecedence prog  = transformExpressions
+                          "correctPrecedence: Non Associative operator used associatively"
+                          adaptExpr
+                          prog
     where
       adaptExpr (InfixOpExp e t) = 
           do
@@ -84,10 +84,9 @@ lst _ t = t
 
 -- prefixer converts all the OpExpr to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
-toPrefix prog = transformExpressions
-                "toPrefix: Unexpected Error (This should not fail)"
-                adaptExpr
-                prog
+toPrefix = transformExpressions
+           "toPrefix: Unexpected Error (This should not fail)"
+           adaptExpr
     where
 
       adaptExpr (InfixOpExp e _) = Just $ prefixer e -- TODO add type?
