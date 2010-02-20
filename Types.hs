@@ -9,7 +9,7 @@ module Types
 import Syntax
 import TransformMonad(TransformM)
 import TransformUtils(transformExpressions)
-import ParserUtils(getType, resultingType)
+import TypeUtils(getType, resultingType)
 
 type Env = (Name, Type)
 

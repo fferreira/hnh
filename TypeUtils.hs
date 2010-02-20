@@ -1,4 +1,4 @@
-module ParserUtils
+module TypeUtils
     (
      addType
     ,litToExp
