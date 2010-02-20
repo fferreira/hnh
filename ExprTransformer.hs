@@ -13,11 +13,13 @@ Wilf Lalonde and Jum Des Rivieres, "Handling Operator Precedence in Artihmetic E
 -}
 
 import Syntax
+import TransformMonad
 
 type FixityDesc = (Operator, Precedence, Associativity)
 
-correctPrecedence :: Program -> Program
-correctPrecedence prog@(Program decls) = Program (map adaptDeclaration decls)
+-- TODO add error handling
+correctPrecedence :: Program -> TransformM Program
+correctPrecedence prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
     where
       adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
       adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
