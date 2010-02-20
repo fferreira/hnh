@@ -1,7 +1,7 @@
 module ExprTransformer
     (
      correctPrecedence
-    ,prefixer
+    ,toPrefix
     )
     where
 {-
@@ -80,8 +80,8 @@ lst tbl t@(Op p t1 (Op q t2 t3)) =
 lst _ t = t
 
 -- prefixer converts all the OpExpr to FExp calls (prefix syntax)
-prefixer :: Program -> TransformM Program
-prefixer prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
+toPrefix :: Program -> TransformM Program
+toPrefix prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
     where
       adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
       adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
@@ -92,12 +92,12 @@ prefixer prog@(Program decls) = transformOk $ Program (map adaptDeclaration decl
 
       adaptGuard (Guard e1 e2) = Guard (adaptExpr e1) (adaptExpr e2)
 
-      adaptExpr (InfixOpExp e _) = toPrefix e -- TODO add type?
+      adaptExpr (InfixOpExp e _) = prefixer e -- TODO add type?
       adaptExpr e = e
 
-toPrefix :: OpExpr -> Expr
-toPrefix (LeafExp e) = e
-toPrefix (Op op e1 e2) = FExp 
-                         (VarExp op UnknownType) 
-                         (FExp (toPrefix e1) (toPrefix e2) UnknownType)
-                         UnknownType
+      prefixer :: OpExpr -> Expr
+      prefixer (LeafExp e) = e
+      prefixer (Op op e1 e2) = FExp 
+                               (VarExp op UnknownType) 
+                               (FExp (prefixer e1) (prefixer e2) UnknownType)
+                               UnknownType
