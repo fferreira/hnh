@@ -15,26 +15,25 @@ Wilf Lalonde and Jum Des Rivieres, "Handling Operator Precedence in Artihmetic E
 
 import Syntax
 import TransformMonad
+import TransformUtils(transformExpressions)
 
 type FixityDesc = (Operator, Precedence, Associativity)
 
--- correctPrecedence corrects the OpExpr trees using the right fixity
-correctPrecedence :: Program -> TransformM Program -- TODO add error proper handling
-correctPrecedence prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
+
+correctPrecedence:: Program -> TransformM Program
+correctPrecedence prog = transformExpressions
+                         "correctPrecedence: Non Associative operator used associatively"
+                         adaptExpr
+                         prog
     where
-      adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
-      adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
-      adaptDeclaration d = d
-
-      adaptRhs (UnGuardedRhs e) = UnGuardedRhs (adaptExpr e)
-      adaptRhs (GuardedRhs guards) = GuardedRhs (map adaptGuard guards)
-
-      adaptGuard (Guard e1 e2) = Guard (adaptExpr e1) (adaptExpr e2)
-
-      adaptExpr (InfixOpExp e t) = InfixOpExp (transform precedences e) t
-      adaptExpr e = e
+      adaptExpr (InfixOpExp e t) = 
+          do
+            e' <- transform precedences e
+            return $ InfixOpExp e' t
+      adaptExpr e = Just e
 
       precedences = buildPrecedenceTable prog
+      
 
 buildPrecedenceTable :: Program -> [FixityDesc]
 buildPrecedenceTable (Program declarations) =
@@ -52,10 +51,13 @@ lookupPrecedence tbl op = case filter (\(o, p, a) -> op == o) tbl of
                             [] -> (op, 9, LeftAssoc) -- default fixity
                             l  -> head l             -- return the first
 
-transform ::[FixityDesc] -> OpExpr -> OpExpr
-transform tbl t@(LeafExp _) = t
-transform tbl t@(Op _ _ (LeafExp _)) = t 
-transform tbl t@(Op o left t'@(Op _ _ _)) = lst tbl (Op o left (transform  tbl (lst tbl t')))
+transform ::[FixityDesc] -> OpExpr -> Maybe OpExpr
+transform tbl t@(LeafExp _) = Just t
+transform tbl t@(Op _ _ (LeafExp _)) = Just t 
+transform tbl t@(Op o left t'@(Op _ _ _)) =
+    do
+      transformed <- transform  tbl (lst tbl t')
+      return $ lst tbl (Op o left transformed)
 
 -- precedence operator, returns whether o1 has a tighter precedence, or left associativity
 compPrecedence :: [FixityDesc] -> Operator -> Operator -> Bool
@@ -81,19 +83,14 @@ lst _ t = t
 
 -- prefixer converts all the OpExpr to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
-toPrefix prog@(Program decls) = transformOk $ Program (map adaptDeclaration decls)
+toPrefix prog = transformExpressions
+                "toPrefix: Unexpected Error (This should not fail)"
+                adaptExpr
+                prog
     where
-      adaptDeclaration (FunBindDcl n pats rhs) = FunBindDcl n pats (adaptRhs rhs)
-      adaptDeclaration (PatBindDcl pat rhs) = PatBindDcl pat (adaptRhs rhs)
-      adaptDeclaration d = d
 
-      adaptRhs (UnGuardedRhs e) = UnGuardedRhs (adaptExpr e)
-      adaptRhs (GuardedRhs guards) = GuardedRhs (map adaptGuard guards)
-
-      adaptGuard (Guard e1 e2) = Guard (adaptExpr e1) (adaptExpr e2)
-
-      adaptExpr (InfixOpExp e _) = prefixer e -- TODO add type?
-      adaptExpr e = e
+      adaptExpr (InfixOpExp e _) = Just $ prefixer e -- TODO add type?
+      adaptExpr e = Just e
 
       prefixer :: OpExpr -> Expr
       prefixer (LeafExp e) = e

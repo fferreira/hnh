@@ -54,11 +54,11 @@ checkTransformation (T.Failed err) = error err
 
 --- simpler compiler
 
-compile program = case P.runParser parser program of
-                    (P.Ok _ r) -> let (tran, hist) = programTransform r in
-                                case tran of
-                                  (T.Ok t) ->  pretty t
-                                  (T.Failed s) -> pretty "Error" <> colon <+> pretty s
-                    (P.Failed p s) -> pretty "Error:" <+> pretty s <+> pretty (show p)
+compileToAST program = case P.runParser parser program of
+                         (P.Ok _ r) -> let (tran, hist) = programTransform r in
+                                       case tran of
+                                         (T.Ok t) ->  t
+                                         (T.Failed s) -> error (show $ pretty s)
+                         (P.Failed p s) -> error (show p ++ " " ++ s)
 
 
