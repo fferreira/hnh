@@ -62,7 +62,6 @@ import Builtins(listType)
    '\\'			{ BackSlashOp }
    '|'			{ BarOp }
    '->'			{ RightArrowOp }
-   '@'			{ AtOp }
    '~'			{ TildeOp }
 
 -- Variable and Constructor Names
@@ -228,7 +227,6 @@ apats : apats pat			{ $2 : $1 }
 -- checkPat is checked redundantly -- TODO improve this
 pat :: { Pattern }
 pat : VARID				{ VarPat $1 } 
-     | VARID '@' pat			{% checkPat $ AsPat $1 $3 }
      | VARID ':' VARID			{% checkPat $ HeadTailPat $1 $3 } 
      | CONID tyvars			{% checkPat $ ConPat $1 (reverse $2) }
      | literal				{ LitPat $1 }

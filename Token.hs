@@ -43,7 +43,6 @@ data HasntToken
      | BackSlashOp	-- \ One back slash
      | BarOp		-- |
      | RightArrowOp	-- ->
-     | AtOp		-- @
      | TildeOp		-- ~
 
 -- Variable and Contructor names

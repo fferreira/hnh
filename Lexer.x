@@ -88,7 +88,6 @@ $white+				;
 "\"				{\(i, s) -> return $ (BackSlashOp, i)}
 "|"				{\(i, s) -> return $ (BarOp, i)}
 "->"				{\(i, s) -> return $ (RightArrowOp, i)}
-"@"				{\(i, s) -> return $ (AtOp, i)}
 "~"				{\(i, s) -> return $ (TildeOp, i)}
 
 @varid				{\(i, s) -> return $ (VariableName s, i)}

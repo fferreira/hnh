@@ -31,7 +31,6 @@ checkPat pat =
     where
       vars :: Pattern -> [Name]
       vars (VarPat n) = [n]
-      vars (AsPat n p) = [n] ++ vars p
       vars (ConPat n ps) = ps
       vars (LitPat _) = []
       vars (ListPat ps) = ps

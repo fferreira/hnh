@@ -25,7 +25,6 @@ c = 2 ^ 3 ^ 4 ^ 5 ;
 --- Function binding & pattern
 
 fun a b c = joker ;
-fun a@d b d = joker ;
 fun Cons a = joker ;
 fun a 2 = joker ;
 fun [a, b, c] = joker;
@@ -36,7 +35,6 @@ fun _ = joker;
 --- Pattern Binding
 
 c = joker ;
-a@b = joker ;
 Cons a = joker ;
 a 2 = joker ;
 [a, b, c] = joker;
