@@ -250,9 +250,9 @@ listpats: listpats ',' VARID		{ $3 : $1 }
 simpletype :: { (Name, [Name]) }
 simpletype : CONID tyvars		{ ($1, reverse $2) } -- TODO add polymorphic types !!
 
-types :: { [Type] }
-types : types ',' type			{ $3 : $1 }
-      | type ',' type			{ [$3, $1] }
+tupletypes :: { [Type] } -- two or more types separated by commas
+tupetypes : tupletypes ',' type		{ $3 : $1 }
+      	  | type ',' type		{ [$3, $1] }
 
 type :: { Type }
 type : btype '->' type			{ FuncType $1 $3 }
@@ -274,7 +274,7 @@ btype : btype atype			{ AppType $1 $2 }
 atype :: { Type }
 atype : CONID				{ ConType $1 } 
       | VARID				{ VarType $1 }
-      | '(' types ')'			{ TupleType (reverse $2) }
+      | '(' tupletypes ')'		{ TupleType (reverse $2) }
       | '[' type ']'			{ AppType listType $2 }
       | '(' type ')'			{ $2 } -- One uple does not exist
 

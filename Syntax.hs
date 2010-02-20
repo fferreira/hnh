@@ -62,10 +62,10 @@ data Associativity
     | RightAssoc
       deriving(Show, Eq)
 
-data Type
+data Type -- for type declarations
     = FuncType Type Type
     | TupleType [Type]
-    | AppType Type Type
+    | AppType Type Type  -- a constructor followed by its parameters
     | VarType Name      -- for parametric types
     | ConType Name     -- the constructor of the type
     | UnknownType
