@@ -51,6 +51,7 @@ lookupPrecedence tbl op = case filter (\(o, p, a) -> op == o) tbl of
                             [] -> (op, 9, LeftAssoc) -- default fixity
                             l  -> head l             -- return the first
 
+-- Apply the transformation recursively to the right sided tree
 transform ::[FixityDesc] -> OpExpr -> Maybe OpExpr
 transform tbl t@(LeafExp _) = Just t
 transform tbl t@(Op _ _ (LeafExp _)) = Just t 
