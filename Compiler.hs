@@ -14,7 +14,8 @@ import Syntax
 import qualified ParserMonad as P
 import qualified TransformMonad as T
 
-import ExprTransformer
+import ExprTransformer(correctPrecedence, toPrefix)
+import Types(addBuiltInTypes)
 
 import Data.List(intersperse)
 
@@ -22,6 +23,7 @@ programTransform :: Program -> (T.TransformResult Program, [Doc])
 programTransform p = 
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
+                                       >>= addBuiltInTypes
                                        >>= return)
     in
       (res, (pretty p):docs) -- adding the original to the list

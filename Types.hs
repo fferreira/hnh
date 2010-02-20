@@ -9,20 +9,29 @@ module Types
 import Syntax
 import TransformMonad(TransformM)
 import TransformUtils(transformExpressions)
+import ParserUtils(getType, resultingType)
 
 type Env = (Name, Type)
 
 
 addBuiltInTypes :: Program -> TransformM Program
 addBuiltInTypes = transformExpressions
-                  "Unable to find some operators" --TODO ??
+                  "addBuiltInTypes: Unable to statically type" 
                   adaptExpr
     where
+      env = env0 -- TODO complete this
+      adaptExpr (VarExp n _) =
+          do
+            t <- lookup n env
+            return $ VarExp n t
+      adaptExpr (FExp e1 e2 _) = 
+          do
+            e1' <- adaptExpr e1
+            e2' <- adaptExpr e2
+            t <- resultingType (getType e1')
+            return $ FExp e1' e2' t
       adaptExpr e = Just e
-
-chain :: Maybe a -> (a -> Maybe b) -> Maybe b
-chain (Just a) f = f a
-chain Nothing _ = Nothing
+      
 
 {-
 buildTypeDic :: Program -> [(Name, [Name], Type)] -- (type name, polymorphic parameters, type)
@@ -41,19 +50,23 @@ listType = ConType "List" -- The defaultType of list
 
 env0 :: [Env] -- the initial environment, containing all the builin functions
 env0 = 
-    [("+", FuncType (ConType "Int") (ConType "Int"))
-    ,("-", FuncType (ConType "Int") (ConType "Int"))
-    ,("*", FuncType (ConType "Int") (ConType "Int"))
-    ,("/", FuncType (ConType "Int") (ConType "Int"))
-    ,("^", FuncType (ConType "Int") (ConType "Int"))
+    [("+", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
+    ,("-", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
+    ,("*", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
+    ,("/", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
+    ,("^", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
 
-    ,("+.", FuncType (ConType "Float") (ConType "Float"))
-    ,("-.", FuncType (ConType "Float") (ConType "Float"))
-    ,("*.", FuncType (ConType "Float") (ConType "Float"))
-    ,("/.", FuncType (ConType "Float") (ConType "Float"))
-    ,("^.", FuncType (ConType "Float") (ConType "Float"))
+    ,("==", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
+    ,( ">", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
+    ,( "<", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
 
-    ,("==", FuncType (ConType "Bool") (ConType "Bool"))
-    ,( ">", FuncType (ConType "Bool") (ConType "Bool"))
-    ,( "<", FuncType (ConType "Bool") (ConType "Bool"))
+    ,("+.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
+    ,("-.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
+    ,("*.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
+    ,("/.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
+    ,("^.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
+
+    ,("==.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
+    ,( ">.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
+    ,( "<.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
     ]

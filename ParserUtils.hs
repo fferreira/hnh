@@ -5,6 +5,7 @@ module ParserUtils
     ,assembleInfixOperator
     ,checkPat
     ,getType
+    ,resultingType
     ,typeFromAlternative
     )
     where
@@ -37,6 +38,11 @@ checkPat pat =
       vars (HeadTailPat n1 n2) = [n1, n2]
       vars (TuplePat ps) = ps
       vars (WildcardPat) = []
+
+-- returns the type resuling for the application of FuncType
+resultingType :: Type -> Maybe Type
+resultingType (FuncType _ t) = Just t
+resultingType _ = Nothing
 
 getType :: Expr -> Type
 getType (VarExp _ t) = t

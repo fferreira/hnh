@@ -191,8 +191,5 @@ instance Pretty Pattern where
 instance Pretty Alternative where
     pretty (Alternative p e) = pretty p <> pretty " -> " <!> pretty e
 
-
-
-
 (<!>) a b = a <> space <> (hang 4) b
 

@@ -95,6 +95,8 @@ toPrefix = transformExpressions
       prefixer :: OpExpr -> Expr
       prefixer (LeafExp e) = e
       prefixer (Op op e1 e2) = FExp 
-                               (VarExp op UnknownType) 
-                               (FExp (prefixer e1) (prefixer e2) UnknownType)
+                               (FExp (VarExp op UnknownType)
+                                     (prefixer e1) 
+                                     UnknownType)
+                               (prefixer e2) 
                                UnknownType
