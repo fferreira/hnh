@@ -10,6 +10,8 @@ import Syntax
 import TransformMonad(TransformM)
 import TransformUtils(transformExpressions)
 import TypeUtils(getType, resultingType)
+import Tools(traceVal)
+
 
 type Env = (Name, Type)
 
@@ -19,19 +21,20 @@ addBuiltInTypes = transformExpressions
                   "addBuiltInTypes: Unable to statically type" 
                   adaptExpr
     where
-      env = env0 -- TODO complete this
-      adaptExpr (VarExp n _) =
-          do
-            t <- lookup n env
-            return $ VarExp n t
+      env = env0 -- TODO complete this here or on in another phase
+      adaptExpr (VarExp n _) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (FExp e1 e2 _) = 
           do
             e1' <- adaptExpr e1
             e2' <- adaptExpr e2
-            t <- resultingType (getType e1')
-            return $ FExp e1' e2' t
+            return $ FExp e1' e2' (resultingType (getType e1'))
       adaptExpr e = Just e
       
+
+lookupWithDefault ::Eq a => a -> [(a, b)] -> b -> b
+lookupWithDefault val list def = case lookup val list of
+                                   Just res -> res
+                                   Nothing -> def
 
 {-
 buildTypeDic :: Program -> [(Name, [Name], Type)] -- (type name, polymorphic parameters, type)

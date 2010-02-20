@@ -19,7 +19,6 @@ import Text.PrettyPrint.Leijen(pretty)
 
 -- checkPat checks that no variable is used twice in a pattern 
 --          (aka it is a linear pattern)
--- TODO is this check really needed?
 checkPat :: Pattern -> ParserM Pattern
 checkPat pat =
     let
@@ -40,9 +39,10 @@ checkPat pat =
       vars (WildcardPat) = []
 
 -- returns the type resuling for the application of FuncType
-resultingType :: Type -> Maybe Type
-resultingType (FuncType _ t) = Just t
-resultingType _ = Nothing
+-- or UnknownType if the type is not appropiate
+resultingType :: Type -> Type
+resultingType (FuncType _ t) = t
+resultingType _ = UnknownType
 
 getType :: Expr -> Type
 getType (VarExp _ t) = t

@@ -44,7 +44,12 @@ fileToProgram file showSteps = do contents <- readFile file
                                   return doc
 
 printSteps :: [Doc] -> Doc
-printSteps docs = vsep $ intersperse (line <> pretty ">>> transforms to:" <> line) docs
+printSteps docs = 
+    let
+        result = vsep $ intersperse (line <> pretty ">>> transforms to:" <> line) docs
+        epigraph = pretty "Number of phases:" <> pretty ((length docs) - 1)
+    in
+      result <> line <> epigraph
 
 runTransformations :: P.ParseResult Program -> (T.TransformResult Program, [Doc])
 runTransformations (P.Ok _ p) = programTransform p
