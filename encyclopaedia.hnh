@@ -31,6 +31,7 @@ fun [a, b, c] = joker;
 fun a:xs = joker;
 fun (a,b,c) = joker;
 fun _ = joker;
+(+) a b = joker;
 
 --- Pattern Binding
 
@@ -41,6 +42,7 @@ a 2 = joker ;
 a:xs = joker;
 (a,b,c) = joker;
 _ = joker;
+(+) = joker;
 
 -- literal 
 
@@ -57,6 +59,7 @@ lit = "hola\nchau";
 a = b;
 a = Cons;
 a = 1 + 1;
+a = (+) 1 1;
 a = 2 * 2 + 3;
 a = 2 + 2 * 3;
 a = (2 + 2) * 3;

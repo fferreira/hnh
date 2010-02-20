@@ -106,7 +106,7 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
-     | VARID apats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
+     | var apats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
      | pat rhs				{ PatBindDcl $1 $2 }
 
 decls :: { [Declaration] }  -- one or more declarations
@@ -201,7 +201,7 @@ fexp : fexp aexp			{ FExp $1 $2 (getType $1) }
      | aexp 				{ $1 }
 
 aexp :: { Expr }
-aexp : VARID				{ VarExp $1 ut }
+aexp : var				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
      | '(' exp ')'			{ ParensExp $2 (getType($2)) }
@@ -226,7 +226,7 @@ apats : apats pat			{ $2 : $1 }
 
 -- checkPat is checked redundantly -- TODO improve this
 pat :: { Pattern }
-pat : VARID				{ VarPat $1 } 
+pat : var				{ VarPat $1 } 
      | VARID ':' VARID			{% checkPat $ HeadTailPat $1 $3 } 
      | CONID tyvars			{% checkPat $ ConPat $1 (reverse $2) }
      | literal				{ LitPat $1 }
@@ -316,7 +316,7 @@ lcb : '{'				{ () }
 
 rcb :: { () } -- optional curly braches
 rcb : '}'				{ () }
-    | 					  { () }
+    | 					{ () }
 
 {
 
