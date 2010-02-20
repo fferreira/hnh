@@ -142,7 +142,7 @@ instance Pretty Guard where
     pretty (Guard e1 e2) = pretty e1 <> equals <> pretty e2
 
 instance Pretty Type where
-    pretty (FuncType t1 t2) = pretty t1 <> pretty "->" <> pretty t2
+    pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
     pretty (AppType t1 t2) = pretty t1 <> pretty " of " <> pretty t2
     pretty (VarType n) = pretty n

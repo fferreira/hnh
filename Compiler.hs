@@ -31,12 +31,12 @@ rawparse = runParser parser
 compile program = case runParser parser program of
                     (Ok _ r) -> let (tran, hist) = programTransform r in
                                 case tran of
-                                  (TM.Ok t) -> pretty t
-                                  (TM.Failed s) -> pretty "Error" <> colon <+> pretty s
-                    (Failed p s) -> pretty "Error:" <//> pretty s <//> pretty (show p)
+                                  (TM.Ok t) -> show $ pretty t
+                                  (TM.Failed s) ->show $ pretty "Error" <> colon <+> pretty s
+                    (Failed p s) -> show $ pretty "Error:" <+> pretty s <+> pretty (show p)
 
 
-compileDeclaration = vsep $  map compile sampleDeclarations
+compileDeclaration = {-vsep $-}  map compile sampleDeclarations
 
 fileCompiler = do contents <- readFile "program.hnh"
                   return $ compile contents
