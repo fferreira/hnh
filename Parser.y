@@ -15,7 +15,7 @@ import ParserUtils(addType
 		  ,checkPat
 		  ,getType
 		  ,typeFromAlternative)
-import Builtins(listType)
+import Types(listType)
 
 }
  
