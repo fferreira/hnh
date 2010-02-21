@@ -288,7 +288,7 @@ constrs : constrs '|' constr		{ $3 : $1 }
 	| constr			{ [$1] }
 
 constr :: { ConstructorDeclaration }
-constr :  CONID atypes			{ ConsDcl $1 $2 }
+constr :  CONID atypes			{ ConsDcl $1 (reverse $2) }
 
 atypes :: { [Type] }
 atypes : atypes atype			{ $2 : $1 }
