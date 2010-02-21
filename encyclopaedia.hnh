@@ -67,7 +67,7 @@ a = 2 * (2 + 3);
 a = f x;
 a = ~a;
 a = \a -> a;
-a = let b = 14; a =c in c b;
+a = let b = 14; a = c in c b;
 a = if 1 == 1 then 1 else 0;
 a = case exp of { a -> a; Cons a -> b; };
 a = 1;

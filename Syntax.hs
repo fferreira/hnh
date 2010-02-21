@@ -82,7 +82,7 @@ data OpExpr
     | Op Operator OpExpr OpExpr
       deriving (Show, Eq)
 
-data Expr -- TODO add a switch statement with expressions?
+data Expr -- TODO rename to Exp!
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type

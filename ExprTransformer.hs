@@ -82,7 +82,7 @@ lst tbl t@(Op p t1 (Op q t2 t3)) =
     if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
 lst _ t = t
 
--- prefixer converts all the OpExpr to FExp calls (prefix syntax)
+-- toPrefix converts all the OpExpr to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
 toPrefix = transformExpressions
            "toPrefix: Unexpected Error (This should not fail)"
@@ -104,6 +104,22 @@ toPrefix = transformExpressions
                     (VarExp "~." UnknownType) 
                     e'
                     UnknownType)
+      adaptExpr (FExp e1 e2 t) =
+          do
+            e1' <- adaptExpr e1
+            e2' <- adaptExpr e2
+            return (FExp e1' e2' t)
+      
+      adaptExpr (LambdaExp pats e t) =
+          do
+            e' <- adaptExpr e
+            return (LambdaExp pats e' t)
+
+      adaptExpr (LetExp decls e t) =
+          do
+            e' <- adaptExpr e
+            return (LetExp decls e' t) -- TODO fix decls!!!!!!
+
       adaptExpr e = Just e --TODO convert other expressions in expressions!
 
       prefixer :: OpExpr -> Expr
