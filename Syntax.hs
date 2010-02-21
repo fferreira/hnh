@@ -66,7 +66,7 @@ data Type -- for type declarations
     = FuncType Type Type
     | TupleType [Type]
     | AppType Type Type  -- a constructor followed by its parameters
-    | VarType Name      -- for parametric types
+    | VarType Name      -- a polymorphic type
     | ConType Name     -- the constructor of the type
     | UnknownType
       deriving(Show, Eq)

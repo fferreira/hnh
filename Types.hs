@@ -17,11 +17,12 @@ type Env = (Name, Type)
 
 
 addBuiltInTypes :: Program -> TransformM Program
-addBuiltInTypes = transformExpressions
-                  "addBuiltInTypes: Unable to statically type" 
-                  adaptExpr
+addBuiltInTypes p@(Program decls) = transformExpressions
+                                    "addBuiltInTypes: Unable to statically type" 
+                                    adaptExpr
+                                    p
     where
-      env = env0 -- TODO complete this here or on in another phase
+      env = {-traceVal $-} env0 ++ (processDeclarations decls) -- TODO complete this here or on in another phase
       adaptExpr (VarExp n _) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
@@ -45,6 +46,19 @@ buildTypeDic (Program decls) = concatMap getType decls
       getType (TypeDcl n p t) = (n, p, t)
       getType (DataDcl n p 
 -}
+
+processDeclarations :: [Declaration] -> [Env]
+processDeclarations decls = concatMap  build decls
+    where
+      build :: Declaration -> [Env]
+      build (DataDcl n params constructors) = buildData n constructors
+      build d = []
+      buildData :: Name -> [ConstructorDeclaration] -> [Env]
+      buildData typeName constructors = map buildConstructor constructors
+          where
+            buildConstructor (ConsDcl name types) = (name, toFunction (types++[ConType typeName]))
+            toFunction (t:[]) = t
+            toFunction (t:ts) = FuncType t (toFunction ts)
 
 --- BuiltIns -- TODO maybe it will be better to move this away
 

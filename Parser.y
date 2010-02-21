@@ -99,7 +99,7 @@ topdecls : topdecl optsc		  { [$1] }
 topdecl :: { Declaration }
 topdecl : 'type' simpletype '=' type	  { TypeDcl (fst $2) (snd $2) $4 }
 topdecl : 'data' simpletype '=' constrs	  { DataDcl (fst $2) (snd $2) (reverse $4) }
-
+-- TODO add check to validate the polymorphic variables
 topdecl : decl	    	      		  { $1 }
 
 
