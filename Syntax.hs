@@ -89,6 +89,7 @@ data Expr -- TODO add a switch statement with expressions?
     | InfixOpExp OpExpr Type
     | FExp Expr Expr Type -- function application expression          
     | MinusExp Expr Type
+    | MinusFloatExp Expr Type
     | LambdaExp [Pattern] Expr Type
     | LetExp [Declaration] Expr Type
     | IfExp Expr Expr Expr Type
@@ -162,6 +163,7 @@ instance Pretty Expr where
     pretty (InfixOpExp e t) = parens $ pretty e <> colon <> pretty t
     pretty (FExp e1 e2 t) = parens $ pretty e1 <!> pretty e2 <> colon <> pretty t
     pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> colon <> pretty t
+    pretty (MinusFloatExp e t) = parens $ pretty "~." <> pretty e <> colon <> pretty t
     pretty (LambdaExp p e t) = parens $ 
                             pretty "\\" 
                                        <> pretty p <> pretty "->"

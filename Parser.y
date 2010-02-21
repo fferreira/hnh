@@ -63,6 +63,7 @@ import Types(listType)
    '|'			{ BarOp }
    '->'			{ RightArrowOp }
    '~'			{ TildeOp }
+   '~.'			{ TildeDotOp }
 
 -- Variable and Constructor Names
 
@@ -176,12 +177,13 @@ exp : expi '::' type 			{ addType $1 $3 }
 
 expi :: { Expr }
 expi : expi op expi			{ assembleInfixOperator $1 $2 $3 }
-     | '~' expi				{ MinusExp $2 ut } --TODO add for flat?, add type?
+     | '~' expi				{ MinusExp $2 ut }
+     | '~.' expi			{ MinusFloatExp $2 ut }
      | exp10   				{ $1 }
 
 exp10 :: { Expr }
 exp10 :	fexp				{ $1 }
-      | '\\' apats '->' exp		{ LambdaExp $2 $4 ut } -- TODO add type info
+      | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
       | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 (getType $6) }
       | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 (getType $4) }
       | 'case' exp 'of' lcb alts rcb   	{ CaseExp $2 

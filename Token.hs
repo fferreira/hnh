@@ -44,6 +44,7 @@ data HasntToken
      | BarOp		-- |
      | RightArrowOp	-- ->
      | TildeOp		-- ~
+     | TildeDotOp       -- ~.
 
 -- Variable and Contructor names
 

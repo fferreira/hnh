@@ -89,6 +89,7 @@ $white+				;
 "|"				{\(i, s) -> return $ (BarOp, i)}
 "->"				{\(i, s) -> return $ (RightArrowOp, i)}
 "~"				{\(i, s) -> return $ (TildeOp, i)}
+"~."				{\(i, s) -> return $ (TildeDotOp, i)}
 
 @varid				{\(i, s) -> return $ (VariableName s, i)}
 @conid				{\(i, s) -> return $ (ConstructorName s, i)}

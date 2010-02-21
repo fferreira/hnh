@@ -23,6 +23,10 @@ addBuiltInTypes = transformExpressions
     where
       env = env0 -- TODO complete this here or on in another phase
       adaptExpr (VarExp n _) = Just $ VarExp n (lookupWithDefault n env UnknownType)
+      adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
+      adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
+      adaptExpr (MinusFloatExp _ _) = Nothing 
+      adaptExpr (InfixOpExp _ _) = Nothing
       adaptExpr (FExp e1 e2 _) = 
           do
             e1' <- adaptExpr e1
@@ -45,9 +49,7 @@ buildTypeDic (Program decls) = concatMap getType decls
       getType (DataDcl n p 
 -}
 
-
-
---- BuiltIns
+--- BuiltIns -- TODO maybe it will be better to move this away
 
 listType = ConType "List" -- The defaultType of list
 
@@ -58,6 +60,7 @@ env0 =
     ,("*", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
     ,("/", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
     ,("^", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
+    ,("~", FuncType (ConType "Int") (ConType "Int"))
 
     ,("==", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
     ,( ">", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
@@ -72,4 +75,7 @@ env0 =
     ,("==.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
     ,( ">.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
     ,( "<.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
+
+    ,("True", ConType "Bool")
+    ,("False", ConType "Bool")
     ]

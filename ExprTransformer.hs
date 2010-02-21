@@ -89,8 +89,22 @@ toPrefix = transformExpressions
            adaptExpr
     where
 
-      adaptExpr (InfixOpExp e _) = Just $ prefixer e -- TODO add type?
-      adaptExpr e = Just e
+      adaptExpr (InfixOpExp e _) = Just $ prefixer e
+      adaptExpr (MinusExp e _) = 
+          do
+            e' <- adaptExpr e
+            return (FExp 
+                    (VarExp "~" UnknownType) 
+                    e'
+                    UnknownType)
+      adaptExpr (MinusFloatExp e _) =
+          do
+            e' <- adaptExpr e
+            return (FExp 
+                    (VarExp "~." UnknownType) 
+                    e'
+                    UnknownType)
+      adaptExpr e = Just e --TODO convert other expressions in expressions!
 
       prefixer :: OpExpr -> Expr
       prefixer (LeafExp e) = e
