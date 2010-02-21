@@ -22,7 +22,7 @@ addBuiltInTypes p@(Program decls) = transformExpressions
                                     adaptExpr
                                     p
     where
-      env = {-traceVal $-} env0 ++ (processDeclarations decls) -- TODO complete this here or on in another phase
+      env = env0 ++ (processDeclarations decls) -- TODO complete this here or on in another phase
       adaptExpr (VarExp n _) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
@@ -39,15 +39,6 @@ lookupWithDefault ::Eq a => a -> [(a, b)] -> b -> b
 lookupWithDefault val list def = case lookup val list of
                                    Just res -> res
                                    Nothing -> def
-
-{-
-buildTypeDic :: Program -> [(Name, [Name], Type)] -- (type name, polymorphic parameters, type)
-buildTypeDic (Program decls) = concatMap getType decls
-    where
-      getType :: Program -> (Name, Type)
-      getType (TypeDcl n p t) = (n, p, t)
-      getType (DataDcl n p 
--}
 
 processDeclarations :: [Declaration] -> [Env]
 processDeclarations decls = concatMap  build decls
