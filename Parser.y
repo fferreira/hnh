@@ -172,8 +172,7 @@ gd : '|' exp				{ $2 }
 -- Expressions
 
 exp :: { Exp }
-exp : expi '::' type 			{ addType $1 $3 } 
-    | expi 				{ $1 }
+exp : expi				{ $1 } 
 
 expi :: { Exp }
 expi : expi op expi			{ assembleInfixOperator $1 $2 $3 }
@@ -199,7 +198,7 @@ alt : pat '->' exp ';'			{ Alternative $1 $3 }
 
 fexp :: { Exp }
 fexp : fexp aexp			{ FExp $1 $2 (getType $1) } 
-       	    				       	     -- ^ if type not unknown, probably an error!
+       	    				    -- ^ if type not unknown, probably an error!
      | aexp 				{ $1 }
 
 aexp :: { Exp }
@@ -207,6 +206,7 @@ aexp : var				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
      | '(' exp ')'			{ ParensExp $2 (getType($2)) }
+     | '(' exp '::' type ')'		{ ParensExp $2 $4 }
      | '(' tupleexps ')'		{ TupleExp (reverse $2) (TupleType 
        	   	     			  	   	           (map getType (reverse $2))) }
      | '[' listexps ']'			{ ListExp (reverse $2) (AppType listType

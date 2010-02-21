@@ -29,7 +29,9 @@ addBuiltInTypes p@(Program decls) = transformExpressions
       adaptExpr (MinusFloatExp _ _) = Nothing 
       adaptExpr (InfixOpExp _ _) = Nothing
       adaptExpr (FExp e1 e2 _) = Just $ FExp e1 e2 (resultingType (getType e1))
-      adaptExpr (LetExp decls e t) = Just $ LetExp decls e (getType e)
+      adaptExpr (LetExp decls e _) = Just $ LetExp decls e (getType e)
+      -- if a ParensExp has type annotations it won't take the type of its subexpression
+      adaptExpr (ParensExp e UnknownType) = Just $ ParensExp e (getType e) 
       adaptExpr e = Just e
       
 
