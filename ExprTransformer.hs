@@ -104,23 +104,7 @@ toPrefix = transformExpressions
                     (VarExp "~." UnknownType) 
                     e'
                     UnknownType)
-      adaptExpr (FExp e1 e2 t) =
-          do
-            e1' <- adaptExpr e1
-            e2' <- adaptExpr e2
-            return (FExp e1' e2' t)
-      
-      adaptExpr (LambdaExp pats e t) =
-          do
-            e' <- adaptExpr e
-            return (LambdaExp pats e' t)
-
-      adaptExpr (LetExp decls e t) =
-          do
-            e' <- adaptExpr e
-            return (LetExp decls e' t) -- TODO fix decls!!!!!!
-
-      adaptExpr e = Just e --TODO convert other expressions in expressions!
+      adaptExpr e = Just e
 
       prefixer :: OpExpr -> Expr
       prefixer (LeafExp e) = e
