@@ -102,7 +102,6 @@ data Exp -- TODO rename to Exp!
 data Pattern
     = VarPat Name
     | ConPat Name [Name] -- a type constructor 
-    | LitPat LiteralValue
     | ListPat [Name]
     | HeadTailPat Name Name -- x:xs pattern type
     | TuplePat [Name]
@@ -184,7 +183,6 @@ instance Pretty Exp where
 instance Pretty Pattern where
     pretty (VarPat n)    = pretty n
     pretty (ConPat n p) = pretty n <!> pretty p
-    pretty (LitPat lit)  = pretty lit
     pretty (TuplePat t)  = pretty "#" <> pretty t
     pretty (ListPat l)   = pretty l
     pretty (HeadTailPat n1 n2) = pretty n1 <> colon <> pretty n2

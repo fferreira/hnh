@@ -61,7 +61,8 @@ transformExpressions msg transform prog@(Program decls) =
             e' <- adaptExp e
             transform (MinusFloatExp e' t)
 
-      adaptExp (LambdaExp pats e t) = -- the patterns contain notinb but names and literals
+      adaptExp (LambdaExp pats e t) = 
+      -- the patterns contain noting but names
           do
             e' <- adaptExp e
             transform (LambdaExp pats e' t)

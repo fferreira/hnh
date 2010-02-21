@@ -233,7 +233,6 @@ pat : var				{ VarPat $1 }
      -- you can not use underscores (ie inConstructor a _ b) here
      -- TODO should underscore be supported in this patterns?
      | CONID tyvars			{% checkPat $ ConPat $1 (reverse $2) }
-     | literal				{ LitPat $1 }
      | '_'				{ WildcardPat }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{% checkPat $ TuplePat (reverse $2) }  

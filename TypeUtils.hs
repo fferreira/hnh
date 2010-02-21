@@ -32,7 +32,6 @@ checkPat pat =
       vars :: Pattern -> [Name]
       vars (VarPat n) = [n]
       vars (ConPat n ps) = ps
-      vars (LitPat _) = []
       vars (ListPat ps) = ps
       vars (HeadTailPat n1 n2) = [n1, n2]
       vars (TuplePat ps) = ps
