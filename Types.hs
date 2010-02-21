@@ -27,11 +27,8 @@ addBuiltInTypes = transformExpressions
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
       adaptExpr (MinusFloatExp _ _) = Nothing 
       adaptExpr (InfixOpExp _ _) = Nothing
-      adaptExpr (FExp e1 e2 _) = 
-          do
-            e1' <- adaptExpr e1
-            e2' <- adaptExpr e2
-            return $ FExp e1' e2' (resultingType (getType e1'))
+      adaptExpr (FExp e1 e2 _) = Just $ FExp e1 e2 (resultingType (getType e1))
+      adaptExpr (LetExp decls e t) = Just $ LetExp decls e (getType e)
       adaptExpr e = Just e
       
 
