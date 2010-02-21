@@ -44,7 +44,7 @@ resultingType :: Type -> Type
 resultingType (FuncType _ t) = t
 resultingType _ = UnknownType
 
-getType :: Expr -> Type
+getType :: Exp -> Type
 getType (VarExp _ t) = t
 getType (ConExp _ t) = t
 getType (LitExp _ t) = t
@@ -64,7 +64,7 @@ typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e
 
 -- addType adds type information to an expression
-addType :: Expr -> Type -> Expr
+addType :: Exp -> Type -> Exp
 addType (VarExp n _) t = VarExp n t
 addType (ConExp n _) t = ConExp n t
 addType (LitExp v _) t = LitExp v t
@@ -81,14 +81,14 @@ addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
 
 -- litToExp creates an Expresion from a literal (with the right type)
-litToExp :: LiteralValue -> Expr
+litToExp :: LiteralValue -> Exp
 litToExp val@(LiteralInt _) = LitExp val (ConType "Int")
 litToExp val@(LiteralFloat _) = LitExp val (ConType "Float")
 litToExp val@(LiteralString _) = LitExp val (ConType "String") -- TODO should this be [Char]??
 litToExp val@(LiteralChar _) = LitExp val (ConType "Char")
 
 -- assembleInfixOperator builds an infix operator structure (for fixity adaptation later)
-assembleInfixOperator :: Expr -> Operator -> Expr -> Expr
+assembleInfixOperator :: Exp -> Operator -> Exp -> Exp
 assembleInfixOperator (InfixOpExp opEx1 _) op (InfixOpExp opEx2 _) = InfixOpExp 
                                                                      (Op op opEx1 opEx2)
                                                                      UnknownType

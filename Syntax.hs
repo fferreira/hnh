@@ -11,8 +11,8 @@ module Syntax
     ,Associativity(..)
     ,Type(..)
     ,ConstructorDeclaration(..)
-    ,OpExpr(..)
-    ,Expr(..)
+    ,OpExp(..)
+    ,Exp(..)
     ,Pattern(..)
     ,Alternative(..)
     )
@@ -46,12 +46,12 @@ data Declaration
       deriving(Show, Eq)
 
 data Rhs
-    = UnGuardedRhs Expr
+    = UnGuardedRhs Exp
     | GuardedRhs [Guard]
       deriving(Show, Eq)
 
 data Guard
-    = Guard Expr Expr -- first Expr evaluates to Bool, the second is the function body
+    = Guard Exp Exp -- first Exp evaluates to Bool, the second is the function body
       deriving(Show, Eq)
 
 type Precedence  = Int
@@ -77,26 +77,26 @@ data ConstructorDeclaration -- No support for named field types
 
 --- Expressions & Patterns
 
-data OpExpr
-    = LeafExp Expr
-    | Op Operator OpExpr OpExpr
+data OpExp
+    = LeafExp Exp
+    | Op Operator OpExp OpExp
       deriving (Show, Eq)
 
-data Expr -- TODO rename to Exp!
+data Exp -- TODO rename to Exp!
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
-    | InfixOpExp OpExpr Type
-    | FExp Expr Expr Type -- function application expression          
-    | MinusExp Expr Type
-    | MinusFloatExp Expr Type
-    | LambdaExp [Pattern] Expr Type
-    | LetExp [Declaration] Expr Type
-    | IfExp Expr Expr Expr Type
-    | CaseExp Expr [Alternative] Type
-    | ParensExp Expr Type
-    | TupleExp [Expr] Type -- a tuple of expresions
-    | ListExp [Expr] Type  -- a list of expresions
+    | InfixOpExp OpExp Type
+    | FExp Exp Exp Type -- function application expression          
+    | MinusExp Exp Type
+    | MinusFloatExp Exp Type
+    | LambdaExp [Pattern] Exp Type
+    | LetExp [Declaration] Exp Type
+    | IfExp Exp Exp Exp Type
+    | CaseExp Exp [Alternative] Type
+    | ParensExp Exp Type
+    | TupleExp [Exp] Type -- a tuple of expresions
+    | ListExp [Exp] Type  -- a list of expresions
       deriving (Show, Eq)
 
 data Pattern
@@ -110,7 +110,7 @@ data Pattern
       deriving (Show, Eq)
 
 data Alternative
-    = Alternative Pattern Expr
+    = Alternative Pattern Exp
     deriving (Show, Eq)
 
 -- Pretty printing support (very important for debugability)
@@ -153,10 +153,10 @@ instance Pretty Type where
 instance Pretty ConstructorDeclaration where
     pretty (ConsDcl n t) = pretty n <!> pretty t
 
-instance Pretty OpExpr where
+instance Pretty OpExp where
     pretty (LeafExp e) = pretty e
     pretty (Op o e1 e2) = parens $ pretty o <+> pretty e1 <+> pretty e2
-instance Pretty Expr where
+instance Pretty Exp where
     pretty (VarExp n t) = parens $ pretty n <> colon <> pretty t
     pretty (ConExp n t) = parens $ pretty n <> colon <> pretty t
     pretty (LitExp v t) = parens $ pretty v <> colon <> pretty t

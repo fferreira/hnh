@@ -166,22 +166,22 @@ gdrhss : gdrhss gdrhs			{ $2 : $1 }
 gdrhs :: { Guard }
 gdrhs : gd '=' exp optsc		{ Guard $1 $3 }  -- TODO add type bool to the first
 
-gd :: { Expr }
+gd :: { Exp }
 gd : '|' exp				{ $2 }
 
 -- Expressions
 
-exp :: { Expr }
+exp :: { Exp }
 exp : expi '::' type 			{ addType $1 $3 } 
     | expi 				{ $1 }
 
-expi :: { Expr }
+expi :: { Exp }
 expi : expi op expi			{ assembleInfixOperator $1 $2 $3 }
      | '~' expi				{ MinusExp $2 ut }
      | '~.' expi			{ MinusFloatExp $2 ut }
      | exp10   				{ $1 }
 
-exp10 :: { Expr }
+exp10 :: { Exp }
 exp10 :	fexp				{ $1 }
       | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
       | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 (getType $6) }
@@ -197,12 +197,12 @@ alts : alts alt				{ $2 : $1 }
 alt :: { Alternative }
 alt : pat '->' exp ';'			{ Alternative $1 $3 }
 
-fexp :: { Expr }
+fexp :: { Exp }
 fexp : fexp aexp			{ FExp $1 $2 (getType $1) } 
        	    				       	     -- ^ if type not unknown, probably an error!
      | aexp 				{ $1 }
 
-aexp :: { Expr }
+aexp :: { Exp }
 aexp : var				{ VarExp $1 ut }
      | CONID				{ ConExp $1 ut }
      | literal				{ litToExp $1 }
@@ -212,11 +212,11 @@ aexp : var				{ VarExp $1 ut }
      | '[' listexps ']'			{ ListExp (reverse $2) (AppType listType
        	   	    			  	  	       		(getType (last $2))) }
 
-tupleexps :: { [Expr] }
+tupleexps :: { [Exp] }
 tupleexps : tupleexps ',' exp		{ $3 : $1 }
 	  | exp ',' exp	  		{ [$3, $1] }
 
-listexps :: { [Expr] }
+listexps :: { [Exp] }
 listexps : listexps ',' exp		{ $3 : $1 }
 	 | exp	    			{ [$1] }
 

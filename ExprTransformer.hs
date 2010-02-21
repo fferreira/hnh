@@ -52,7 +52,7 @@ lookupPrecedence tbl op = case filter (\(o, p, a) -> op == o) tbl of
                             l  -> head l             -- return the first
 
 -- Apply the transformation recursively to the right sided tree
-transform ::[FixityDesc] -> OpExpr -> Maybe OpExpr
+transform ::[FixityDesc] -> OpExp -> Maybe OpExp
 transform tbl t@(LeafExp _) = Just t
 transform tbl t@(Op _ _ (LeafExp _)) = Just t 
 transform tbl t@(Op o left t'@(Op _ _ _)) =
@@ -77,12 +77,12 @@ compPrecedence table o1 o2 =
 
 -- Left Subordinate Transform 
 
-lst :: [FixityDesc] -> OpExpr -> OpExpr
+lst :: [FixityDesc] -> OpExp -> OpExp
 lst tbl t@(Op p t1 (Op q t2 t3)) =
     if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
 lst _ t = t
 
--- toPrefix converts all the OpExpr to FExp calls (prefix syntax)
+-- toPrefix converts all the OpExp to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
 toPrefix = transformExpressions
            "toPrefix: Unexpected Error (This should not fail)"
@@ -106,7 +106,7 @@ toPrefix = transformExpressions
                     UnknownType)
       adaptExpr e = Just e
 
-      prefixer :: OpExpr -> Expr
+      prefixer :: OpExp -> Exp
       prefixer (LeafExp e) = e
       prefixer (Op op e1 e2) = FExp 
                                (FExp (VarExp op UnknownType)

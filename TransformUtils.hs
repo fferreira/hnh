@@ -8,7 +8,7 @@ import Syntax
 import TransformMonad(TransformM, transformOk, transformError)
 import Control.Monad.Error
 
-transformExpressions :: String -> (Expr -> Maybe Expr) -> Program -> TransformM Program
+transformExpressions :: String -> (Exp -> Maybe Exp) -> Program -> TransformM Program
 transformExpressions msg transform prog@(Program decls) = 
     case decls' of
       Just d -> transformOk $ Program d
@@ -42,7 +42,7 @@ transformExpressions msg transform prog@(Program decls) =
 
       adaptExp (InfixOpExp opEx t) =
           do
-            opEx' <- adaptOpExpr opEx
+            opEx' <- adaptOpExp opEx
             transform (InfixOpExp opEx' t)
 
       adaptExp (FExp e1 e2 t) =
@@ -102,15 +102,15 @@ transformExpressions msg transform prog@(Program decls) =
 
       adaptExp e = transform e
                     
-      adaptOpExpr (LeafExp e) =
+      adaptOpExp (LeafExp e) =
           do
             e' <- adaptExp e
             return $ LeafExp e'
 
-      adaptOpExpr (Op o e1 e2) =
+      adaptOpExp (Op o e1 e2) =
           do
-            e1' <- adaptOpExpr e1
-            e2' <- adaptOpExpr e2
+            e1' <- adaptOpExp e1
+            e2' <- adaptOpExp e2
             return $ Op o e1' e2'
 
       adaptAlt (Alternative p e) =
