@@ -66,8 +66,8 @@ data Type -- for type declarations
     = FuncType Type Type
     | TupleType [Type]
     | AppType Type Type  -- a constructor followed by its parameters
-    | VarType Name      -- a polymorphic type
-    | ConType Name     -- the constructor of the type
+    | VarType Name      -- a polymorphic type parameter
+    | ConType Name [Type]     -- the constructor of the type and its polymorphic params
     | MetaType Int -- a meta variable for the unification process
     | UnknownType
       deriving(Show, Eq)
@@ -148,7 +148,7 @@ instance Pretty Type where
     pretty (TupleType t) = pretty t
     pretty (AppType t1 t2) = pretty t1 <> pretty " of " <> pretty t2
     pretty (VarType n) = pretty n
-    pretty (ConType n) = pretty n
+    pretty (ConType n params) = pretty n <> pretty"_"<> pretty params
     pretty (UnknownType) = pretty "?"
     pretty (MetaType i) = pretty "%" <> pretty i
 
