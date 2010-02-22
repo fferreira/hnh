@@ -30,12 +30,12 @@ checkPat pat =
           returnError $ "Duplicated variable in pattern: " ++ (show $ pretty pat)
     where
       vars :: Pattern -> [Name]
-      vars (VarPat n) = [n]
-      vars (ConPat n ps) = ps
-      vars (ListPat ps) = ps
-      vars (HeadTailPat n1 n2) = [n1, n2]
-      vars (TuplePat ps) = ps
-      vars (WildcardPat) = []
+      vars (VarPat n _) = [n]
+      vars (ConPat n ps _) = ps
+      vars (ListPat ps _) = ps
+      vars (HeadTailPat n1 n2 _) = [n1, n2]
+      vars (TuplePat ps _) = ps
+      vars (WildcardPat _) = []
 
 -- returns the type resuling for the application of FuncType
 -- or UnknownType if the type is not appropiate

@@ -19,7 +19,7 @@ type Env = (Name, Type)
 addBuiltInTypes :: Program -> TransformM Program
 addBuiltInTypes p@(Program decls) = transformTree
                                     "addBuiltInTypes: Unable to statically type" 
-                                    (Transformer adaptExpr idM)
+                                    (Transformer adaptExpr adaptPattern)
                                     p
     where
       env = env0 ++ (processDeclarations decls)
@@ -33,6 +33,21 @@ addBuiltInTypes p@(Program decls) = transformTree
       -- if a ParensExp has type annotations it won't take the type of its subexpression
       adaptExpr (ParensExp e UnknownType) = Just $ ParensExp e (getType e) 
       adaptExpr e = Just e
+
+      adaptPattern (TuplePat vars _) = Just $ 
+                                       TuplePat vars 
+                                                (TupleType (replicate (length vars) UnknownType))
+
+      adaptPattern (ConPat name params _) =
+          do
+            t <- lookup name env
+            return (ConPat name params (getLastType t))
+      adaptPattern (ListPat names _) = Just $ ListPat names listType
+      adaptPattern (HeadTailPat h t _) = Just $ HeadTailPat h t listType
+      adaptPattern p = Just p
+
+      getLastType (FuncType _ f@(FuncType _ _)) = getLastType f
+      getLastType t = t
       
 
 lookupWithDefault ::Eq a => a -> [(a, b)] -> b -> b
@@ -55,7 +70,7 @@ processDeclarations decls = concatMap  build decls
 
 --- BuiltIns -- TODO maybe it will be better to move this away
 
-listType = ConType "List" -- The defaultType of list
+listType = ConType "List" -- The defaultType of list --TODO add polymorphism
 
 env0 :: [Env] -- the initial environment, containing all the builin functions
 env0 = 

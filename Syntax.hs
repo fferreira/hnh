@@ -100,12 +100,12 @@ data Exp -- TODO rename to Exp!
       deriving (Show, Eq)
 
 data Pattern
-    = VarPat Name
-    | ConPat Name [Name] -- a type constructor 
-    | ListPat [Name]
-    | HeadTailPat Name Name -- x:xs pattern type
-    | TuplePat [Name]
-    | WildcardPat
+    = VarPat Name Type
+    | ConPat Name [Name] Type -- a type constructor 
+    | ListPat [Name] Type
+    | HeadTailPat Name Name Type -- x:xs pattern type
+    | TuplePat [Name] Type
+    | WildcardPat Type
       deriving (Show, Eq)
 
 data Alternative
@@ -181,12 +181,12 @@ instance Pretty Exp where
     pretty (ListExp e t) = parens $ pretty e <> colon <> pretty t
 
 instance Pretty Pattern where
-    pretty (VarPat n)    = pretty n
-    pretty (ConPat n p) = pretty n <!> pretty p
-    pretty (TuplePat t)  = pretty "#" <> pretty t
-    pretty (ListPat l)   = pretty l
-    pretty (HeadTailPat n1 n2) = pretty n1 <> colon <> pretty n2
-    pretty (WildcardPat) = pretty '_'
+    pretty (VarPat n t)    = pretty n <> colon <> pretty t
+    pretty (ConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
+    pretty (TuplePat tuple t)  = pretty "#" <> pretty tuple <> colon <> pretty t
+    pretty (ListPat l t)   = pretty l <> colon <> pretty t
+    pretty (HeadTailPat n1 n2 t) = pretty n1 <> colon <> pretty n2 <> colon <> pretty t
+    pretty (WildcardPat t) = pretty '_' <> colon <> pretty t
 
 instance Pretty Alternative where
     pretty (Alternative p e) = pretty p <> pretty " -> " <!> pretty e
