@@ -25,7 +25,7 @@ programTransform p =
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
                                        >>= addKnownTypes
-                                       >>= addTypeSignatures
+                                       >>= addTypeSignatures -- multiple steps to the trace
                                        >>= performTypeInference
                                        >>= return)
     in

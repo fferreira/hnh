@@ -68,7 +68,24 @@ typeDeclarations decls = concatMap  build decls
 
 -- addTypeSignature, add declared type signatures to the corresponding pattern
 addTypeSignatures :: Program -> TransformM Program
-addTypeSignatures (Program decls) = transformOk $ Program (map addType decls)
+addTypeSignatures (Program decls) = 
+    (transformOk $ Program (addTypeSignatureToDeclarations decls))
+    >>= addTypeSignatureToLet
+
+
+addTypeSignatureToLet :: Program -> TransformM Program
+addTypeSignatureToLet p@(Program decls) = transformTree
+                                  "addKnownTypes: Unable to type (type constructor not found)" 
+                                  (Transformer adaptExpr idM)
+                                  p
+    where
+      adaptExpr (LetExp decls e t) = Just $ (LetExp decls' e t)
+          where
+            decls' = addTypeSignatureToDeclarations decls
+      adaptExpr e = Just e
+
+
+addTypeSignatureToDeclarations decls = map addType decls
     where
       addType (FunBindDcl n pats r t) = (FunBindDcl n pats r (lookupWithDefault n sigs t))
       addType (PatBindDcl (VarPat n t) r) = (PatBindDcl (VarPat n 
