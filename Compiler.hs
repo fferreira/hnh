@@ -15,7 +15,8 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 
 import ExprTransformer(correctPrecedence, toPrefix)
-import KnownTypes(addKnownTypes)
+import KnownTypes(addKnownTypes, addTypeSignatures)
+import InferTypes(performTypeInference)
 
 import Data.List(intersperse)
 
@@ -24,6 +25,8 @@ programTransform p =
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
                                        >>= addKnownTypes
+                                       >>= addTypeSignatures
+                                       >>= performTypeInference
                                        >>= return)
     in
       (res, (pretty p):docs) -- adding the original to the list

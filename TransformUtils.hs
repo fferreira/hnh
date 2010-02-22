@@ -31,11 +31,11 @@ transformTree msg transform prog@(Program decls) =
       Nothing -> transformError msg
     where
       decls' = mapM adaptDeclaration decls
-      adaptDeclaration (FunBindDcl n pats rhs) =
+      adaptDeclaration (FunBindDcl n pats rhs t) =
           do
             rhs' <- adaptRhs rhs
             pats' <- mapM (pattern transform) pats
-            return $ FunBindDcl n pats' rhs'
+            return $ FunBindDcl n pats' rhs' t
 
       adaptDeclaration (PatBindDcl pat rhs) = 
           do

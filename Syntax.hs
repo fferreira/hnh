@@ -41,7 +41,7 @@ data Declaration
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
-    | FunBindDcl Name [Pattern] Rhs
+    | FunBindDcl Name [Pattern] Rhs Type --this is the type of the function to be inferred
     | PatBindDcl Pattern Rhs
       deriving(Show, Eq)
 
@@ -68,6 +68,7 @@ data Type -- for type declarations
     | AppType Type Type  -- a constructor followed by its parameters
     | VarType Name      -- a polymorphic type
     | ConType Name     -- the constructor of the type
+    | MetaType Int -- a meta variable for the unification process
     | UnknownType
       deriving(Show, Eq)
 
@@ -130,7 +131,9 @@ instance Pretty Declaration where
     pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
     pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
     pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
-    pretty (FunBindDcl n ps r) = pretty n <> pretty ps <> equals <> pretty r
+    pretty (FunBindDcl n ps r t) = pretty n 
+                                   <> pretty ps <> equals <> pretty r
+                                   <> colon <> pretty t
     pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
 
 instance Pretty Rhs where
@@ -147,6 +150,7 @@ instance Pretty Type where
     pretty (VarType n) = pretty n
     pretty (ConType n) = pretty n
     pretty (UnknownType) = pretty "?"
+    pretty (MetaType i) = pretty "%" <> pretty i
 
 instance Pretty ConstructorDeclaration where
     pretty (ConDcl n t) = pretty n <!> pretty t

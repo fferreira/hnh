@@ -107,7 +107,7 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
-     | var apats rhs			{ FunBindDcl $1 (reverse $2) $3 } --funlhs
+     | var apats rhs			{ FunBindDcl $1 (reverse $2) $3 ut } --funlhs
      | pat rhs				{ PatBindDcl $1 $2 }
 
 decls :: { [Declaration] }  -- one or more declarations

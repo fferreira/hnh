@@ -1,11 +1,12 @@
 module KnownTypes
     (
      addKnownTypes
+    ,addTypeSignatures
     )
     where
 
 import Syntax
-import TransformMonad(TransformM)
+import TransformMonad(TransformM, transformOk, nullTransform) -- TODO remove nullTransform
 import TransformUtils(transformTree, Transformer(..), idM)
 import TypeUtils(getType, resultingType)
 import BuiltIn(Env, listType, env0)
@@ -64,3 +65,21 @@ typeDeclarations decls = concatMap  build decls
             buildConstructor (ConDcl name types) = (name, toFunction (types++[ConType typeName]))
             toFunction (t:[]) = t
             toFunction (t:ts) = FuncType t (toFunction ts)
+
+-- addTypeSignature, add declared type signatures to the corresponding pattern
+addTypeSignatures :: Program -> TransformM Program
+addTypeSignatures (Program decls) = transformOk $ Program (map addType decls)
+    where
+      addType (FunBindDcl n pats r t) = (FunBindDcl n pats r (lookupWithDefault n sigs t))
+      addType (PatBindDcl (VarPat n t) r) = (PatBindDcl (VarPat n 
+                                                                (lookupWithDefault n sigs t)) 
+                                             r)
+      addType n = n
+
+      sigs = prepareTypeSignatures decls
+
+prepareTypeSignatures :: [Declaration] -> [(Name, Type)]
+prepareTypeSignatures decls = concatMap extractFromSig decls
+    where
+      extractFromSig (TypeSigDcl ns t) = zip ns (replicate (length ns) t)
+      extractFromSig _ = []
