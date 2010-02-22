@@ -168,7 +168,7 @@ gdrhs : gd '=' exp optsc		{ Guard $1 $3 }
 
 gd :: { Exp }  	   			-- this should be Bool, so if unknown then Bool
 gd : '|' exp				{ if (getType $2) == UnknownType
-     	 				     then addType $2 (ConType "Bool")
+     	 				     then addType $2 (ConType "Bool" [])
 					     else $2
      	 				}
 
@@ -273,7 +273,7 @@ btype : btype atype			{ AppType $1 $2 }
       | atype 				{ $1 }
 
 atype :: { Type }
-atype : CONID				{ ConType $1 } 
+atype : CONID				{ ConType $1 []} 
       | VARID				{ VarType $1 }
       | '(' tupletypes ')'		{ TupleType (reverse $2) }
       | '[' type ']'			{ AppType listType $2 }

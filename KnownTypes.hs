@@ -58,14 +58,21 @@ typeDeclarations :: [Declaration] -> [Env]
 typeDeclarations decls = concatMap  build decls
     where
       build :: Declaration -> [Env]
-      build (DataDcl n params constructors) = buildData n constructors
+      build (DataDcl n params constructors) =
+          let 
+              buildData typeName constructors = map (buildConstructor typeName) constructors
+              buildConstructor typeName (ConDcl name types) = (name, toFunction 
+                                                                       (types
+                                                                        ++ [ConType
+                                                                            typeName
+                                                                            polyParams
+                                                                           ]))
+              toFunction (t:[]) = t
+              toFunction (t:ts) = FuncType t (toFunction ts)
+              polyParams = map (\param -> (VarType param)) params
+          in 
+            buildData n constructors
       build d = []
-      buildData :: Name -> [ConstructorDeclaration] -> [Env]
-      buildData typeName constructors = map buildConstructor constructors
-          where
-            buildConstructor (ConDcl name types) = (name, toFunction (types++[ConType typeName]))
-            toFunction (t:[]) = t
-            toFunction (t:ts) = FuncType t (toFunction ts)
 
 -- addTypeSignature, add declared type signatures to the corresponding pattern
 addTypeSignatures :: Program -> TransformM Program

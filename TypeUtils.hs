@@ -80,10 +80,10 @@ addType (ListExp e _) t = ListExp e t
 
 -- litToExp creates an Expresion from a literal (with the right type)
 litToExp :: LiteralValue -> Exp
-litToExp val@(LiteralInt _) = LitExp val (ConType "Int")
-litToExp val@(LiteralFloat _) = LitExp val (ConType "Float")
-litToExp val@(LiteralString _) = LitExp val (ConType "String") -- TODO should this be [Char]??
-litToExp val@(LiteralChar _) = LitExp val (ConType "Char")
+litToExp val@(LiteralInt _) = LitExp val (ConType "Int" [])
+litToExp val@(LiteralFloat _) = LitExp val (ConType "Float" [])
+litToExp val@(LiteralString _) = LitExp val (ConType "String" []) -- TODO perhaps (ConType "List" (ConType "Char" []))
+litToExp val@(LiteralChar _) = LitExp val (ConType "Char" [])
 
 -- assembleInfixOperator builds an infix operator structure (for fixity adaptation later)
 assembleInfixOperator :: Exp -> Operator -> Exp -> Exp
