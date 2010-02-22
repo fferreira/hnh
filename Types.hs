@@ -23,7 +23,7 @@ addBuiltInTypes p@(Program decls) = transformExpressions
                                     p
     where
       env = env0 ++ (processDeclarations decls) -- TODO complete this here or on in another phase
-      adaptExpr (VarExp n _) = Just $ VarExp n (lookupWithDefault n env UnknownType)
+      adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
       adaptExpr (MinusFloatExp _ _) = Nothing 

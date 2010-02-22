@@ -32,6 +32,7 @@ fun a:xs = joker;
 fun (a,b,c) = joker;
 fun _ = joker;
 (+) a b = joker;
+f x | x = 1 | y = 2;
 
 --- Pattern Binding
 

@@ -164,10 +164,13 @@ gdrhss : gdrhss gdrhs			{ $2 : $1 }
        | gdrhs				{ [$1] }
 
 gdrhs :: { Guard }
-gdrhs : gd '=' exp optsc		{ Guard $1 $3 }  -- TODO add type bool to the first
+gdrhs : gd '=' exp optsc		{ Guard $1 $3 }
 
-gd :: { Exp }
-gd : '|' exp				{ $2 }
+gd :: { Exp }  	   			-- this should be Bool, so if unknown then Bool
+gd : '|' exp				{ if (getType $2) == UnknownType
+     	 				     then addType $2 (ConType "Bool")
+					     else $2
+     	 				}
 
 -- Expressions
 
