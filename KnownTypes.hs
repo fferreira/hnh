@@ -17,7 +17,7 @@ addKnownTypes p@(Program decls) = transformTree
                                   (Transformer adaptExpr adaptPattern)
                                   p
     where
-      env = env0 ++ (processDeclarations decls)
+      env = env0 ++ (typeDeclarations decls)
       adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = 
           do
@@ -40,7 +40,6 @@ addKnownTypes p@(Program decls) = transformTree
           do
             t <- lookup name env -- Fails when the constructor does not exist
             return (ConPat name params (getLastType t))
-      adaptPattern (ListPat names _) = Just $ ListPat names listType
       adaptPattern (HeadTailPat h t _) = Just $ HeadTailPat h t listType
       adaptPattern p = Just p
 
@@ -53,8 +52,8 @@ lookupWithDefault val list def = case lookup val list of
                                    Just res -> res
                                    Nothing -> def
 
-processDeclarations :: [Declaration] -> [Env]
-processDeclarations decls = concatMap  build decls
+typeDeclarations :: [Declaration] -> [Env]
+typeDeclarations decls = concatMap  build decls
     where
       build :: Declaration -> [Env]
       build (DataDcl n params constructors) = buildData n constructors

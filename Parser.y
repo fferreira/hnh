@@ -240,16 +240,11 @@ pat : var				{ VarPat $1 ut }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{% checkPat $ TuplePat (reverse $2) ut }  
        	   	     			  	      	    -- ^ it has to be >= 2 to be a tuple
-     | '[' listpats ']'			{% checkPat $ ListPat (reverse $2) ut }
 
 
 tuplepats :: { [Name] }  -- two or more
 tuplepats : tuplepats ',' VARID		{ $3 : $1 }
 	  | VARID ',' VARID		{ [$3, $1] }
-
-listpats :: { [Name] }  -- one or more
-listpats: listpats ',' VARID		{ $3 : $1 } 
-	| VARID	   			{ [$1] }  	   
 
 -- Types
 
