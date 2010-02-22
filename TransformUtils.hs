@@ -1,6 +1,8 @@
 module TransformUtils
     (
-     transformExpressions
+     transformTree
+    ,Transformer(..)
+    ,idM
     )
     where
 
@@ -8,8 +10,22 @@ import Syntax
 import TransformMonad(TransformM, transformOk, transformError)
 import Control.Monad.Error
 
-transformExpressions :: String -> (Exp -> Maybe Exp) -> Program -> TransformM Program
-transformExpressions msg transform prog@(Program decls) = 
+-- idM: monadic version of id
+idM :: Monad m => a -> m a
+idM = return 
+
+data Transformer = Transformer {
+                   expression :: (Exp -> Maybe Exp)
+                  ,pattern :: (Pattern -> Maybe Pattern)
+                  -- TODO maybe add other transformers here
+    }
+
+-- transformTree: does a depth first transformation of the program
+-- it is not suitable for transformations that require recursive 
+-- access to expressions or other constructs
+
+transformTree :: String -> Transformer -> Program -> TransformM Program
+transformTree msg transform prog@(Program decls) = 
     case decls' of
       Just d -> transformOk $ Program d
       Nothing -> transformError msg
@@ -18,11 +34,15 @@ transformExpressions msg transform prog@(Program decls) =
       adaptDeclaration (FunBindDcl n pats rhs) =
           do
             rhs' <- adaptRhs rhs
-            return $ FunBindDcl n pats rhs'
+            pats' <- mapM (pattern transform) pats
+            return $ FunBindDcl n pats' rhs'
+
       adaptDeclaration (PatBindDcl pat rhs) = 
           do
             rhs' <- adaptRhs rhs
-            return $ PatBindDcl pat rhs'
+            pat' <- (pattern transform) pat
+            return $ PatBindDcl pat' rhs'
+
       adaptDeclaration d = Just d
 
       adaptRhs (UnGuardedRhs e) = 
@@ -43,65 +63,66 @@ transformExpressions msg transform prog@(Program decls) =
       adaptExp (InfixOpExp opEx t) =
           do
             opEx' <- adaptOpExp opEx
-            transform (InfixOpExp opEx' t)
+            (expression transform) (InfixOpExp opEx' t)
 
       adaptExp (FExp e1 e2 t) =
           do
             e1' <- adaptExp e1
             e2' <- adaptExp e2
-            transform (FExp e1' e2' t)
+            (expression transform) (FExp e1' e2' t)
 
       adaptExp (MinusExp e t) =
           do
             e' <- adaptExp e
-            transform (MinusExp e' t)
+            (expression transform) (MinusExp e' t)
 
       adaptExp (MinusFloatExp e t) =
           do
             e' <- adaptExp e
-            transform (MinusFloatExp e' t)
+            (expression transform) (MinusFloatExp e' t)
 
       adaptExp (LambdaExp pats e t) = 
       -- the patterns contain noting but names
           do
             e' <- adaptExp e
-            transform (LambdaExp pats e' t)
+            pats' <- mapM (pattern transform) pats
+            (expression transform) (LambdaExp pats' e' t)
 
       adaptExp (LetExp decls e t) =
           do
             decls' <- mapM adaptDeclaration decls
             e' <- adaptExp e
-            transform (LetExp decls' e' t)
+            (expression transform) (LetExp decls' e' t)
             
       adaptExp (IfExp e1 e2 e3 t) =
           do
             e1' <- adaptExp e1
             e2' <- adaptExp e2
             e3' <- adaptExp e3
-            transform (IfExp e1' e2' e3' t)
+            (expression transform) (IfExp e1' e2' e3' t)
 
       adaptExp (CaseExp e alts t) = 
           do
             e' <- adaptExp e
             alts' <- mapM adaptAlt alts
-            transform (CaseExp e' alts' t)
+            (expression transform) (CaseExp e' alts' t)
 
       adaptExp (ParensExp e t) =
           do
             e' <- adaptExp e
-            transform (ParensExp e' t)
+            (expression transform) (ParensExp e' t)
 
       adaptExp (TupleExp exps t) =
           do
             exps' <- mapM adaptExp exps
-            transform (TupleExp exps' t)
+            (expression transform) (TupleExp exps' t)
 
       adaptExp (ListExp exps t) =
           do
             exps' <- mapM adaptExp exps
-            transform (ListExp exps' t)
+            (expression transform) (ListExp exps' t)
 
-      adaptExp e = transform e
+      adaptExp e = (expression transform) e
                     
       adaptOpExp (LeafExp e) =
           do
@@ -114,7 +135,8 @@ transformExpressions msg transform prog@(Program decls) =
             e2' <- adaptOpExp e2
             return $ Op o e1' e2'
 
-      adaptAlt (Alternative p e) =
+      adaptAlt (Alternative pat e) =
           do
             e' <- adaptExp e
-            return $ Alternative p e'
+            pat' <- (pattern transform) pat
+            return $ Alternative pat' e'

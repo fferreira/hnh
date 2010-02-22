@@ -8,7 +8,7 @@ module Types
 
 import Syntax
 import TransformMonad(TransformM)
-import TransformUtils(transformExpressions)
+import TransformUtils(transformTree, Transformer(..), idM)
 import TypeUtils(getType, resultingType)
 import Tools(traceVal)
 
@@ -17,12 +17,12 @@ type Env = (Name, Type)
 
 
 addBuiltInTypes :: Program -> TransformM Program
-addBuiltInTypes p@(Program decls) = transformExpressions
+addBuiltInTypes p@(Program decls) = transformTree
                                     "addBuiltInTypes: Unable to statically type" 
-                                    adaptExpr
+                                    (Transformer adaptExpr idM)
                                     p
     where
-      env = env0 ++ (processDeclarations decls) -- TODO complete this here or on in another phase
+      env = env0 ++ (processDeclarations decls)
       adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
