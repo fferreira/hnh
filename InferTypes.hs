@@ -12,11 +12,16 @@ import Control.Monad.State
 
 performTypeInference :: Program -> TransformM Program
 performTypeInference (Program decls) = transformOk $ Program (addMetaTypes decls)
--- TODO add the patterns in lambdas and declarations in lets
+
 ----------------------------------------------------
 
 type MTState = Int -- meta type state
 
+{-
+addMetaTypes:
+
+First phase of inference, it will add meta type to all the variable declarations in the program
+-}
 
 addMetaTypes :: [Declaration] -> [Declaration]
 addMetaTypes decls = evalState (addMetaTypes' decls) 0
@@ -130,7 +135,7 @@ numberPattern (ConPat n ns UnknownType)  =
       put (s+1)
       return  (ConPat n ns (MetaType s))
 
-numberPattern (HeadTailPat n1 n2 UnknownType) = 
+numberPattern (HeadTailPat n1 n2 _) = 
     do
       s <- get
       put (s+1)
@@ -162,28 +167,38 @@ numberVarList i =
 -}
 
 --------------------------------------------------
-{- 
+
+typeExpressions :: [Env] -> [Declaration] -> [Declaration]
+typeExpressions env decls = undefined
+
+populateEnvironment :: [Env] -> [Declaration] -> [Env]
+populateEnvironment env decls = undefined
+
+
+{-
 findDeclaration :: Monad m => Name -> [Declaration] -> m Declaration
 findDeclaration n decls = 
     case filter (\d -> elem n (namesDeclared d)) decls of
       x:[] -> return x
       _ -> fail "not found, or multiple declarations"
+-}
 
-namesDeclared :: Declaration -> [Name]
-namesDeclared (FunBindDcl n _ _ _) = [n]
+namesDeclared :: Declaration -> [(Name, Type)]
+namesDeclared (FunBindDcl n _ _ t) = [(n, t)]  --TODO missing the parameters!!
 namesDeclared (PatBindDcl p _) = namesFromPattern p
 
-namesFromPattern :: Pattern -> [Name]
-namesFromPattern (VarPat n _) = [n]
-namesFromPattern (ConPat _ ns _) = ns
-namesFromPattern (HeadTailPat n1 n2 _) = [n1, n2]
-namesFromPattern (TuplePat ns _) = ns
+namesFromPattern :: Pattern -> [(Name, Type)]
+namesFromPattern (VarPat n t) = [(n, t)]
+
+namesFromPattern (ConPat _ ns _) = undefined  -- ?
+namesFromPattern (HeadTailPat n1 n2 _) = undefined -- ?
+
+namesFromPattern (TuplePat ns (TupleType ts)) = zip ns ts
 namesFromPattern (WildcardPat _) = []
 
 getRhsType :: Rhs -> Type
 getRhsType = undefined
 
--}
 {-
 infer env (FunBindDcl n pats r) = undefined
 infer env (PatBindDcl pat r) = undefined

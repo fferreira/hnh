@@ -2,6 +2,7 @@ module KnownTypes
     (
      addKnownTypes
     ,addTypeSignatures
+    ,typeDeclarations
     )
     where
 
