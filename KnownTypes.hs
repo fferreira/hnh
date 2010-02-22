@@ -1,4 +1,4 @@
-module Types
+module KnownTypes
     (
      addKnownTypes
     ,Env

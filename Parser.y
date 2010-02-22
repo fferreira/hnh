@@ -15,7 +15,7 @@ import TypeUtils(addType
 		  ,checkPat
 		  ,getType
 		  ,typeFromAlternative)
-import Types(listType)
+import KnownTypes(listType)
 
 }
  

@@ -15,7 +15,7 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 
 import ExprTransformer(correctPrecedence, toPrefix)
-import Types(addKnownTypes)
+import KnownTypes(addKnownTypes)
 
 import Data.List(intersperse)
 
