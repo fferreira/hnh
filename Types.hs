@@ -49,7 +49,7 @@ processDeclarations decls = concatMap  build decls
       buildData :: Name -> [ConstructorDeclaration] -> [Env]
       buildData typeName constructors = map buildConstructor constructors
           where
-            buildConstructor (ConsDcl name types) = (name, toFunction (types++[ConType typeName]))
+            buildConstructor (ConDcl name types) = (name, toFunction (types++[ConType typeName]))
             toFunction (t:[]) = t
             toFunction (t:ts) = FuncType t (toFunction ts)
 

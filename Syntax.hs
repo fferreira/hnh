@@ -72,7 +72,7 @@ data Type -- for type declarations
       deriving(Show, Eq)
 
 data ConstructorDeclaration -- No support for named field types
-    = ConsDcl Name [Type]
+    = ConDcl Name [Type]
       deriving(Show, Eq)
 
 --- Expressions & Patterns
@@ -150,7 +150,7 @@ instance Pretty Type where
     pretty (UnknownType) = pretty "?"
 
 instance Pretty ConstructorDeclaration where
-    pretty (ConsDcl n t) = pretty n <!> pretty t
+    pretty (ConDcl n t) = pretty n <!> pretty t
 
 instance Pretty OpExp where
     pretty (LeafExp e) = pretty e
