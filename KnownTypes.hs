@@ -1,8 +1,6 @@
 module KnownTypes
     (
      addKnownTypes
-    ,Env
-    ,listType
     )
     where
 
@@ -10,11 +8,8 @@ import Syntax
 import TransformMonad(TransformM)
 import TransformUtils(transformTree, Transformer(..), idM)
 import TypeUtils(getType, resultingType)
+import BuiltIn(Env, listType, env0)
 import Tools(traceVal)
-
-
-type Env = (Name, Type)
-
 
 addKnownTypes :: Program -> TransformM Program
 addKnownTypes p@(Program decls) = transformTree
@@ -70,34 +65,3 @@ processDeclarations decls = concatMap  build decls
             buildConstructor (ConDcl name types) = (name, toFunction (types++[ConType typeName]))
             toFunction (t:[]) = t
             toFunction (t:ts) = FuncType t (toFunction ts)
-
---- BuiltIns -- TODO maybe it will be better to move this away
-
-listType = ConType "List" -- The defaultType of list --TODO add polymorphism
-
-env0 :: [Env] -- the initial environment, containing all the builin functions
-env0 = 
-    [("+", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
-    ,("-", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
-    ,("*", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
-    ,("/", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
-    ,("^", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Int")))
-    ,("~", FuncType (ConType "Int") (ConType "Int"))
-
-    ,("==", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
-    ,( ">", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
-    ,( "<", FuncType (ConType "Int") (FuncType (ConType "Int") (ConType "Bool")))
-
-    ,("+.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
-    ,("-.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
-    ,("*.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
-    ,("/.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
-    ,("^.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Float")))
-
-    ,("==.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
-    ,( ">.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
-    ,( "<.", FuncType (ConType "Float") (FuncType (ConType "Float") (ConType "Bool")))
-
-    ,("True", ConType "Bool")
-    ,("False", ConType "Bool")
-    ]
