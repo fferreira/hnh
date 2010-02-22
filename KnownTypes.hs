@@ -45,7 +45,7 @@ addKnownTypes p@(Program decls) = transformTree
       adaptPattern (HeadTailPat h t _) = Just $ HeadTailPat h t listType
       adaptPattern p = Just p
 
-      getLastType (FuncType _ f@(FuncType _ _)) = getLastType f
+      getLastType (FuncType _ t) = getLastType t
       getLastType t = t
       
 
