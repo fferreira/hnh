@@ -1,6 +1,6 @@
 module Types
     (
-     addBuiltInTypes
+     addKnownTypes
     ,Env
     ,listType
     )
@@ -16,15 +16,18 @@ import Tools(traceVal)
 type Env = (Name, Type)
 
 
-addBuiltInTypes :: Program -> TransformM Program
-addBuiltInTypes p@(Program decls) = transformTree
-                                    "addBuiltInTypes: Unable to statically type" 
-                                    (Transformer adaptExpr adaptPattern)
-                                    p
+addKnownTypes :: Program -> TransformM Program
+addKnownTypes p@(Program decls) = transformTree
+                                  "addKnownTypes: Unable to type (type constructor not found)" 
+                                  (Transformer adaptExpr adaptPattern)
+                                  p
     where
       env = env0 ++ (processDeclarations decls)
       adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
-      adaptExpr (ConExp n _) = Just $ ConExp n (lookupWithDefault n env UnknownType)
+      adaptExpr (ConExp n _) = 
+          do
+            t <- lookup n env -- Fails when the constructor does not exist
+            return $ ConExp n t
       adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
       adaptExpr (MinusFloatExp _ _) = Nothing 
       adaptExpr (InfixOpExp _ _) = Nothing
@@ -40,7 +43,7 @@ addBuiltInTypes p@(Program decls) = transformTree
 
       adaptPattern (ConPat name params _) =
           do
-            t <- lookup name env
+            t <- lookup name env -- Fails when the constructor does not exist
             return (ConPat name params (getLastType t))
       adaptPattern (ListPat names _) = Just $ ListPat names listType
       adaptPattern (HeadTailPat h t _) = Just $ HeadTailPat h t listType
