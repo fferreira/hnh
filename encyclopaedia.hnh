@@ -25,53 +25,53 @@ c = 2 ^ 3 ^ 4 ^ 5 ;
 
 --- Function binding & pattern
 
-fun a b c = joker ;
-fun Cons a = joker ;
-fun a b = joker ;
-fun a:xs = joker;
-fun (a,b,c) = joker;
-fun _ = joker;
+fun' a b c = joker ;
+fun2 Cons a = joker ;
+fun3 a b = joker ;
+fun4 a:xs = joker;
+fun5 (a,b,c) = joker;
+fun6 _ = joker;
 (+) a b = joker;
 f x | x = 1 | y = 2;
 
 --- Pattern Binding
 
-c = joker ;
-Cons a = joker ;
-a b = joker ;
-a:xs = joker;
-(a,b,c) = joker;
+c1 = joker ;
+Cons a2 = joker ;
+a3 b4 = joker ;
+a5:xs = joker;
+(a7,b8,c9) = joker;
 _ = joker;
-(+) = joker;
+(.+.) = joker;
 
 -- literal 
 
 lit = 42;
-lit = 1.6180339887;
-lit = 100E100;
-lit = 100E-100;
-lit = "hola";
-lit = 'a';
-lit = "hola\nchau";
+lit1 = 1.6180339887;
+lit2 = 100E100;
+lit3 = 100E-100;
+lit4 = "hola";
+lit5 = 'a';
+lit6 = "hola\nchau";
 
 -- Expression
 
-a = b;
-a = Cons;
-a = 1 + 1;
-a = (+) 1 1;
-a = 2 * 2 + 3;
-a = 2 + 2 * 3;
-a = (2 + 2) * 3;
-a = 2 * (2 + 3); 
-a = f x;
-a = ~a;
-a = \a -> a;
-a = let b = 14; a = c in c b;
-a = if 1 == 1 then 1 else 0;
-a = case exp of { a -> a; Cons a -> b; };
-a = 1;
-a = [1, 2, 4];
+ga = b;
+ha = Cons;
+ia = 1 + 1;
+ja = (+) 1 1;
+ka = 2 * 2 + 3;
+la = 2 + 2 * 3;
+ma = (2 + 2) * 3;
+na = 2 * (2 + 3); 
+oa = f x;
+pa = ~a;
+qa = \a -> a;
+ra = let b = 14; a = c in c b;
+sa = if 1 == 1 then 1 else 0;
+ta = case exp of { a -> a; Cons a -> b; };
+ua = 1;
+va = [1, 2, 4];
 
 two :: (Int, Int, Int);
 two = (1, 2, 4);

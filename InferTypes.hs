@@ -6,12 +6,25 @@ module InferTypes
 
 import Syntax
 import BuiltIn(Env, env0)
-import TransformMonad (TransformM, transformOk)
+import TransformMonad (TransformM, transformOk, transformError)
+import KnownTypes(declsToEn)
+import TypeUtils(addType, getType)
 
 import Control.Monad.State
+import Data.List(nub)
+
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+
+import Debug.Trace
+import Tools(traceVal)
 
 performTypeInference :: Program -> TransformM Program
-performTypeInference (Program decls) = transformOk $ Program (addMetaTypes decls)
+performTypeInference (Program decls) = typedProgram --(typeExpressions env0 (addMetaTypes decls))
+    where
+      typedDecls = addMetaTypes decls
+      typedProgram = case typeDeclarations (env0 ++ declsToEn typedDecls) typedDecls of
+                       Nothing -> transformError "PerformTypeInference: error" --TODO Improve this
+                       Just result -> transformOk $ Program result
 
 ----------------------------------------------------
 
@@ -30,10 +43,12 @@ addMetaTypes decls = evalState (addMetaTypes' decls) 0
 addMetaTypes' :: [Declaration] -> State MTState [Declaration]
 addMetaTypes' ((FunBindDcl n p r t):ds) = 
     do
+      s <- get
+      put (s+1)
       p' <- mapM numberPattern p
       ds' <- addMetaTypes' ds
       r' <- addToRhs r
-      return ((FunBindDcl n p' r' t) :ds')
+      return ((FunBindDcl n p' r' (MetaType s)) :ds')
 
 addMetaTypes' ((PatBindDcl p r):ds) =
     do
@@ -131,15 +146,14 @@ numberPattern (VarPat n UnknownType) =
 
 numberPattern (ConPat n ns UnknownType)  =
     do
-      s <- get
-      put (s+1)
-      return  (ConPat n ns (MetaType s))
+      t <- numberVarList (length ns)
+      return  (ConPat n ns (ConType n t))
 
 numberPattern (HeadTailPat n1 n2 _) = 
     do
       s <- get
       put (s+1)
-      return (HeadTailPat n1 n2 (MetaType s)) --TODO really this is a list of meta 
+      return (HeadTailPat n1 n2 (ConType "List" [(MetaType s)]))
 
 numberPattern (TuplePat ns _) =
     do
@@ -168,39 +182,161 @@ numberVarList i =
 
 --------------------------------------------------
 
-typeExpressions :: [Env] -> [Declaration] -> [Declaration]
-typeExpressions env decls = undefined
+-- this will type the functions according to the meta variables, or it will fail 
+-- if the types are irrecocilable
+typeDeclarations :: Monad m => [Env] -> [Declaration] -> m [Declaration]
+typeDeclarations env decls = 
+    do
+      (mapM (typeDeclaration env') decls)
+    where
+      env' = env ++ getEnv decls
 
-populateEnvironment :: [Env] -> [Declaration] -> [Env]
-populateEnvironment env decls = undefined
+typeDeclaration :: Monad m => [Env] -> Declaration -> m Declaration
+typeDeclaration env (FunBindDcl n pats r t) =
+    do
+      r' <- typeRhs env r
+      return (FunBindDcl n pats r' t)
 
+typeDeclaration env (PatBindDcl p r) =
+    do
+      r' <- typeRhs env r
+      return (PatBindDcl p r')
+typeDeclaration env decl = return decl
+
+typeRhs ::Monad m => [Env] -> Rhs -> m Rhs
+typeRhs env (UnGuardedRhs e) = 
+    do
+      e' <- typeExp env e
+      return (UnGuardedRhs e')
+
+typeRhs env (GuardedRhs guards) =
+    do
+      guards' <- mapM (typeGuard env) guards
+      return (GuardedRhs guards)
+
+typeGuard :: Monad m => [Env] -> Guard -> m Guard
+typeGuard env (Guard e1 e2) =
+    do
+      e1' <- typeExp env e1
+      e2' <- typeExp env e2
+      return (Guard e1' e2')
+
+
+typeExp :: Monad m => [Env] -> Exp -> m Exp
+typeExp env (VarExp n t) = 
+    do
+      tenv <- lookupEnv n env
+      tres <- checkType t tenv 
+      return (VarExp n (traceVal tres))
+
+typeExp env (ConExp n t) =
+    do
+      tenv <- lookupEnv n env
+      tres <- checkType t tenv 
+      return (ConExp n (traceVal tres))
+
+typeExp env (IfExp e1 e2 e3 t) =
+    do
+      e1' <- typeExp env e1
+      e2' <- typeExp env e2
+      e3' <- typeExp env e3
+      tbool <- checkType (getType e1') (ConType "Bool" []) -- e1 hast to be a boolean expression
+      tes <- checkType (getType e2') (getType e3') -- e2 and e3 have to share the type
+      tres <- checkType tes t -- the if exp has to have the same type as e2, e3
+      return (IfExp (addType e1' (ConType "Bool" [])) (addType e2' tres) (addType e3' tres) tres)
 
 {-
-findDeclaration :: Monad m => Name -> [Declaration] -> m Declaration
-findDeclaration n decls = 
-    case filter (\d -> elem n (namesDeclared d)) decls of
-      x:[] -> return x
-      _ -> fail "not found, or multiple declarations"
+typeExp env (CaseExp e alts t) = undefined
+typeExp env (ParensExp e t) = undefined
+typeExp env (TupleExp es t) = undefined
+typeExp env (ListExp es t) = undefined
 -}
 
-namesDeclared :: Declaration -> [(Name, Type)]
-namesDeclared (FunBindDcl n _ _ t) = [(n, t)]  --TODO missing the parameters!!
+{- Complicated expression follow :P
+typeExp env (FExp Exp Exp Type 
+
+typeExp env (LambdaExp [Pattern] Exp Type
+typeExp env (LetExp [Declaration] Exp Type
+-}
+
+typeExp env e = return e -- TODO this is for literals and something else? replace by LitExp
+
+checkType :: Monad m => Type -> Type -> m Type
+checkType t1 t2 = checkType' (traceVal t1) (traceVal t2)
+
+checkType' :: Monad m => Type -> Type -> m Type
+checkType' (FuncType t1 t2) (FuncType t3 t4) =
+    do
+      t1' <- checkType t1 t2
+      t2' <- checkType t3 t4
+      return $ FuncType t1' t2'
+
+checkType' (TupleType t1s) (TupleType t2s) =
+    do
+      t' <- mapM (\(t1,t2) -> checkType t1 t2) (zip t1s t2s)
+      if  (length t1s == length t2s)   then
+                   return (TupleType t')
+               else
+                   fail "non compatible tuples"
+
+checkType' t@(MetaType _) _ = return t
+checkType' _ t@(MetaType _) = return t
+checkType' _ t@(VarType _) = return t  -- TODO this has to be changed from expression to expression
+checkType' t@(VarType _) _ = return t
+
+checkType' UnknownType UnknownType = fail "Unconcilable checkType UnknownType UnkownType"
+checkType' t UnknownType = return t
+checkType' UnknownType t = return t
+checkType' t1 t2 = if t1 == t2 then return t2 else fail(show $ pretty "type" <+> pretty t1 
+                                                              <+> pretty "not compatible with" <+> pretty t2)
+
+lookupEnv :: Monad m => Name -> [Env] -> m Type
+lookupEnv n e = 
+    do
+      v <- lookupEnv' n e 
+      return $ traceVal (v)
+
+-- monadic lookup from the environment
+lookupEnv' :: Monad m => Name -> [Env] -> m Type
+lookupEnv' n env =
+    do
+      case lookup n (traceVal env) of
+        Nothing -> fail ("undefined " ++ n)
+        Just t -> return t
+
+-- getEnv: gets an environment with all the names declared by a list of declarations
+getEnv :: [Declaration] -> [Env]
+getEnv decls = validate $ concatMap namesDeclared decls
+    where
+      validate env = 
+          let 
+              (vars, _) = unzip env
+          in
+            if (length vars) == (length $ nub vars) then -- there should not be duplicated entries
+                env
+            else
+                error "Duplicated variables!" --TODO add proper error handling
+
+
+namesDeclared :: Declaration -> [Env]
+namesDeclared (FunBindDcl n _ _ t) = [(n, t)]  
 namesDeclared (PatBindDcl p _) = namesFromPattern p
+    where
+      namesFromPattern :: Pattern -> [Env]
+      namesFromPattern (VarPat n t) = [(n, t)]
 
-namesFromPattern :: Pattern -> [(Name, Type)]
-namesFromPattern (VarPat n t) = [(n, t)]
+      namesFromPattern (ConPat _ ns (ConType _ ts)) = zip ns ts
+      namesFromPattern (HeadTailPat n1 n2 t1@(ConType name t2)) = [(n1, head t2), (n2, t1)] 
+                                                                  -- t1 is a List of t2   
 
-namesFromPattern (ConPat _ ns _) = undefined  -- ?
-namesFromPattern (HeadTailPat n1 n2 _) = undefined -- ?
+      namesFromPattern (TuplePat ns (TupleType ts)) = zip ns ts
+      namesFromPattern (WildcardPat _) = []
 
-namesFromPattern (TuplePat ns (TupleType ts)) = zip ns ts
-namesFromPattern (WildcardPat _) = []
-
-getRhsType :: Rhs -> Type
-getRhsType = undefined
+namesDeclared _ = []
 
 {-
 infer env (FunBindDcl n pats r) = undefined
 infer env (PatBindDcl pat r) = undefined
 infer env d = undefined
 -}
+

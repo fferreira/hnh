@@ -63,7 +63,7 @@ data Associativity
       deriving(Show, Eq)
 
 data Type -- for type declarations
-    = FuncType Type Type
+    = FuncType Type Type -- TODO rename to FunType for consistency
     | TupleType [Type]
     | AppType Type Type  -- a constructor followed by its parameters
     | VarType Name      -- a polymorphic type parameter

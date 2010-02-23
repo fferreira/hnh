@@ -2,7 +2,7 @@ module KnownTypes
     (
      addKnownTypes
     ,addTypeSignatures
-    ,typeDeclarations
+    ,declsToEn
     )
     where
 
@@ -19,7 +19,7 @@ addKnownTypes p@(Program decls) = transformTree
                                   (Transformer adaptExpr adaptPattern)
                                   p
     where
-      env = env0 ++ (typeDeclarations decls)
+      env = env0 ++ (declsToEn decls)
       adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = 
           do
@@ -54,8 +54,8 @@ lookupWithDefault val list def = case lookup val list of
                                    Just res -> res
                                    Nothing -> def
 
-typeDeclarations :: [Declaration] -> [Env]
-typeDeclarations decls = concatMap  build decls
+declsToEn :: [Declaration] -> [Env]
+declsToEn decls = concatMap  build decls
     where
       build :: Declaration -> [Env]
       build (DataDcl n params constructors) =
