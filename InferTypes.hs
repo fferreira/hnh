@@ -245,11 +245,23 @@ typeExp env (IfExp e1 e2 e3 t) =
       tres <- checkType tes t -- the if exp has to have the same type as e2, e3
       return (IfExp (addType e1' (ConType "Bool" [])) (addType e2' tres) (addType e3' tres) tres)
 
+typeExp env (ParensExp e t) =
+    do
+      e' <- typeExp env e
+      t' <- checkType (getType e') t
+      return $ ParensExp e' t'
+
+typeExp env (TupleExp es t) =
+    do
+      es' <- mapM (typeExp env) es
+      t' <- checkType (TupleType (map getType es')) t
+      return (TupleExp es' t')
+
 {-
-typeExp env (CaseExp e alts t) = undefined
-typeExp env (ParensExp e t) = undefined
-typeExp env (TupleExp es t) = undefined
 typeExp env (ListExp es t) = undefined
+
+typeExp env (CaseExp e alts t) = undefined
+
 -}
 
 {- Complicated expression follow :P
@@ -279,7 +291,7 @@ checkType' (TupleType t1s) (TupleType t2s) =
                else
                    fail "non compatible tuples"
 
-checkType' t@(MetaType _) _ = return t
+checkType' t@(MetaType _) _ = return t --TODO concrete types shouldn't win?
 checkType' _ t@(MetaType _) = return t
 checkType' _ t@(VarType _) = return t  -- TODO this has to be changed from expression to expression
 checkType' t@(VarType _) _ = return t
