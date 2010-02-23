@@ -258,6 +258,15 @@ typeExp env (TupleExp es t) =
       return (TupleExp es' t')
 
 {-
+typeExp env (ListExp es t) =
+    do
+      es' <- mapM (typeExp env) es
+      t' <- checkType (ConType "List" [UnknownType]) t
+      tmatch <- mapM (\s -> checkType s (getListParam t')
+-}
+
+
+{-
 typeExp env (ListExp es t) = undefined
 
 typeExp env (CaseExp e alts t) = undefined
@@ -290,6 +299,16 @@ checkType' (TupleType t1s) (TupleType t2s) =
                    return (TupleType t')
                else
                    fail "non compatible tuples"
+
+checkType' (ConType n1 l1) (ConType n2 l2) =
+    do
+      tpar <- mapM (\(t1, t2) -> checkType t1 t2) (zip l1 l2)
+
+      if (n1 == n2) then
+          return (ConType n1 tpar)
+       else
+          fail "non compatible types"
+
 
 checkType' t@(MetaType _) _ = return t --TODO concrete types shouldn't win?
 checkType' _ t@(MetaType _) = return t

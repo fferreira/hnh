@@ -13,9 +13,9 @@ import TypeUtils(addType
        	          ,litToExp
 		  ,assembleInfixOperator
 		  ,checkPat
+		  ,addParam
 		  ,getType
 		  ,typeFromAlternative)
-import BuiltIn(listType)
 
 }
  
@@ -212,8 +212,9 @@ aexp : var				{ VarExp $1 ut }
      | '(' exp '::' type ')'		{ ParensExp $2 $4 }
      | '(' tupleexps ')'		{ TupleExp (reverse $2) (TupleType 
        	   	     			  	   	           (map getType (reverse $2))) }
-     | '[' listexps ']'			{ ListExp (reverse $2) (AppType listType
-       	   	    			  	  	       		(getType (last $2))) }
+     | '[' listexps ']'			{ ListExp (reverse $2) (ConType "List" 
+       	   	    			  	  	       		[getType (last $2)]) }
+
 
 tupleexps :: { [Exp] }
 tupleexps : tupleexps ',' exp		{ $3 : $1 }
@@ -269,14 +270,14 @@ tyvar : VARID				{ $1 }
 -- TODO see shift/reduce conflicts that are introduced around here
 
 btype :: { Type }
-btype : btype atype			{ AppType $1 $2 }
+btype : btype atype			{% addParam $1 $2 }
       | atype 				{ $1 }
 
 atype :: { Type }
 atype : CONID				{ ConType $1 []} 
       | VARID				{ VarType $1 }
       | '(' tupletypes ')'		{ TupleType (reverse $2) }
-      | '[' type ']'			{ AppType listType $2 }
+      | '[' type ']'			{ ConType "List" [$2] }
       | '(' type ')'			{ $2 } -- One uple does not exist
 
 -- 'data' declarations

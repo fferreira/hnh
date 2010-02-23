@@ -65,7 +65,6 @@ data Associativity
 data Type -- for type declarations
     = FuncType Type Type -- TODO rename to FunType for consistency
     | TupleType [Type]
-    | AppType Type Type  -- a constructor followed by its parameters
     | VarType Name      -- a polymorphic type parameter
     | ConType Name [Type]     -- the constructor of the type and its polymorphic params
     | MetaType Int -- a meta variable for the unification process
@@ -146,7 +145,6 @@ instance Pretty Guard where
 instance Pretty Type where
     pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
-    pretty (AppType t1 t2) = pretty t1 <> pretty " of " <> pretty t2
     pretty (VarType n) = pretty n
     pretty (ConType n params) = pretty n <> pretty"_"<> pretty params
     pretty (UnknownType) = pretty "?"

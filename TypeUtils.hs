@@ -4,6 +4,7 @@ module TypeUtils
     ,litToExp
     ,assembleInfixOperator
     ,checkPat
+    ,addParam
     ,getType
     ,resultingType
     ,typeFromAlternative
@@ -60,6 +61,12 @@ getType (ListExp _ t) = t
 
 typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e
+
+-- addParam adds polymorphic parameters to a type
+addParam :: Type -> Type -> ParserM Type
+addParam (ConType n l) t = returnOk (ConType n (l++[t]))
+addParam t1 t2 = returnError "Only Constructor type can have parameters"
+
 
 -- addType adds type information to an expression
 addType :: Exp -> Type -> Exp
