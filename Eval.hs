@@ -12,7 +12,7 @@ import qualified TransformMonad as T
 import ErrorMonad
 
 import Value
-import EvalEnv(Env)
+import EvalEnv(Env, buildEvalEnv)
 
 import Data.List(intersperse)
 
@@ -64,6 +64,7 @@ printSteps docs =
 eval :: Program -> Name -> ErrorM Value
 eval (Program declarations) name =
     do
+      env <- buildEvalEnv declarations
       mainDecl <- findDeclarations name declarations
       main <- return (head $ mainDecl)
       case main of 
@@ -76,8 +77,3 @@ findDeclarations name declarations = fail "not implemented 1"
 evalExp :: Monad m => Exp -> m Value
 evalExp e = fail "not implemented"
 
-
-buildEvalEnv :: Monad m => [Declaration] -> m [Env]
-buildEvalEnv decls = mapM declToValue decls
-    where
-      declToValue (PatBindDcl pat rhs) = undefined
