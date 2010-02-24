@@ -5,6 +5,7 @@ import Text.PrettyPrint.Leijen
 import Syntax
 
 import ExprTransformer(correctPrecedence, toPrefix)
+import TreeSimplify(funToLambda)
 
 import qualified ParserMonad as P
 import qualified TransformMonad as T
@@ -20,6 +21,7 @@ evaluationTransform :: Program -> (T.TransformResult Program, [Doc])
 evaluationTransform p = 
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
+                                       >>= funToLambda
                                        >>= return)
     in
       (res, (pretty p):docs) -- adding the original to the list

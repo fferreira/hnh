@@ -8,6 +8,7 @@ module TypeUtils
     ,getType
     ,resultingType
     ,typeFromAlternative
+    ,validateFunBindDcl
     )
     where
 
@@ -17,6 +18,22 @@ import ParserMonad(ParserM, returnOk, returnError)
 import Data.List(nub)
 
 import Text.PrettyPrint.Leijen(pretty)
+
+import Tools
+
+validateFunBindDcl :: Declaration -> ParserM Declaration
+validateFunBindDcl d@(FunBindDcl n pats r t) =
+    if validate pats then
+        returnOk d
+    else
+        returnError $ "Too many complex patterns in function declaration"
+    where
+      validate pats =
+          if length pats == 1 then True
+             else
+                 foldl (&&) True (map isSimple pats)
+      isSimple (VarPat _ _) = True
+      isSimple _ = False
 
 -- checkPat checks that no variable is used twice in a pattern 
 --          (aka it is a linear pattern)

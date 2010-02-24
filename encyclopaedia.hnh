@@ -32,7 +32,6 @@ fun4 a:xs = joker;
 fun5 (a,b,c) = joker;
 fun6 _ = joker;
 (+) a b = joker;
-f x | x = 1 | y = 2;
 
 --- Pattern Binding
 
