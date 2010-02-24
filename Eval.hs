@@ -5,7 +5,7 @@ import Text.PrettyPrint.Leijen
 import Syntax
 
 import ExprTransformer(correctPrecedence, toPrefix)
-import TreeSimplify(funToLambda)
+import TreeSimplify(funToLambda, simplifyLambda)
 
 import qualified ParserMonad as P
 import qualified TransformMonad as T
@@ -24,6 +24,7 @@ evaluationTransform p =
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
                                        >>= funToLambda
+                                       >>= simplifyLambda
                                        >>= return)
     in
       (res, (pretty p):docs) -- adding the original to the list
@@ -87,6 +88,7 @@ buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
       isPatBind _ = False
 
 evalExp :: Exp -> State EvalState Value
+evalExp (ParensExp e _) = evalExp e
 evalExp e@(LitExp l _) = return (LitVal l)
 evalExp e@(ConExp c t) = return (ConVal c)
 evalExp (VarExp n _) = 
@@ -97,8 +99,8 @@ evalExp (VarExp n _) =
 
 evalExp (IfExp e1 e2 e3 _) =
     do
-      e1' <- evalExp e1
-      res <- case e1' of
+      v1 <- evalExp e1
+      res <- case v1 of
                (ConVal "True" ) -> evalExp e2
                (ConVal "False") -> evalExp e3
                _ -> fail "if condition not boolean"
@@ -118,7 +120,12 @@ evalExp (LambdaExp pats e _) =
       env <- get
       return $ Closure pats env e
 
-evalExp (ParensExp e _) = evalExp e
+evalExp (FExp e1 e2 _) =
+    do
+      v1 <- evalExp e1 -- it should evaluate to a closure
+      v2 <- evalExp e2
+      fail "No FExp for you"
+
 
 evalExp (InfixOpExp _ _) = fail "InfixOpExp should not be evaluated"
 evalExp (MinusExp _ _) = fail "MinusExp should not be evalueted"

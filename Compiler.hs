@@ -16,7 +16,7 @@ import qualified TransformMonad as T
 import ExprTransformer(correctPrecedence, toPrefix)
 import KnownTypes(addKnownTypes, addTypeSignatures)
 import InferTypes(performTypeInference)
-import TreeSimplify(funToLambda)
+import TreeSimplify(funToLambda, simplifyLambda)
 
 import Data.List(intersperse)
 
@@ -25,6 +25,7 @@ programTransform p =
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
                                        >>= funToLambda
+                                       >>= simplifyLambda
 {-
                                        >>= addKnownTypes
                                        >>= addTypeSignatures -- multiple steps to the trace

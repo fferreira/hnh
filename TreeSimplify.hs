@@ -1,6 +1,7 @@
 module TreeSimplify
     (
      funToLambda
+    ,simplifyLambda
     )
     where
 
@@ -81,3 +82,36 @@ partition f (x:xs) = (if f x then ([x], []) else ([], [x])) +-+ partition f xs
     where
       (+-+) (a, b) (c, d) = (a++c, b++d)
 partition f [] = ([], [])                   
+
+{-
+  simplifyLambda: pushes all comples pattern matching to case expressions
+-}
+simplifyLambda:: Program -> TransformM Program
+simplifyLambda prog  = transformTree
+                       "simplifyLambda: unable to simplify lambdas"
+                       defTrans {tExp  = transformLambda }
+                       prog
+
+
+transformLambda :: Monad m => Exp -> m Exp
+transformLambda (LambdaExp pats e t) = return $ LambdaExp pats' e' t
+    where
+      newPats = map (\i ->(VarPat ("p#"++show i) UnknownType )) [1..(length pats)]
+
+      merge :: Pattern -> Pattern -> ([Pattern], Exp) -> ([Pattern], Exp)
+      merge p1 p2@(VarPat n2 _) (p, e) = if isSimple p1 then (p1:p, e)
+                                           else
+                                             (p2:p, (CaseExp 
+                                                     (VarExp n2 UnknownType) 
+                                                     [Alternative p1 e] UnknownType))
+
+      isSimple (VarPat _ _) = True
+      isSimple _ = False
+
+      process :: [Pattern] -> [Pattern] -> ([Pattern], Exp) -> ([Pattern], Exp)
+      process (op:ops) (np:nps) (pats,e) = merge op np (process ops nps (pats, e)) 
+      process [] [] (pats, e) = (pats, e)
+
+      (pats', e') = process (reverse pats) newPats ([], e)
+
+transformLambda e = return e
