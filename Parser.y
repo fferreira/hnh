@@ -156,21 +156,7 @@ op : VARSYM				{ $1 }
 -- Right Hand Side
 
 rhs :: { Rhs }
-rhs : '=' exp optsc			{ UnGuardedRhs $2 }
-    | gdrhss				{ GuardedRhs (reverse $1) }
-
-gdrhss :: { [Guard] }
-gdrhss : gdrhss gdrhs			{ $2 : $1 }
-       | gdrhs				{ [$1] }
-
-gdrhs :: { Guard }
-gdrhs : gd '=' exp optsc		{ Guard $1 $3 }
-
-gd :: { Exp }  	   			-- this should be Bool, so if unknown then Bool
-gd : '|' exp				{ if (getType $2) == UnknownType
-     	 				     then addType $2 (ConType "Bool" [])
-					     else $2
-     	 				}
+rhs : '=' exp optsc			{ Rhs $2 }
 
 -- Expressions
 

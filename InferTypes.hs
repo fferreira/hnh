@@ -64,21 +64,10 @@ addMetaTypes' (d:ds) =
 addMetaTypes' [] = return []
 
 addToRhs :: Rhs -> State MTState Rhs
-addToRhs (UnGuardedRhs e) = 
+addToRhs (Rhs e) = 
     do
       e' <- addToExp e
-      return (UnGuardedRhs e')
-
-addToRhs (GuardedRhs guards) =
-    do
-      guards' <- mapM applyToGuard guards
-      return (GuardedRhs guards')
-    where
-      applyToGuard (Guard e1 e2) =
-          do
-            e1' <- addToExp e1
-            e2' <- addToExp e2
-            return (Guard e1' e2')
+      return (Rhs e')
 
 addToExp :: Exp -> State MTState Exp
 addToExp (FExp e1 e2 t) =
@@ -204,23 +193,10 @@ typeDeclaration env (PatBindDcl p r) =
 typeDeclaration env decl = return decl
 
 typeRhs ::Monad m => [EnvType] -> Rhs -> m Rhs
-typeRhs env (UnGuardedRhs e) = 
+typeRhs env (Rhs e) = 
     do
       e' <- typeExp env e
-      return (UnGuardedRhs e')
-
-typeRhs env (GuardedRhs guards) =
-    do
-      guards' <- mapM (typeGuard env) guards
-      return (GuardedRhs guards)
-
-typeGuard :: Monad m => [EnvType] -> Guard -> m Guard
-typeGuard env (Guard e1 e2) =
-    do
-      e1' <- typeExp env e1
-      e2' <- typeExp env e2
-      return (Guard e1' e2')
-
+      return (Rhs e')
 
 typeExp :: Monad m => [EnvType] -> Exp -> m Exp
 typeExp env (VarExp n t) = 

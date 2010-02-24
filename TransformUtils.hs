@@ -53,20 +53,10 @@ transformTree msg transform prog@(Program decls) =
 
       adaptDeclaration d = Just d
 
-      adaptRhs (UnGuardedRhs e) = 
+      adaptRhs (Rhs e) = 
           do
             e' <- adaptExp e
-            (tRhs transform) (UnGuardedRhs e')
-      adaptRhs (GuardedRhs guards) =
-          do
-            guards' <- mapM adaptGuard guards
-            (tRhs transform) (GuardedRhs guards')
-
-      adaptGuard (Guard e1 e2) =
-          do
-            e1' <- adaptExp e1
-            e2' <- adaptExp e2
-            return $ Guard e1' e2'
+            (tRhs transform) (Rhs e')
 
       adaptExp (InfixOpExp opEx t) =
           do

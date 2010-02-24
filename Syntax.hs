@@ -6,7 +6,6 @@ module Syntax
     ,Operator
     ,LiteralValue(..)
     ,Rhs(..)
-    ,Guard(..)
     ,Precedence
     ,Associativity(..)
     ,Type(..)
@@ -46,12 +45,7 @@ data Declaration
       deriving(Show, Eq)
 
 data Rhs
-    = UnGuardedRhs Exp
-    | GuardedRhs [Guard]
-      deriving(Show, Eq)
-
-data Guard
-    = Guard Exp Exp -- first Exp evaluates to Bool, the second is the function body
+    = Rhs Exp
       deriving(Show, Eq)
 
 type Precedence  = Int
@@ -147,11 +141,7 @@ instance Pretty Declaration where
     pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
 
 instance Pretty Rhs where
-    pretty (UnGuardedRhs e) = pretty e
-    pretty (GuardedRhs g) = pretty g
-
-instance Pretty Guard where
-    pretty (Guard e1 e2) = pretty e1 <> equals <> pretty e2
+    pretty (Rhs e) = pretty e
 
 instance Pretty Type where
     pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
