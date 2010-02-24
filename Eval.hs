@@ -12,7 +12,7 @@ import qualified TransformMonad as T
 import ErrorMonad
 
 import Value
-import EvalEnv(Env, buildEvalEnv)
+import EvalEnv(Env, buildEvalEnv, lookupEvalEnv)
 
 import Data.List(intersperse)
 
@@ -65,15 +65,13 @@ eval :: Program -> Name -> ErrorM Value
 eval (Program declarations) name =
     do
       env <- buildEvalEnv declarations
-      mainDecl <- findDeclarations name declarations
-      main <- return (head $ mainDecl)
+      (main, e) <- lookupEvalEnv name env
       case main of 
-        (PatBindDcl (VarPat _ _) e) ->  evalExp e
+        (VarPat _ _) ->  evalExp env e
         _ -> fail (name ++ " not found or not the right from")
 
-findDeclarations :: Monad m => Name -> [Declaration] -> m [Declaration]
-findDeclarations name declarations = fail "not implemented 1" 
 
-evalExp :: Monad m => Exp -> m Value
-evalExp e = fail "not implemented"
+evalExp :: Monad m => [Env] -> Exp -> m Value
+evalExp env (LitExp l _) = return $ LitVal l
+evalExp env e = fail "not supported"
 
