@@ -11,7 +11,8 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 import ErrorMonad
 
-import EvalEnv(Env, buildEvalEnv, lookupEvalEnv)
+import Value(Value(..))
+import EvalEnv(Env, lookupEvalEnv)
 
 import Data.List(intersperse)
 import Control.Monad.State
@@ -64,46 +65,54 @@ type EvalState = [Env]
 
 
 -- name should be a single var pattern i.e. main = 1 + 1
-eval :: Program -> Name -> State EvalState Exp
+eval :: Program -> Name -> State EvalState Value
 eval (Program declarations) name =
     do
-      env <- buildEvalEnv declarations
-      put env
-      env' <- mapM evalPat env
-      put env'
-      (main, e) <- lookupEvalEnv name env'
+      buildEvalEnv declarations
+      env <- get
+      (main, v) <- lookupEvalEnv name env
       case main of 
-        (VarPat _ _) ->  evalExp e
+        (VarPat _ _) -> return v  
         _ -> fail (name ++ " not found or not the right from")
 
+buildEvalEnv :: [Declaration] -> State EvalState [Env]
+buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
+    where
+      declToValue (PatBindDcl pat e) = 
+          do
+            env <- get
+            v <- evalExp e
+            put((pat,v):env)
+            return (pat, v)
+      isPatBind (PatBindDcl _ _) = True
+      isPatBind _ = False
 
-evalExp :: Exp -> State EvalState Exp
-evalExp e@(LitExp l _) = return e
-evalExp e@(ConExp c t) = return e
+evalExp :: Exp -> State EvalState Value
+evalExp e@(LitExp l _) = return (LitVal l)
+evalExp e@(ConExp c t) = return (ConVal c)
 evalExp (VarExp n _) = 
     do
       env <- get
-      (p, e) <- lookupEvalEnv n env
-      evalExp e
+      (p, v) <- lookupEvalEnv n env
+      return v
 
 evalExp (IfExp e1 e2 e3 _) =
     do
       e1' <- evalExp e1
       res <- case e1' of
-               (ConExp "True" _) -> evalExp e2
-               (ConExp "False" _) -> evalExp e3
+               (ConVal "True" ) -> evalExp e2
+               (ConVal "False") -> evalExp e3
                _ -> fail "if condition not boolean"
       return res
 
 evalExp (LetExp decls e _) =
     do
       env <- get
-      env' <- buildEvalEnv decls -- get env'
-      mapM evalPat env'
+      buildEvalEnv decls -- get env'
 
-      e' <- evalExp e
+      v <- evalExp e
       put env -- restores the original environment
-      return e'
+      return v
 
 
 evalExp (ParensExp e _) = evalExp e
@@ -113,10 +122,10 @@ evalExp (MinusExp _ _) = fail "MinusExp should not be evalueted"
 evalExp (MinusFloatExp _ _) = fail "MinusFloatExp should not be evaluated"
 evalExp e = fail "not supported"
 
-evalPat ::  (Pattern, Exp) -> State EvalState (Pattern, Exp)
+evalPat ::  (Pattern, Exp) -> State EvalState (Pattern, Value)
 evalPat (p, e) =
     do
       env <- get
-      e' <- evalExp e
-      put $ (p, e'):env
-      return (p, e')
+      v <- evalExp e
+      put $ (p, v):env
+      return (p, v)
