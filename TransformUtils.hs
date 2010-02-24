@@ -82,9 +82,10 @@ transformTree msg transform prog@(Program decls) =
 
       adaptExp (LetExp decls e t) =
           do
-            decls' <- mapM adaptDeclaration decls
+            decls' <- (tDecls transform) decls
+            decls'' <- mapM adaptDeclaration decls'
             e' <- adaptExp e
-            (tExp transform) (LetExp decls' e' t)
+            (tExp transform) (LetExp decls'' e' t)
             
       adaptExp (IfExp e1 e2 e3 t) =
           do
