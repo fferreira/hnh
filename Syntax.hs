@@ -5,7 +5,6 @@ module Syntax
     ,Name
     ,Operator
     ,LiteralValue(..)
-    ,Rhs(..)
     ,Precedence
     ,Associativity(..)
     ,Type(..)
@@ -40,12 +39,8 @@ data Declaration
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
-    | FunBindDcl Name [Pattern] Rhs Type --this is the type of the function to be inferred
-    | PatBindDcl Pattern Rhs
-      deriving(Show, Eq)
-
-data Rhs
-    = Rhs Exp
+    | FunBindDcl Name [Pattern] Exp Type --this is the type of the function to be inferred
+    | PatBindDcl Pattern Exp
       deriving(Show, Eq)
 
 type Precedence  = Int
@@ -139,9 +134,6 @@ instance Pretty Declaration where
                                    <> pretty ps <> equals <> pretty r
                                    <> colon <> pretty t
     pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
-
-instance Pretty Rhs where
-    pretty (Rhs e) = pretty e
 
 instance Pretty Type where
     pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2

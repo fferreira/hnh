@@ -67,14 +67,14 @@ eval (Program declarations) name =
       mainDecl <- findDeclarations name declarations
       main <- return (head $ mainDecl)
       case main of 
-        (PatBindDcl (VarPat _ _) rhs) ->  evalRhs rhs
+        (PatBindDcl (VarPat _ _) e) ->  evalExp e
         _ -> fail (name ++ " not found or not the right from")
 
 findDeclarations :: Monad m => Name -> [Declaration] -> m [Declaration]
 findDeclarations name declarations = fail "not implemented 1" 
 
-evalRhs :: Monad m => Rhs -> m Value
-evalRhs rhs = fail "not implemented"
+evalExp :: Monad m => Exp -> m Value
+evalExp e = fail "not implemented"
 
 
 buildEvalEnv :: Monad m => [Declaration] -> m [Env]

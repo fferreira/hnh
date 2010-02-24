@@ -17,12 +17,11 @@ idM = return
 data Transformer = Transformer {
                    tExp :: Exp -> Maybe Exp
                   ,tPat  :: Pattern -> Maybe Pattern
-                  ,tRhs  :: Rhs -> Maybe Rhs
                   ,tDecls :: [Declaration] -> Maybe [Declaration]
                   -- TODO maybe add other transformers here
     }
 
-defTrans = Transformer idM idM idM idM
+defTrans = Transformer idM idM idM
 
 -- transformTree: does a depth first transformation of the program
 -- it is not suitable for transformations that require recursive 
@@ -39,24 +38,19 @@ transformTree msg transform prog@(Program decls) =
             decls'' <- tDecls transform $ decls
             mapM adaptDeclaration decls''
 
-      adaptDeclaration (FunBindDcl n pats rhs t) =
-          do
-            rhs' <- adaptRhs rhs
-            pats' <- mapM (tPat transform) pats
-            return $ FunBindDcl n pats' rhs' t
-
-      adaptDeclaration (PatBindDcl pat rhs) = 
-          do
-            rhs' <- adaptRhs rhs
-            pat' <- (tPat transform) pat
-            return $ PatBindDcl pat' rhs'
-
-      adaptDeclaration d = Just d
-
-      adaptRhs (Rhs e) = 
+      adaptDeclaration (FunBindDcl n pats e t) =
           do
             e' <- adaptExp e
-            (tRhs transform) (Rhs e')
+            pats' <- mapM (tPat transform) pats
+            return $ FunBindDcl n pats' e' t
+
+      adaptDeclaration (PatBindDcl pat e) = 
+          do
+            e' <- adaptExp e
+            pat' <- (tPat transform) pat
+            return $ PatBindDcl pat' e'
+
+      adaptDeclaration d = Just d
 
       adaptExp (InfixOpExp opEx t) =
           do

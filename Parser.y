@@ -157,8 +157,8 @@ op : VARSYM				{ $1 }
 
 -- Right Hand Side
 
-rhs :: { Rhs }
-rhs : '=' exp optsc			{ Rhs $2 }
+rhs :: { Exp }
+rhs : '=' exp optsc			{ $2 }
 
 -- Expressions
 

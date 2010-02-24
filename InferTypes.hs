@@ -41,33 +41,27 @@ addMetaTypes decls = evalState (addMetaTypes' decls) 0
 
 
 addMetaTypes' :: [Declaration] -> State MTState [Declaration]
-addMetaTypes' ((FunBindDcl n p r t):ds) = 
+addMetaTypes' ((FunBindDcl n p e t):ds) = 
     do
       s <- get
       put (s+1)
       p' <- mapM numberPattern p
       ds' <- addMetaTypes' ds
-      r' <- addToRhs r
-      return ((FunBindDcl n p' r' (MetaType s)) :ds')
+      e' <- addToExp e
+      return ((FunBindDcl n p' e' (MetaType s)) :ds')
 
-addMetaTypes' ((PatBindDcl p r):ds) =
+addMetaTypes' ((PatBindDcl p e):ds) =
     do
       p' <- numberPattern p
       ds' <- addMetaTypes' ds
-      r' <- addToRhs r
-      return ((PatBindDcl p' r'):ds')
+      e' <- addToExp e
+      return ((PatBindDcl p' e'):ds')
 
 addMetaTypes' (d:ds) =
     do
       ds' <- addMetaTypes' ds
       return (d:ds')
 addMetaTypes' [] = return []
-
-addToRhs :: Rhs -> State MTState Rhs
-addToRhs (Rhs e) = 
-    do
-      e' <- addToExp e
-      return (Rhs e')
 
 addToExp :: Exp -> State MTState Exp
 addToExp (FExp e1 e2 t) =
@@ -181,22 +175,16 @@ typeDeclarations env decls =
       env' = env ++ getEnv decls
 
 typeDeclaration :: Monad m => [EnvType] -> Declaration -> m Declaration
-typeDeclaration env (FunBindDcl n pats r t) =
-    do
-      r' <- typeRhs env r
-      return (FunBindDcl n pats r' t)
-
-typeDeclaration env (PatBindDcl p r) =
-    do
-      r' <- typeRhs env r
-      return (PatBindDcl p r')
-typeDeclaration env decl = return decl
-
-typeRhs ::Monad m => [EnvType] -> Rhs -> m Rhs
-typeRhs env (Rhs e) = 
+typeDeclaration env (FunBindDcl n pats e t) =
     do
       e' <- typeExp env e
-      return (Rhs e')
+      return (FunBindDcl n pats e' t)
+
+typeDeclaration env (PatBindDcl p e) =
+    do
+      e' <- typeExp env e
+      return (PatBindDcl p e')
+typeDeclaration env decl = return decl
 
 typeExp :: Monad m => [EnvType] -> Exp -> m Exp
 typeExp env (VarExp n t) = 
