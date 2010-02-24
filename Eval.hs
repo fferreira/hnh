@@ -11,8 +11,7 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 import ErrorMonad
 
-import Value(Value(..))
-import EvalEnv(Env, lookupEvalEnv)
+import EvalEnv(Env,Value(..), lookupEvalEnv)
 
 import Data.List(intersperse)
 import Control.Monad.State
@@ -114,6 +113,10 @@ evalExp (LetExp decls e _) =
       put env -- restores the original environment
       return v
 
+evalExp (LambdaExp pats e _) =
+    do
+      env <- get
+      return $ Closure pats env e
 
 evalExp (ParensExp e _) = evalExp e
 
