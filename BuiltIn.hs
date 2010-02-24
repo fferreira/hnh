@@ -7,7 +7,6 @@ module BuiltIn
     where
 
 import Syntax
-import Value
 
 type EnvType = (Name, Type)
 
