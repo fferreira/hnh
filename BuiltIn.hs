@@ -1,18 +1,20 @@
 module BuiltIn
     (
-     Env
+     EnvType
     ,listType
     ,env0
     )
     where
 
 import Syntax
+import Value
 
-type Env = (Name, Type)
+type EnvType = (Name, Type)
+
 
 listType = ConType "List" [VarType "a"] -- The defaultType of list 
 
-env0 :: [Env] -- the initial environment, containing all the builin functions
+env0 :: [EnvType] -- the initial environment, containing all the builin functions
 env0 = 
     [("+", FuncType (ConType "Int" []) (FuncType (ConType "Int" []) (ConType "Int" [])))
     ,("-", FuncType (ConType "Int" []) (FuncType (ConType "Int" []) (ConType "Int" [])))

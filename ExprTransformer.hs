@@ -15,15 +15,14 @@ Wilf Lalonde and Jum Des Rivieres, "Handling Operator Precedence in Artihmetic E
 
 import Syntax
 import TransformMonad(TransformM)
-import TransformUtils(transformTree, Transformer(..), idM)
+import TransformUtils(transformTree, Transformer(..), defTrans)
 
 type FixityDesc = (Operator, Precedence, Associativity)
-
 
 correctPrecedence:: Program -> TransformM Program
 correctPrecedence prog  = transformTree
                           "correctPrecedence: Non Associative operator used associatively"
-                          (Transformer adaptExpr idM)
+                          defTrans {tExp  = adaptExpr }
                           prog
     where
       adaptExpr (InfixOpExp e t) = 
@@ -86,7 +85,7 @@ lst _ t = t
 toPrefix :: Program -> TransformM Program
 toPrefix = transformTree
            "toPrefix: Unexpected Error (This should not fail)"
-           (Transformer adaptExpr idM)
+           defTrans { tExp = adaptExpr } -- (Transformer adaptExpr idM idM)
     where
 
       adaptExpr (InfixOpExp e _) = Just $ prefixer e

@@ -1,5 +1,6 @@
 module Main where
 
+import Eval
 import Compiler
 import System.Environment(getArgs)
 

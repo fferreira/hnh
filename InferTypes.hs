@@ -5,7 +5,7 @@ module InferTypes
     where
 
 import Syntax
-import BuiltIn(Env, env0)
+import BuiltIn(EnvType, env0)
 import TransformMonad (TransformM, transformOk, transformError)
 import KnownTypes(declsToEn)
 import TypeUtils(addType, getType)
@@ -24,7 +24,7 @@ performTypeInference (Program decls) = typedProgram --(typeExpressions env0 (add
       typedDecls = addMetaTypes decls
       typedProgram = case typeDeclarations (env0 ++ declsToEn typedDecls) typedDecls of
                        Nothing -> transformError "PerformTypeInference: error" --TODO Improve this
-                       Just result -> transformOk $ Program result
+                       Just result -> transformOk $ Program result             --TODO Use ErrorM
 
 ----------------------------------------------------
 
@@ -184,14 +184,14 @@ numberVarList i =
 
 -- this will type the functions according to the meta variables, or it will fail 
 -- if the types are irrecocilable
-typeDeclarations :: Monad m => [Env] -> [Declaration] -> m [Declaration]
+typeDeclarations :: Monad m => [EnvType] -> [Declaration] -> m [Declaration]
 typeDeclarations env decls = 
     do
       (mapM (typeDeclaration env') decls)
     where
       env' = env ++ getEnv decls
 
-typeDeclaration :: Monad m => [Env] -> Declaration -> m Declaration
+typeDeclaration :: Monad m => [EnvType] -> Declaration -> m Declaration
 typeDeclaration env (FunBindDcl n pats r t) =
     do
       r' <- typeRhs env r
@@ -203,7 +203,7 @@ typeDeclaration env (PatBindDcl p r) =
       return (PatBindDcl p r')
 typeDeclaration env decl = return decl
 
-typeRhs ::Monad m => [Env] -> Rhs -> m Rhs
+typeRhs ::Monad m => [EnvType] -> Rhs -> m Rhs
 typeRhs env (UnGuardedRhs e) = 
     do
       e' <- typeExp env e
@@ -214,7 +214,7 @@ typeRhs env (GuardedRhs guards) =
       guards' <- mapM (typeGuard env) guards
       return (GuardedRhs guards)
 
-typeGuard :: Monad m => [Env] -> Guard -> m Guard
+typeGuard :: Monad m => [EnvType] -> Guard -> m Guard
 typeGuard env (Guard e1 e2) =
     do
       e1' <- typeExp env e1
@@ -222,7 +222,7 @@ typeGuard env (Guard e1 e2) =
       return (Guard e1' e2')
 
 
-typeExp :: Monad m => [Env] -> Exp -> m Exp
+typeExp :: Monad m => [EnvType] -> Exp -> m Exp
 typeExp env (VarExp n t) = 
     do
       tenv <- lookupEnv n env
@@ -321,14 +321,14 @@ checkType' UnknownType t = return t
 checkType' t1 t2 = if t1 == t2 then return t2 else fail(show $ pretty "type" <+> pretty t1 
                                                               <+> pretty "not compatible with" <+> pretty t2)
 
-lookupEnv :: Monad m => Name -> [Env] -> m Type
+lookupEnv :: Monad m => Name -> [EnvType] -> m Type
 lookupEnv n e = 
     do
       v <- lookupEnv' n e 
       return $ traceVal (v)
 
 -- monadic lookup from the environment
-lookupEnv' :: Monad m => Name -> [Env] -> m Type
+lookupEnv' :: Monad m => Name -> [EnvType] -> m Type
 lookupEnv' n env =
     do
       case lookup n (traceVal env) of
@@ -336,8 +336,9 @@ lookupEnv' n env =
         Just t -> return t
 
 -- getEnv: gets an environment with all the names declared by a list of declarations
-getEnv :: [Declaration] -> [Env]
+getEnv :: [Declaration] -> [EnvType]
 getEnv decls = validate $ concatMap namesDeclared decls
+
     where
       validate env = 
           let 
@@ -349,11 +350,11 @@ getEnv decls = validate $ concatMap namesDeclared decls
                 error "Duplicated variables!" --TODO add proper error handling
 
 
-namesDeclared :: Declaration -> [Env]
+namesDeclared :: Declaration -> [EnvType]
 namesDeclared (FunBindDcl n _ _ t) = [(n, t)]  
 namesDeclared (PatBindDcl p _) = namesFromPattern p
     where
-      namesFromPattern :: Pattern -> [Env]
+      namesFromPattern :: Pattern -> [EnvType]
       namesFromPattern (VarPat n t) = [(n, t)]
 
       namesFromPattern (ConPat _ ns (ConType _ ts)) = zip ns ts

@@ -8,15 +8,15 @@ module KnownTypes
 
 import Syntax
 import TransformMonad(TransformM, transformOk, nullTransform) -- TODO remove nullTransform
-import TransformUtils(transformTree, Transformer(..), idM)
+import TransformUtils(transformTree, Transformer(..), defTrans)
 import TypeUtils(getType, resultingType)
-import BuiltIn(Env, listType, env0)
+import BuiltIn(EnvType, listType, env0)
 import Tools(traceVal)
 
 addKnownTypes :: Program -> TransformM Program
 addKnownTypes p@(Program decls) = transformTree
                                   "addKnownTypes: Unable to type (type constructor not found)" 
-                                  (Transformer adaptExpr adaptPattern)
+                                  (defTrans {tExp=adaptExpr, tPat=adaptPattern})
                                   p
     where
       env = env0 ++ (declsToEn decls)
@@ -54,10 +54,10 @@ lookupWithDefault val list def = case lookup val list of
                                    Just res -> res
                                    Nothing -> def
 
-declsToEn :: [Declaration] -> [Env]
+declsToEn :: [Declaration] -> [EnvType]
 declsToEn decls = concatMap  build decls
     where
-      build :: Declaration -> [Env]
+      build :: Declaration -> [EnvType]
       build (DataDcl n params constructors) =
           let 
               buildData typeName constructors = map (buildConstructor typeName) constructors
@@ -84,7 +84,7 @@ addTypeSignatures (Program decls) =
 addTypeSignatureToLet :: Program -> TransformM Program
 addTypeSignatureToLet p@(Program decls) = transformTree
                                   "addKnownTypes: Unable to type (type constructor not found)" 
-                                  (Transformer adaptExpr idM)
+                                  (defTrans {tExp = adaptExpr})
                                   p
     where
       adaptExpr (LetExp decls e t) = Just $ (LetExp decls' e t)

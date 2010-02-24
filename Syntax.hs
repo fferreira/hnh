@@ -111,6 +111,17 @@ data Alternative
     = Alternative Pattern Exp
     deriving (Show, Eq)
 
+{-
+  this allows us to order the functions in the latest part of
+  a declaration list, the functions oredered by name
+-}
+instance Ord Declaration where
+    compare (FunBindDcl n1 _ _ _) (FunBindDcl n2 _ _ _) = compare n1 n2
+    compare (FunBindDcl _ _ _ _) _ = GT
+    compare _ (FunBindDcl _ _ _ _) = LT
+    compare _ _ = EQ
+
+           
 -- Pretty printing support (very important for debugability)
 
 instance Pretty Program where

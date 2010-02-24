@@ -1,9 +1,8 @@
-module Compiler
-{- TODO Debug only    
+module Compiler   
     (
-
+     fileToProgram
+    ,compileToAST
     )
--}
     where
 
 import Lexer
@@ -15,8 +14,9 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 
 import ExprTransformer(correctPrecedence, toPrefix)
---import KnownTypes(addKnownTypes, addTypeSignatures)
---import InferTypes(performTypeInference)
+import KnownTypes(addKnownTypes, addTypeSignatures)
+import InferTypes(performTypeInference)
+import TreeSimplify(funToLambda)
 
 import Data.List(intersperse)
 
@@ -24,6 +24,7 @@ programTransform :: Program -> (T.TransformResult Program, [Doc])
 programTransform p = 
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
+                                       >>= funToLambda
 {-
                                        >>= addKnownTypes
                                        >>= addTypeSignatures -- multiple steps to the trace
