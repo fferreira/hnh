@@ -38,6 +38,33 @@ env0 = [
  (VarPat "==" UnknownType, 
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun eq)),
+ 
+ (VarPat ">" UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun gt)),
+
+  --- Float Operations ---
+ (VarPat "+." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fadd)),
+ (VarPat "-." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fsub)),
+ (VarPat "*." UnknownType,
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fmul)),
+ (VarPat "/." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fdiv)),
+
+ (VarPat "==." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun feq)),
+ 
+ (VarPat ">." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fgt)),
+ 
   --- Support for lists ---
  (VarPat "Nil" UnknownType,
          ConVal "Nil" []),
@@ -156,3 +183,69 @@ eq env =
             return $ a == b) of
       Just v -> if v then (ConVal "True" []) else (ConVal "False" [])
       Nothing -> error "== is of type Int -> Int -> Bool"
+
+gt :: IntrinsicFun
+gt env =
+    case( do
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
+            return $ a > b) of
+      Just v -> if v then (ConVal "True" []) else (ConVal "False" [])
+      Nothing -> error "> is of type Int -> Int -> Bool"
+
+
+fadd :: IntrinsicFun
+fadd env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a + b) of
+      Just v -> (FloatVal v)
+      Nothing -> error "+. is of type Int -> Int -> Int"
+
+fsub :: IntrinsicFun
+fsub env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a - b) of
+      Just v -> (FloatVal v)
+      Nothing -> error "-. is of type Int -> Int -> Int"
+
+
+fmul :: IntrinsicFun
+fmul env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a * b) of
+      Just v -> (FloatVal v)
+      Nothing -> error "*. is of type Int -> Int -> Int"
+
+fdiv :: IntrinsicFun
+fdiv env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a / b) of
+      Just v -> (FloatVal v)
+      Nothing -> error "/. is of type Int -> Int -> Int"
+
+feq :: IntrinsicFun
+feq env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a == b) of
+      Just v -> if v then (ConVal "True" []) else (ConVal "False" [])
+      Nothing -> error "==. is of type Int -> Int -> Bool"
+
+fgt :: IntrinsicFun
+fgt env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            (_, (FloatVal b)) <- lookupEvalEnv "b" env
+            return $ a > b) of
+      Just v -> if v then (ConVal "True" []) else (ConVal "False" [])
+      Nothing -> error ">. is of type Int -> Int -> Bool"
+

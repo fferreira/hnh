@@ -87,7 +87,7 @@ simplifyLambda prog  = transformTree
 
 
 transformLambda :: Monad m => Exp -> m Exp
-transformLambda (LambdaExp pats e t) = return $ LambdaExp pats' e' t
+transformLambda (LambdaExp pats e t) = return $ LambdaExp (reverse pats') e' t
     where
       newPats = map (\i ->(VarPat ("p#"++show i) UnknownType )) [1..(length pats)]
 
