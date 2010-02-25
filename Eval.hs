@@ -217,7 +217,14 @@ checkAlternative (TupleVal vs) p@(TuplePat ns _) =
 
 checkAlternative v (TuplePat _ _) = return False
 
-checkAlternative v p = fail "alt to be done"
+checkAlternative (ConVal n1 vs) (ConPat n2 ns _) =
+    if (n1==n2)&&(length vs == length ns) then
+        do
+          env <- get
+          put $ (zip (map (\n->VarPat n UnknownType) ns) vs) ++ env
+          return True
+    else return False
+checkAlternative v (ConPat n2 ns _) = return False
 
 listToVal :: [Value] -> Value -- converts a haskell list to hnh builtin list
 listToVal (v:vs) = (ConVal "Cons" ([v]++[listToVal vs]))

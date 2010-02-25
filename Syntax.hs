@@ -91,7 +91,7 @@ data Exp -- TODO rename to Exp!
 data Pattern
     = VarPat Name Type
     | ConPat Name [Name] Type -- a type constructor 
-    | HeadTailPat Name Name Type -- x:xs pattern type
+--    | HeadTailPat Name Name Type -- x:xs pattern type
     | TuplePat [Name] Type
     | WildcardPat Type
       deriving (Show, Eq)
@@ -178,7 +178,6 @@ instance Pretty Pattern where
     pretty (VarPat n t)    = pretty n <> colon <> pretty t
     pretty (ConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
     pretty (TuplePat tuple t)  = pretty "#" <> pretty tuple <> colon <> pretty t
-    pretty (HeadTailPat n1 n2 t) = pretty n1 <> colon <> pretty n2 <> colon <> pretty t
     pretty (WildcardPat t) = pretty '_' <> colon <> pretty t
 
 instance Pretty Alternative where

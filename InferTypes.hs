@@ -132,12 +132,6 @@ numberPattern (ConPat n ns UnknownType)  =
       t <- numberVarList (length ns)
       return  (ConPat n ns (ConType n t))
 
-numberPattern (HeadTailPat n1 n2 _) = 
-    do
-      s <- get
-      put (s+1)
-      return (HeadTailPat n1 n2 (ConType "List" [(MetaType s)]))
-
 numberPattern (TuplePat ns _) =
     do
       ts <- numberVarList (length ns)
@@ -322,8 +316,6 @@ namesDeclared (PatBindDcl p _) = namesFromPattern p
       namesFromPattern (VarPat n t) = [(n, t)]
 
       namesFromPattern (ConPat _ ns (ConType _ ts)) = zip ns ts
-      namesFromPattern (HeadTailPat n1 n2 t1@(ConType name t2)) = [(n1, head t2), (n2, t1)] 
-                                                                  -- t1 is a List of t2   
 
       namesFromPattern (TuplePat ns (TupleType ts)) = zip ns ts
       namesFromPattern (WildcardPat _) = []

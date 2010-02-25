@@ -42,7 +42,6 @@ addKnownTypes p@(Program decls) = transformTree
           do
             t <- lookup name env -- Fails when the constructor does not exist
             return (ConPat name params (getLastType t))
-      adaptPattern (HeadTailPat h t _) = Just $ HeadTailPat h t listType
       adaptPattern p = Just p
 
       getLastType (FuncType _ t) = getLastType t

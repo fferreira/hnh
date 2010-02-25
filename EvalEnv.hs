@@ -25,9 +25,19 @@ env0 = [
  (VarPat "+" UnknownType, 
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun add)),
- (VarPat "*" UnknownType, 
+ (VarPat "-" UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun sub)),
+ (VarPat "*" UnknownType,
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun mul)),
+ (VarPat "/" UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun idiv)),
+
+ (VarPat "==" UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun eq)),
   --- Support for lists ---
  (VarPat "Nil" UnknownType,
          ConVal "Nil" []),
@@ -51,7 +61,6 @@ lookupEvalEnv n [] = fail $ "lookupEvalEnv: name " ++ n ++ " not found"
 match :: Name -> Pattern -> Bool
 match n (VarPat n1 _) = n == n1
 match n (ConPat n1 ns _) = (n == n1) || foldr (||) False (map (\n2 -> n == n2) ns)
-match n (HeadTailPat n1 n2 _) = (n == n1) || (n == n2)
 match n (TuplePat ns _) = foldr (||) False (map (\n2 -> n == n2) ns)
 match n (WildcardPat _) = False
 
@@ -108,8 +117,18 @@ add env =
             (_, (IntVal a)) <- lookupEvalEnv "a" env
             (_, (IntVal b)) <- lookupEvalEnv "b" env
             return $ a + b) of
-      Just sum -> (IntVal sum)
+      Just v -> (IntVal v)
       Nothing -> error "+ is of type Int -> Int -> Int"
+
+sub :: IntrinsicFun
+sub env =
+    case( do
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
+            return $ a - b) of
+      Just v -> (IntVal v)
+      Nothing -> error "- is of type Int -> Int -> Int"
+
 
 mul :: IntrinsicFun
 mul env =
@@ -117,5 +136,23 @@ mul env =
             (_, (IntVal a)) <- lookupEvalEnv "a" env
             (_, (IntVal b)) <- lookupEvalEnv "b" env
             return $ a * b) of
-      Just mul -> (IntVal mul)
-      Nothing -> error "+ is of type Int -> Int -> Int"
+      Just v -> (IntVal v)
+      Nothing -> error "* is of type Int -> Int -> Int"
+
+idiv :: IntrinsicFun
+idiv env =
+    case( do
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
+            return $ a `div` b) of
+      Just v -> (IntVal v)
+      Nothing -> error "/ is of type Int -> Int -> Int"
+
+eq :: IntrinsicFun
+eq env =
+    case( do
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
+            return $ a == b) of
+      Just v -> if v then (ConVal "True" []) else (ConVal "False" [])
+      Nothing -> error "== is of type Int -> Int -> Bool"

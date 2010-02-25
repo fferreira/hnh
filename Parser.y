@@ -222,7 +222,8 @@ apats : apats pat			{ $2 : $1 }
 -- checkPat is checked redundantly -- TODO improve this
 pat :: { Pattern }
 pat : var				{ VarPat $1 ut } 
-     | VARID ':' VARID			{% checkPat $ HeadTailPat $1 $3 ut } 
+     | VARID ':' VARID			{% checkPat $ ConPat "Cons" [$1, $3] ut } --TODO add type list?
+     | '['']'	 			{ ConPat "Nil" [] ut }
      -- you can not use underscores (ie inConstructor a _ b) here
      -- TODO should underscore be supported in this patterns?
      | CONID tyvars			{% checkPat $ ConPat $1 (reverse $2) ut }
@@ -230,7 +231,6 @@ pat : var				{ VarPat $1 ut }
      | '(' pat ')'			{ $2 }
      | '(' tuplepats ')'		{% checkPat $ TuplePat (reverse $2) ut }  
        	   	     			  	      	    -- ^ it has to be >= 2 to be a tuple
-
 
 tuplepats :: { [Name] }  -- two or more
 tuplepats : tuplepats ',' VARID		{ $3 : $1 }
