@@ -2,7 +2,7 @@
 complete: compile
 
 compile: Lexer.hs Parser.hs
-	ghc --make Main
+	ghc --make Main -o hnh
 
 run: complete
 	ghci Lexer.hs Parser.hs
