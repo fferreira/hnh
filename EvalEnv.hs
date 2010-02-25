@@ -20,19 +20,25 @@ type Env = (Pattern, Value)
 
 env0 :: [Env]
 env0 = [
+  --- Integer Operations ---
  (VarPat "+" UnknownType, 
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun add)),
  (VarPat "*" UnknownType, 
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun mul)),
+  --- Support for lists ---
  (VarPat "Nil" UnknownType,
          ConVal "Nil" []),
-
  (VarPat "Cons" UnknownType,
          Closure
-         [VarPat "p1" UnknownType, VarPat "p2" UnknownType] [] (CFun (buildData 2 "Cons")))
-
+         [VarPat "p1" UnknownType, VarPat "p2" UnknownType] [] (CFun (buildData 2 "Cons"))),
+  -- Suport for boolean type ---
+ (VarPat "True" UnknownType,
+         ConVal "True" []),
+ (VarPat "False" UnknownType,
+         ConVal "False" [])
+ 
  ]
 
 lookupEvalEnv :: Monad m => Name -> [Env] -> m Env
