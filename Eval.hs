@@ -11,7 +11,7 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 import ErrorMonad
 
-import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv)
+import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv, envForData)
 
 import Data.List(intersperse)
 import Control.Monad.State
@@ -67,14 +67,19 @@ type EvalState = [Env]
 
 -- name should be a single var pattern i.e. main = 1 + 1
 eval :: Program -> Name -> Value
-eval (Program declarations) name =
+eval (Program decls) name =
     evalState (do
-                env <- buildEvalEnv declarations
+                env <- buildEvalEnv decls
                 put env
                 (main, v) <- lookupEvalEnv name env
                 case main of 
                   (VarPat _ _) -> return v  
-                  _ -> fail (name ++ " not found or not the right from")) env0
+                  _ -> fail (name ++ " not found or not the right from")) (env0++dataTypes decls)
+
+dataTypes :: [Declaration] -> [Env]
+dataTypes ((DataDcl n _ cons):ds) = ((envForData n cons)++(dataTypes ds))
+dataTypes (d:ds) = dataTypes ds
+
 
 buildEvalEnv :: [Declaration] -> State EvalState [Env]
 buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
@@ -94,7 +99,12 @@ evalExp e@(LitExp (LiteralInt v) _) = return (IntVal v)
 evalExp e@(LitExp (LiteralFloat v) _) = return (FloatVal v)
 evalExp e@(LitExp (LiteralString v) _) = return (StringVal v)
 evalExp e@(LitExp (LiteralChar v) _) = return (CharVal v)
-evalExp e@(ConExp c t) = return (ConVal c)
+evalExp e@(ConExp c t) =
+    do
+      env <- get
+      (p, v) <- lookupEvalEnv c env
+      return v
+
 evalExp (VarExp n _) = 
     do
       env <- get
@@ -105,8 +115,8 @@ evalExp (IfExp e1 e2 e3 _) =
     do
       v1 <- evalExp e1
       res <- case v1 of
-               (ConVal "True" ) -> evalExp e2
-               (ConVal "False") -> evalExp e3
+               (ConVal "True" _) -> evalExp e2
+               (ConVal "False" _) -> evalExp e3
                _ -> fail "if condition not boolean"
       return res
 

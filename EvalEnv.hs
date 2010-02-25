@@ -3,6 +3,7 @@ module EvalEnv
      Env
     ,env0
     ,lookupEvalEnv
+    ,envForData
     ,Value(..)
     ,ClosureAction(..)
     )
@@ -44,7 +45,7 @@ data Value = IntVal Int
            | FloatVal Double
            | StringVal String
            | CharVal String
-           | ConVal Name -- a constructor, such as "True"
+           | ConVal Name [Value]-- a constructor, such as "True"
            | TupleVal [Value]
            | Closure [Pattern] [Env] ClosureAction
 
@@ -57,12 +58,34 @@ instance Show Value where
     show (FloatVal a) = show a
     show (StringVal a) = a
     show (CharVal a) = a
-    show (ConVal n) = n
+    show (ConVal n vs) = n ++ " " ++show vs
     show (TupleVal vs) = "#"++ show (map show vs)
     show (Closure pats env _) = "Closure"
 
 instance Pretty Value where
     pretty v = pretty $ show v --TODO improve this
+
+-- builds a closure to represent a data type constructor
+envForData :: Name -> [ConstructorDeclaration] -> [Env]
+envForData n ((ConDcl nCons types):cs) = ((VarPat nCons) UnknownType, 
+                                          if length types == 0 then (ConVal nCons []) else (Closure pats env (CFun buildData)))
+                                         : envForData n cs
+    where
+      pats = map (\i ->(VarPat ("p"++show i) UnknownType)) [1..(length types)]
+      env = [(VarPat "val" UnknownType, ConVal n []), (VarPat "numParams" UnknownType, IntVal (length types))]
+envForData n [] = []
+
+-- builds a value of a data type constructor
+buildData:: IntrinsicFun
+buildData env = 
+    case (do
+           (_, (IntVal l)) <- lookupEvalEnv "numParams" env
+           pats <- return $ map (\i ->(VarPat ("p"++show i) UnknownType)) [1..l]
+           pvs <- mapM (\(VarPat n _) -> lookupEvalEnv n env) pats
+           (_, (ConVal n _)) <- lookupEvalEnv "val" env
+           return $ ConVal n (snd (unzip pvs))) of
+      Just v -> v
+      Nothing -> error "Unable to build data value"
 
 add :: IntrinsicFun
 add env =
