@@ -17,6 +17,7 @@ import Data.List(intersperse)
 import Control.Monad.State
 
 import Tools
+import Debug.Trace
 
 
 evaluationTransform :: Program -> (T.TransformResult Program, [Doc])
@@ -89,7 +90,10 @@ buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
 
 evalExp :: Exp -> State EvalState Value
 evalExp (ParensExp e _) = evalExp e
-evalExp e@(LitExp l _) = return (LitVal l)
+evalExp e@(LitExp (LiteralInt v) _) = return (IntVal v)
+evalExp e@(LitExp (LiteralFloat v) _) = return (FloatVal v)
+evalExp e@(LitExp (LiteralString v) _) = return (StringVal v)
+evalExp e@(LitExp (LiteralChar v) _) = return (CharVal v)
 evalExp e@(ConExp c t) = return (ConVal c)
 evalExp (VarExp n _) = 
     do
@@ -126,11 +130,22 @@ evalExp (FExp e1 e2 _) =
       v2 <- evalExp e2
       applyFun v1 v2
 
+evalExp (CaseExp e alts _) = 
+    do
+      env <- get
+      v <- evalExp e
+      res <- findAlternative  v  alts
+      put env
+      return res
+
+evalExp (TupleExp exps _) =
+    do
+      vs <- mapM evalExp exps
+      return $ TupleVal vs
 
 evalExp (InfixOpExp _ _) = fail "InfixOpExp should not be evaluated"
 evalExp (MinusExp _ _) = fail "MinusExp should not be evalueted"
 evalExp (MinusFloatExp _ _) = fail "MinusFloatExp should not be evaluated"
-evalExp e = fail "not supported"
 
 evalPat ::  (Pattern, Exp) -> State EvalState (Pattern, Value)
 evalPat (p, e) =
@@ -157,3 +172,33 @@ evalClosure (Closure [] env (CExp e)) =
 
 evalClosure (Closure [] env (CFun f)) = return $ f env
 evalClosure c = fail "evalClosure needs a closure to evaluate"
+
+findAlternative :: Value -> [Alternative] -> State EvalState Value
+findAlternative v ((Alternative pat e):alts) = 
+    do
+      current <- checkAlternative v pat
+      if current then
+          evalExp e
+        else
+          findAlternative v alts
+findAlternative v [] = fail "Exhausted alternatives!"
+
+checkAlternative :: Value -> Pattern -> State EvalState Bool
+checkAlternative v (WildcardPat _) = return True
+checkAlternative v p@(VarPat _ _) =
+    do
+      env <- get
+      put ((p,v):env)
+      return True
+
+checkAlternative (TupleVal vs) p@(TuplePat ns _) =
+    if length vs == length ns then
+        do
+          env <- get
+          put $ (zip (map (\n->VarPat n UnknownType) ns) vs) ++ env
+          return True
+     else return False
+
+checkAlternative v (TuplePat _ _) = return False
+
+checkAlternative v p = fail "alt to be done"

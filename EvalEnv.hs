@@ -40,8 +40,12 @@ match n (HeadTailPat n1 n2 _) = (n == n1) || (n == n2)
 match n (TuplePat ns _) = foldr (||) False (map (\n2 -> n == n2) ns)
 match n (WildcardPat _) = False
 
-data Value = LitVal LiteralValue
+data Value = IntVal Int
+           | FloatVal Double
+           | StringVal String
+           | CharVal String
            | ConVal Name -- a constructor, such as "True"
+           | TupleVal [Value]
            | Closure [Pattern] [Env] ClosureAction
 
 data ClosureAction = CExp Exp |CFun IntrinsicFun
@@ -49,8 +53,12 @@ data ClosureAction = CExp Exp |CFun IntrinsicFun
 type IntrinsicFun = [Env] -> Value
 
 instance Show Value where
-    show (LitVal a) = show a
+    show (IntVal a) = show a
+    show (FloatVal a) = show a
+    show (StringVal a) = a
+    show (CharVal a) = a
     show (ConVal n) = n
+    show (TupleVal vs) = "#"++ show (map show vs)
     show (Closure pats env _) = "Closure"
 
 instance Pretty Value where
@@ -59,17 +67,17 @@ instance Pretty Value where
 add :: IntrinsicFun
 add env =
     case( do
-            (_, (LitVal (LiteralInt a))) <- lookupEvalEnv "a" env
-            (_, (LitVal (LiteralInt b))) <- lookupEvalEnv "b" env
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
             return $ a + b) of
-      Just sum -> (LitVal (LiteralInt sum))
+      Just sum -> (IntVal sum)
       Nothing -> error "+ is of type Int -> Int -> Int"
 
 mul :: IntrinsicFun
 mul env =
     case( do
-            (_, (LitVal (LiteralInt a))) <- lookupEvalEnv "a" env
-            (_, (LitVal (LiteralInt b))) <- lookupEvalEnv "b" env
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            (_, (IntVal b)) <- lookupEvalEnv "b" env
             return $ a * b) of
-      Just mul -> (LitVal (LiteralInt mul))
+      Just mul -> (IntVal mul)
       Nothing -> error "+ is of type Int -> Int -> Int"

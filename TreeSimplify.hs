@@ -21,25 +21,16 @@ funToLambda prog  = transformTree
                     prog
 
 declsToLambda :: [Declaration] -> Maybe [Declaration]
-declsToLambda decls =
-    let
-        (funs, other) = partition isFun decls
-        isFun (FunBindDcl _ _ _ _) = True
-        isFun _ = False
-    in
-      do
-        funs' <- mergePatternsInCase funs
-        return $ other ++ funs'
+declsToLambda decls = mergePatternsInCase decls
 
 mergePatternsInCase :: Monad m => [Declaration] -> m [Declaration]
 mergePatternsInCase decls =
     do
-        -- TODO do we have to sort the list? or the definitions should be contiguous?
-        groups <- return $ groupBy sameName (sort decls) 
+        groups <- return $ groupBy sameName decls 
         mapM convertGroup groups
       
 convertGroup :: Monad m => [Declaration] -> m Declaration
-convertGroup funs =
+convertGroup funs@((FunBindDcl _ _ _ _):fs) =
     do
         name <- getFunName (head funs)
         patterns <- mapM getFunPattern funs
@@ -47,6 +38,8 @@ convertGroup funs =
         validePatternLength patterns
         rhs <- generateLambdas (zip patterns rhss)
         return (PatBindDcl (VarPat name UnknownType) rhs)
+
+convertGroup otherDecls = return $ head otherDecls
 
 {- if there are more than one function all patterns should have length 1 -}
 validePatternLength :: Monad m => [[Pattern]] -> m Bool
