@@ -109,7 +109,7 @@ evalExp e@(ConExp c t) =
 evalExp (VarExp n _) = 
     do
       env <- get
-      (p, v) <- lookupEvalEnv n env
+      (p, v) <- lookupEvalEnv n env 
       return v
 
 evalExp (IfExp e1 e2 e3 _) =
@@ -181,7 +181,7 @@ evalClosure :: Value -> State EvalState Value
 evalClosure (Closure [] env (CExp e)) =
     do
       env' <- get
-      put env
+      put (env++env')
       v <- evalExp e
       put env'
       return v
