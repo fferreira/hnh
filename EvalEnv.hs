@@ -68,11 +68,14 @@ instance Pretty Value where
 -- builds a closure to represent a data type constructor
 envForData :: Name -> [ConstructorDeclaration] -> [Env]
 envForData n ((ConDcl nCons types):cs) = ((VarPat nCons) UnknownType, 
-                                          if length types == 0 then (ConVal nCons []) else (Closure pats env (CFun buildData)))
+                                          if length types == 0 
+                                          then (ConVal nCons []) 
+                                          else (Closure pats env (CFun buildData)))
                                          : envForData n cs
     where
       pats = map (\i ->(VarPat ("p"++show i) UnknownType)) [1..(length types)]
-      env = [(VarPat "val" UnknownType, ConVal n []), (VarPat "numParams" UnknownType, IntVal (length types))]
+      env = [(VarPat "val" UnknownType, ConVal n []), 
+             (VarPat "numParams" UnknownType, IntVal (length types))]
 envForData n [] = []
 
 -- builds a value of a data type constructor
