@@ -11,7 +11,7 @@ import qualified ParserMonad as P
 import qualified TransformMonad as T
 import ErrorMonad
 
-import EvalEnv(Env,Value(..), lookupEvalEnv)
+import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv)
 
 import Data.List(intersperse)
 import Control.Monad.State
@@ -70,11 +70,10 @@ eval (Program declarations) name =
     evalState (do
                 env <- buildEvalEnv declarations
                 put env
---                env <- get
                 (main, v) <- lookupEvalEnv name env
                 case main of 
                   (VarPat _ _) -> return v  
-                  _ -> fail (name ++ " not found or not the right from")) []
+                  _ -> fail (name ++ " not found or not the right from")) env0
 
 buildEvalEnv :: [Declaration] -> State EvalState [Env]
 buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
@@ -119,7 +118,7 @@ evalExp (LetExp decls e _) =
 evalExp (LambdaExp pats e _) =
     do
       env <- get
-      return $ Closure pats env e
+      return $ Closure pats env (CExp e)
 
 evalExp (FExp e1 e2 _) =
     do
@@ -148,13 +147,13 @@ applyFun (Closure (p:ps) env e) v = return (Closure ps ((p, v):env) e)
 applyFun v1 _ = fail "Apply function requires a closure"
 
 evalClosure :: Value -> State EvalState Value
-evalClosure (Closure [] env e) = -- undefined
-{- -}
+evalClosure (Closure [] env (CExp e)) =
     do
-      exp' <- get
+      env' <- get
       put env
       v <- evalExp e
-      put exp'
+      put env'
       return v
-{- -}
+
+evalClosure (Closure [] env (CFun f)) = return $ f env
 evalClosure c = fail "evalClosure needs a closure to evaluate"
