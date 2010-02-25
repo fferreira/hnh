@@ -202,6 +202,7 @@ aexp : var				{ VarExp $1 ut }
        	   	     			  	   	           (map getType (reverse $2))) }
      | '[' listexps ']'			{ ListExp (reverse $2) (ConType "List" 
        	   	    			  	  	       		[getType (last $2)]) }
+     | '['']'				{ ListExp [] (ConType "List" [UnknownType]) }															 
 
 
 tupleexps :: { [Exp] }

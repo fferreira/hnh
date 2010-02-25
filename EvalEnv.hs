@@ -25,7 +25,14 @@ env0 = [
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun add)),
  (VarPat "*" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun mul))
+         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun mul)),
+ (VarPat "Nil" UnknownType,
+         ConVal "Nil" []),
+
+ (VarPat "Cons" UnknownType,
+         Closure
+         [VarPat "p1" UnknownType, VarPat "p2" UnknownType] [] (CFun (buildData 2 "Cons")))
+
  ]
 
 lookupEvalEnv :: Monad m => Name -> [Env] -> m Env
@@ -70,7 +77,7 @@ envForData :: Name -> [ConstructorDeclaration] -> [Env]
 envForData n ((ConDcl nCons types):cs) = ((VarPat nCons) UnknownType, 
                                           if length types == 0 
                                           then (ConVal nCons []) 
-                                          else (Closure pats env (CFun buildData)))
+                                          else (Closure pats env (CFun(buildData (length types) nCons))))
                                          : envForData n cs
     where
       pats = map (\i ->(VarPat ("p"++show i) UnknownType)) [1..(length types)]
@@ -79,13 +86,11 @@ envForData n ((ConDcl nCons types):cs) = ((VarPat nCons) UnknownType,
 envForData n [] = []
 
 -- builds a value of a data type constructor
-buildData:: IntrinsicFun
-buildData env = 
+buildData:: Int -> Name-> IntrinsicFun
+buildData l n env = 
     case (do
-           (_, (IntVal l)) <- lookupEvalEnv "numParams" env
            pats <- return $ map (\i ->(VarPat ("p"++show i) UnknownType)) [1..l]
            pvs <- mapM (\(VarPat n _) -> lookupEvalEnv n env) pats
-           (_, (ConVal n _)) <- lookupEvalEnv "val" env
            return $ ConVal n (snd (unzip pvs))) of
       Just v -> v
       Nothing -> error "Unable to build data value"

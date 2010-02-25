@@ -153,6 +153,11 @@ evalExp (TupleExp exps _) =
       vs <- mapM evalExp exps
       return $ TupleVal vs
 
+evalExp (ListExp exps _) =
+    do
+      vs <- mapM evalExp exps
+      return $ listToVal vs
+
 evalExp (InfixOpExp _ _) = fail "InfixOpExp should not be evaluated"
 evalExp (MinusExp _ _) = fail "MinusExp should not be evalueted"
 evalExp (MinusFloatExp _ _) = fail "MinusFloatExp should not be evaluated"
@@ -212,3 +217,7 @@ checkAlternative (TupleVal vs) p@(TuplePat ns _) =
 checkAlternative v (TuplePat _ _) = return False
 
 checkAlternative v p = fail "alt to be done"
+
+listToVal :: [Value] -> Value -- converts a haskell list to hnh builtin list
+listToVal (v:vs) = (ConVal "Cons" ([v]++[listToVal vs]))
+listToVal [] = (ConVal "Nil" [])
