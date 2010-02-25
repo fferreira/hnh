@@ -48,7 +48,7 @@ loadAndEval file main showSteps = do contents <- readFile file
                                      doc <- return $ if showSteps then
                                                          printSteps docs
                                                      else
-                                                         pretty $ evalState (eval program main) []
+                                                         pretty $ eval program main
                                      return doc
 
 printSteps :: [Doc] -> Doc
@@ -65,15 +65,16 @@ type EvalState = [Env]
 
 
 -- name should be a single var pattern i.e. main = 1 + 1
-eval :: Program -> Name -> State EvalState Value
+eval :: Program -> Name -> Value
 eval (Program declarations) name =
-    do
-      buildEvalEnv declarations
-      env <- get
-      (main, v) <- lookupEvalEnv name env
-      case main of 
-        (VarPat _ _) -> return v  
-        _ -> fail (name ++ " not found or not the right from")
+    evalState (do
+                env <- buildEvalEnv declarations
+                put env
+--                env <- get
+                (main, v) <- lookupEvalEnv name env
+                case main of 
+                  (VarPat _ _) -> return v  
+                  _ -> fail (name ++ " not found or not the right from")) []
 
 buildEvalEnv :: [Declaration] -> State EvalState [Env]
 buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
@@ -124,7 +125,7 @@ evalExp (FExp e1 e2 _) =
     do
       v1 <- evalExp e1 -- it should evaluate to a closure
       v2 <- evalExp e2
-      fail "No FExp for you"
+      applyFun v1 v2
 
 
 evalExp (InfixOpExp _ _) = fail "InfixOpExp should not be evaluated"
@@ -139,3 +140,21 @@ evalPat (p, e) =
       v <- evalExp e
       put $ (p, v):env
       return (p, v)
+
+applyFun :: Value -> Value -> State EvalState Value
+applyFun (Closure (p:[]) env e) v = evalClosure (Closure [] ((p, v):env)  e)
+applyFun (Closure (p:ps) env e) v = return (Closure ps ((p, v):env) e)
+
+applyFun v1 _ = fail "Apply function requires a closure"
+
+evalClosure :: Value -> State EvalState Value
+evalClosure (Closure [] env e) = -- undefined
+{- -}
+    do
+      exp' <- get
+      put env
+      v <- evalExp e
+      put exp'
+      return v
+{- -}
+evalClosure c = fail "evalClosure needs a closure to evaluate"
