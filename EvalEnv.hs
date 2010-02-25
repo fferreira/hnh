@@ -12,7 +12,7 @@ module EvalEnv
 import Syntax
 
 
-
+import Data.List(intersperse)
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
 
@@ -34,6 +34,9 @@ env0 = [
  (VarPat "/" UnknownType, 
          Closure 
          [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun idiv)),
+ (VarPat "~" UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" [])] [] (CFun neg)),
 
  (VarPat "==" UnknownType, 
          Closure 
@@ -56,6 +59,9 @@ env0 = [
  (VarPat "/." UnknownType, 
          Closure 
          [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fdiv)),
+ (VarPat "~." UnknownType, 
+         Closure 
+         [VarPat "a" (ConType "Int" [])] [] (CFun fneg)),
 
  (VarPat "==." UnknownType, 
          Closure 
@@ -108,12 +114,18 @@ instance Show Value where
     show (FloatVal a) = show a
     show (StringVal a) = a
     show (CharVal a) = a
+    show v@(ConVal "Cons" _) = "["++concat (intersperse ", " (map show (consToList v)))++"]"
     show (ConVal n vs) = n ++ " " ++show vs
     show (TupleVal vs) = "#"++ show (map show vs)
     show (Closure pats env _) = "Closure"
 
 instance Pretty Value where
     pretty v = pretty $ show v --TODO improve this
+
+consToList :: Value -> [Value]
+consToList (ConVal "Cons" [v1, v2]) = v1:consToList v2
+consToList (ConVal "Nil" _) = []
+consToList _ = [] 
 
 -- builds a closure to represent a data type constructor
 envForData :: Name -> [ConstructorDeclaration] -> [Env]
@@ -175,6 +187,14 @@ idiv env =
       Just v -> (IntVal v)
       Nothing -> error "/ is of type Int -> Int -> Int"
 
+neg :: IntrinsicFun
+neg env =
+    case( do
+            (_, (IntVal a)) <- lookupEvalEnv "a" env
+            return $ -a) of
+      Just v -> (IntVal v)
+      Nothing -> error "- is of type Int -> Int -> Int"
+
 eq :: IntrinsicFun
 eq env =
     case( do
@@ -230,6 +250,14 @@ fdiv env =
             return $ a / b) of
       Just v -> (FloatVal v)
       Nothing -> error "/. is of type Int -> Int -> Int"
+
+fneg :: IntrinsicFun
+fneg env =
+    case( do
+            (_, (FloatVal a)) <- lookupEvalEnv "a" env
+            return $ -a) of
+      Just v -> (FloatVal v)
+      Nothing -> error "- is of type Int -> Int -> Int"
 
 feq :: IntrinsicFun
 feq env =
