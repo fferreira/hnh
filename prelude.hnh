@@ -1,0 +1,19 @@
+
+(++) l1 l2 = 
+     let
+	f [] = l2;
+	f (x:xs) = (Cons x (f xs)); 
+     in
+	f l1; 
+
+filter f l =
+  let
+    fil l:ls = (if f l then Cons l (fil ls) else fil ls); 
+    fil [] = [];
+  in
+    fil l;
+
+not True = False;
+not False = True;
+
+(<=) a b = not (a > b);

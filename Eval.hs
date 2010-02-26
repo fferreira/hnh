@@ -42,15 +42,22 @@ checkTransformation (T.Ok program) = program
 checkTransformation (T.Failed err) = error err
 
 loadAndEval :: String -> Name -> Bool -> IO Doc
-loadAndEval file main showSteps = do contents <- readFile file 
+loadAndEval file main showSteps = do contents <- readFile file
+                                     preludeContents <- readFile "prelude.hnh"
+                                     parsedPrelude <- return $ rawParse preludeContents
                                      parsed <- return $ rawParse contents
-                                     (programRes, docs) <- return $ runTransformations parsed
+                                     (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
                                      program <- return $ checkTransformation programRes 
                                      doc <- return $ if showSteps then
                                                          printSteps docs
                                                      else
                                                          pretty $ eval program main
                                      return doc
+
+merge :: P.ParseResult Program -> P.ParseResult Program -> P.ParseResult Program
+merge (P.Ok _ (Program d1)) (P.Ok t (Program d2)) = P.Ok t (Program (d1++d2))
+merge (P.Failed p msg) _ = (P.Failed p msg)
+merge _ (P.Failed p msg) = (P.Failed p msg)
 
 printSteps :: [Doc] -> Doc
 printSteps docs = 
