@@ -153,7 +153,7 @@ ops : ops ',' op			{ $3 : $1 }
 op :: { Operator }
 op : VARSYM				{ $1 }
    | '`' VARID '`'			{ $2 }
-   | ':'       				{ ":" } -- TODO are there other operators missing?
+   | ':'       				{ ":" } -- TODO currently undeclarable
 
 -- Right Hand Side
 
@@ -239,7 +239,7 @@ tuplepats : tuplepats ',' VARID		{ $3 : $1 }
 -- Types
 
 simpletype :: { (Name, [Name]) }
-simpletype : CONID tyvars		{ ($1, reverse $2) } -- TODO add polymorphic types !!
+simpletype : CONID tyvars		{ ($1, reverse $2) }
 
 tupletypes :: { [Type] } -- two or more types separated by commas
 tupetypes : tupletypes ',' type		{ $3 : $1 }

@@ -4,7 +4,7 @@ infixl 7 *, /, *., /.
 --infixr 8 ^,^.
 infix 4 ==, <, >
 
-infixr 5 ++
+infixr 5 ++,<> -- <> should be :
 
 -- infixr 3 &&
 -- infixr 2 ||
@@ -14,11 +14,13 @@ infixr 5 ++
 	f [] = l2;
 	f (x:xs) = (Cons x (f xs)); 
      in
-	f l1; 
+	f l1;
+
+(<>) a b = Cons a b ;
 
 filter f l =
   let
-    fil l:ls = (if f l then Cons l (fil ls) else fil ls); 
+    fil l:ls = (if f l then l<>(fil ls) else fil ls); 
     fil [] = [];
   in
     fil l;
