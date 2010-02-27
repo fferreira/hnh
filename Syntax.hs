@@ -71,7 +71,7 @@ data OpExp
     | Op Operator OpExp OpExp
       deriving (Show, Eq)
 
-data Exp -- TODO rename to Exp!
+data Exp 
     = VarExp Name Type
     | ConExp Name Type
     | LitExp LiteralValue Type
@@ -91,7 +91,6 @@ data Exp -- TODO rename to Exp!
 data Pattern
     = VarPat Name Type
     | ConPat Name [Name] Type -- a type constructor 
---    | HeadTailPat Name Name Type -- x:xs pattern type
     | TuplePat [Name] Type
     | WildcardPat Type
       deriving (Show, Eq)
@@ -100,17 +99,6 @@ data Alternative
     = Alternative Pattern Exp
     deriving (Show, Eq)
 
-{-
-  this allows us to order the functions in the latest part of
-  a declaration list, the functions oredered by name
--}
-instance Ord Declaration where
-    compare (FunBindDcl n1 _ _ _) (FunBindDcl n2 _ _ _) = compare n1 n2
-    compare (FunBindDcl _ _ _ _) _ = GT
-    compare _ (FunBindDcl _ _ _ _) = LT
-    compare _ _ = EQ
-
-           
 -- Pretty printing support (very important for debugability)
 
 instance Pretty Program where
