@@ -9,14 +9,10 @@ infixr 5 ++,<> -- <> should be :
 -- infixr 3 &&
 -- infixr 2 ||
 
-(++) l1 l2 = 
-     let
-	f [] = l2;
-	f (x:xs) = (Cons x (f xs)); 
-     in
-	f l1;
-
 (<>) a b = Cons a b ;
+
+(++) (x:xs) l2 = x <> (xs ++ l2); 
+(++) [] l2 = l2;
 
 filter f l =
   let
