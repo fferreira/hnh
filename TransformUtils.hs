@@ -27,17 +27,18 @@ module TransformUtils
 
 import Syntax
 import TransformMonad(TransformM, transformOk, transformError)
-import Control.Monad.Error
+import ErrorMonad(ErrorM(..))
+
 
 -- idM: monadic version of id
 idM :: Monad m => a -> m a
 idM = return 
 
 data Transformer = Transformer {
-                   tExp :: Exp -> Maybe Exp
-                  ,tPat  :: Pattern -> Maybe Pattern
-                  ,tDecls :: [Declaration] -> Maybe [Declaration]
-                  -- TODO maybe add other transformers here
+                   tExp :: Exp -> ErrorM Exp
+                  ,tPat  :: Pattern -> ErrorM Pattern
+                  ,tDecls :: [Declaration] -> ErrorM [Declaration]
+                  -- add other transformers as needed here
     }
 
 defTrans = Transformer idM idM idM
@@ -47,10 +48,10 @@ defTrans = Transformer idM idM idM
 -- access to expressions or other constructs
 
 transformTree :: String -> Transformer -> Program -> TransformM Program
-transformTree msg transform prog@(Program decls) = 
-    case decls' of  -- TODO USE ErrorM!!!!
-      Just d -> transformOk $ Program d
-      Nothing -> transformError msg
+transformTree msg transform prog@(Program decls) =
+    case decls' of
+      Success d -> transformOk $ Program d
+      Error msg' -> transformError (msg ++ " " ++ msg')
     where
       decls' =
           do
@@ -69,7 +70,7 @@ transformTree msg transform prog@(Program decls) =
             pat' <- (tPat transform) pat
             return $ PatBindDcl pat' e'
 
-      adaptDeclaration d = Just d
+      adaptDeclaration d = return d
 
       adaptExp (InfixOpExp opEx t) =
           do

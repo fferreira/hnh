@@ -36,11 +36,11 @@ import Data.List(sort, group, groupBy, nub, intersperse)
 -}
 funToLambda:: Program -> TransformM Program
 funToLambda prog  = transformTree
-                    "funToLambda: unable to generate lambdas"
+                    "funToLambda:"
                     defTrans {tDecls  = declsToLambda }
                     prog
 
-declsToLambda :: [Declaration] -> Maybe [Declaration]
+declsToLambda :: Monad m => [Declaration] -> m [Declaration]
 declsToLambda decls = mergePatternsInCase decls
 
 mergePatternsInCase :: Monad m => [Declaration] -> m [Declaration]
@@ -69,7 +69,7 @@ validePatternLength pats =
         then
             return True
         else
-            fail "not all lengths equal!"
+            fail "not all functions take the same number of parameters"
 
 
 generateLambdas :: Monad m => [([Pattern], Exp)] -> m Exp
@@ -105,7 +105,7 @@ partition f [] = ([], [])
 -}
 simplifyLambda:: Program -> TransformM Program
 simplifyLambda prog  = transformTree
-                       "simplifyLambda: unable to simplify lambdas"
+                       "simplifyLambda:"
                        defTrans {tExp  = transformLambda }
                        prog
 
@@ -140,7 +140,7 @@ transformLambda e = return e
 
 simplifyPatterns :: Program -> TransformM Program
 simplifyPatterns prog =  transformTree
-                         "simplifyPattern: unable to simplify patterns"
+                         "simplifyPattern:"
                          defTrans {tDecls  =  transformPatBinds }
                          prog
 

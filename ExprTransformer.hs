@@ -36,33 +36,35 @@ import Syntax
 import TransformMonad(TransformM)
 import TransformUtils(transformTree, Transformer(..), defTrans)
 
+import Control.Monad(filterM)
+
 type FixityDesc = (Operator, Precedence, Associativity)
 
 correctPrecedence:: Program -> TransformM Program
 correctPrecedence prog  = transformTree
-                          "correctPrecedence: Non Associative operator used associatively"
+                          "correctPrecedence:"
                           defTrans {tExp  = adaptExpr }
                           prog
     where
       adaptExpr (InfixOpExp e t) = 
           do
+            precedences <- buildPrecedenceTable prog
             e' <- transform precedences e
             return $ InfixOpExp e' t
-      adaptExpr e = Just e
+      adaptExpr e = return e
 
-      precedences = buildPrecedenceTable prog
-      
 
-buildPrecedenceTable :: Program -> [FixityDesc]
-buildPrecedenceTable (Program declarations) =
-    let
-        fixity = filter isFixity declarations
-        isFixity = \d -> case d of
-                           FixityDcl _ _ _ -> True
-                           otherwise -> False
-        explode (opList, p, a) = map (\x -> (x, p, a)) opList
-    in
-      concatMap (\(FixityDcl a p o) -> explode(o, p, a)) fixity
+buildPrecedenceTable :: Monad m => Program -> m [FixityDesc]
+buildPrecedenceTable (Program decls) =
+    do
+      fixity <- filterM isFixity decls
+      precedences <- mapM (\(FixityDcl a p o) -> explode(o, p, a)) fixity
+      return $ concat precedences
+    where
+      isFixity (FixityDcl _ _ _) = return True
+      isFixity _ = return False
+
+      explode (opList, p, a) = mapM (\x -> return (x, p, a)) opList
 
 lookupPrecedence :: [FixityDesc] -> Operator -> FixityDesc
 lookupPrecedence tbl op = case filter (\(o, p, a) -> op == o) tbl of
@@ -70,16 +72,17 @@ lookupPrecedence tbl op = case filter (\(o, p, a) -> op == o) tbl of
                             l  -> head l             -- return the first
 
 -- Apply the transformation recursively to the right sided tree
-transform ::[FixityDesc] -> OpExp -> Maybe OpExp
-transform tbl t@(LeafExp _) = Just t
-transform tbl t@(Op _ _ (LeafExp _)) = Just t 
-transform tbl t@(Op o left t'@(Op _ _ _)) =
+transform ::Monad m => [FixityDesc] -> OpExp -> m OpExp
+transform tbl t@(LeafExp _) = return t
+transform tbl t@(Op _ _ (LeafExp _)) = return t 
+transform tbl t@(Op o left right@(Op _ _ _)) =
     do
-      transformed <- transform  tbl (lst tbl t')
-      return $ lst tbl (Op o left transformed)
+      right' <- lst tbl right
+      transformed <- transform  tbl right'
+      lst tbl (Op o left transformed)
 
 -- precedence operator, returns whether o1 has a tighter precedence, or left associativity
-compPrecedence :: [FixityDesc] -> Operator -> Operator -> Bool
+compPrecedence :: Monad m => [FixityDesc] -> Operator -> Operator -> m Bool
 compPrecedence table o1 o2 =
     let
         (_, o1p, o1a) = lookupPrecedence table o1
@@ -87,27 +90,30 @@ compPrecedence table o1 o2 =
         -- if o1 binds tighter than o2, or for equal precedence, if o1 is left associative
         res = (o1p > o2p) || ((o1p == o2p) && (o1a == LeftAssoc)) 
     in
-      (res || 
-          (if (o1p == o2p) && (o1a == NonAssoc) then
-              error "Non associative operator used without ()" --TODO improve error handling
-          else
-              False))
+      if res then return True
+         else 
+             if (o1p == o2p) && (o1a == NonAssoc) then
+                 fail "Non associative operator used without ()"
+             else
+                 return False
 
 -- Left Subordinate Transform 
 
-lst :: [FixityDesc] -> OpExp -> OpExp
+lst :: Monad m => [FixityDesc] -> OpExp -> m OpExp
 lst tbl t@(Op p t1 (Op q t2 t3)) =
-    if compPrecedence tbl p q then Op q (Op p t1 t2) t3 else t
-lst _ t = t
+    do
+      should <- compPrecedence tbl p q
+      if should then return $ Op q (Op p t1 t2) t3 else return t
+lst _ t = return t
 
 -- toPrefix converts all the OpExp to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
 toPrefix = transformTree
            "toPrefix: Unexpected Error (This should not fail)"
-           defTrans { tExp = adaptExpr } -- (Transformer adaptExpr idM idM)
+           defTrans { tExp = adaptExpr }
     where
 
-      adaptExpr (InfixOpExp e _) = Just $ prefixer e
+      adaptExpr (InfixOpExp e _) = return $ prefixer e
       adaptExpr (MinusExp e _) = 
           do
             e' <- adaptExpr e
@@ -122,7 +128,7 @@ toPrefix = transformTree
                     (VarExp "~." UnknownType) 
                     e'
                     UnknownType)
-      adaptExpr e = Just e
+      adaptExpr e = return e
 
       prefixer :: OpExp -> Exp
       prefixer (LeafExp e) = e
