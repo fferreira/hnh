@@ -5,7 +5,7 @@ import Text.PrettyPrint.Leijen
 import Syntax
 
 import ExprTransformer(correctPrecedence, toPrefix)
-import TreeSimplify(funToLambda, simplifyLambda)
+import TreeSimplify(funToLambda, simplifyLambda, simplifyPatterns)
 
 import qualified ParserMonad as P
 import qualified TransformMonad as T
@@ -25,8 +25,9 @@ evaluationTransform p =
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= toPrefix
                                        >>= funToLambda
+                                       >>= simplifyPatterns
                                        >>= simplifyLambda
-                                       >>= return)
+                                       >>= return)       
     in
       (res, (pretty p):docs) -- adding the original to the list
 

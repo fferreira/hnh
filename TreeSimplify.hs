@@ -2,6 +2,7 @@ module TreeSimplify
     (
      funToLambda
     ,simplifyLambda
+    ,simplifyPatterns
     )
     where
 
@@ -9,7 +10,7 @@ import Syntax
 import TransformMonad (TransformM, transformOk)
 import TransformUtils(transformTree, Transformer(..), defTrans)
 
-import Data.List(sort, group, groupBy, nub)
+import Data.List(sort, group, groupBy, nub, intersperse)
 
 {-
   funToLambda: eliminates all the FunBindDcl transforming them to lambdas
@@ -112,3 +113,42 @@ transformLambda (LambdaExp pats e t) = return $ LambdaExp (reverse pats') e' t
       (pats', e') = process (reverse pats) newPats ([], e)
 
 transformLambda e = return e
+
+{-
+  simplifyPatterns will transfrom all pattern bindings into pattern bindings
+  that only use var patterns
+-}
+
+simplifyPatterns :: Program -> TransformM Program
+simplifyPatterns prog =  transformTree
+                         "simplifyPattern: unable to simplify patterns"
+                         defTrans {tDecls  =  transformPatBinds }
+                         prog
+
+
+transformPatBinds :: Monad m => [Declaration] -> m [Declaration]
+transformPatBinds decls =
+    do
+      decls' <- mapM transformPatBind decls
+      return $ concat decls'
+
+transformPatBind :: Monad m => Declaration -> m [Declaration]
+transformPatBind (PatBindDcl pat@(ConPat _ ns _) e) = 
+    do
+      valName <- return $ concat (intersperse "#" ns) ++ "#"
+      ds <- mapM (buildDecl pat valName) ns
+      return $ (PatBindDcl (VarPat valName UnknownType) e):ds
+
+transformPatBind  (PatBindDcl pat@(TuplePat ns _) e) =
+    do
+      valName <- return $ concat (intersperse "#" ns) ++ "#"
+      ds <- mapM (buildDecl pat valName) ns
+      return $ (PatBindDcl (VarPat valName UnknownType) e):ds
+
+transformPatBind p = return [p];
+
+-- builds a declaration to extract a variable from the 'patterned' value
+buildDecl :: Monad m => Pattern -> Name -> Name -> m Declaration
+buildDecl pat valName name = return $ PatBindDcl (VarPat name UnknownType) 
+                             (FExp (LambdaExp [pat] (VarExp name UnknownType)  UnknownType) 
+                                       (VarExp valName UnknownType) UnknownType)
