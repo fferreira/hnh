@@ -148,11 +148,11 @@ evalExp (FExp e1 e2 _) =
       v2 <- evalExp e2
       applyFun v1 v2
 
-evalExp (CaseExp e alts _) = 
+evalExp (CaseExp es alts _) = 
     do
       env <- get
-      v <- evalExp e
-      res <- findAlternative  v  alts
+      vs <- mapM evalExp es
+      res <- findAlternative  vs  alts
       put env
       return res
 
@@ -196,15 +196,27 @@ evalClosure (Closure [] env (CExp e)) =
 evalClosure (Closure [] env (CFun f)) = return $ f env
 evalClosure c = fail "evalClosure needs a closure to evaluate"
 
-findAlternative :: Value -> [Alternative] -> State EvalState Value
-findAlternative v ((Alternative pat e):alts) = 
+findAlternative :: [Value] -> [Alternative] -> State EvalState Value
+findAlternative vs ((Alternative pats e):alts) = 
     do
-      current <- checkAlternative v pat
+      current <- checkAlternatives vs pats
       if current then
           evalExp e
         else
-          findAlternative v alts
-findAlternative v [] = fail "Exhausted alternatives!"
+          findAlternative vs alts
+findAlternative vs [] = fail "Exhausted alternatives!"
+
+checkAlternatives :: [Value] -> [Pattern] -> State EvalState Bool
+checkAlternatives vs pats =
+    do
+      env <- get
+      matches <- mapM (\(v,p) -> checkAlternative v p) (zip vs pats)
+      if (foldl (&&) True matches) == True then
+          return True
+       else
+           do
+             put env
+             return False
 
 checkAlternative :: Value -> Pattern -> State EvalState Bool
 checkAlternative v (WildcardPat _) = return True

@@ -82,7 +82,7 @@ data Exp
     | LambdaExp [Pattern] Exp Type
     | LetExp [Declaration] Exp Type
     | IfExp Exp Exp Exp Type
-    | CaseExp Exp [Alternative] Type
+    | CaseExp [Exp] [Alternative] Type
     | ParensExp Exp Type
     | TupleExp [Exp] Type -- a tuple of expresions
     | ListExp [Exp] Type  -- a list of expresions
@@ -96,7 +96,7 @@ data Pattern
       deriving (Show, Eq)
 
 data Alternative
-    = Alternative Pattern Exp
+    = Alternative [Pattern] Exp
     deriving (Show, Eq)
 
 -- Pretty printing support (very important for debugability)

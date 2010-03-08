@@ -94,11 +94,11 @@ transformTree msg transform prog@(Program decls) =
             e3' <- adaptExp e3
             (tExp transform) (IfExp e1' e2' e3' t)
 
-      adaptExp (CaseExp e alts t) = 
+      adaptExp (CaseExp es alts t) = 
           do
-            e' <- adaptExp e
+            es' <- mapM adaptExp es
             alts' <- mapM adaptAlt alts
-            (tExp transform) (CaseExp e' alts' t)
+            (tExp transform) (CaseExp es' alts' t)
 
       adaptExp (ParensExp e t) =
           do
@@ -128,8 +128,8 @@ transformTree msg transform prog@(Program decls) =
             e2' <- adaptOpExp e2
             return $ Op o e1' e2'
 
-      adaptAlt (Alternative pat e) =
+      adaptAlt (Alternative pats e) =
           do
             e' <- adaptExp e
-            pat' <- (tPat transform) pat
-            return $ Alternative pat' e'
+            pats' <- mapM (tPat transform) pats
+            return $ Alternative pats' e'

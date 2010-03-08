@@ -15,8 +15,7 @@ import TypeUtils(addType
 		  ,checkPat
 		  ,addParam
 		  ,getType
-		  ,typeFromAlternative
-		  ,validateFunBindDcl)
+		  ,typeFromAlternative)
 
 }
  
@@ -108,8 +107,7 @@ topdecl : decl	    	      		  { $1 }
 
 decl :: { Declaration }
 decl : gendecl				{ $1 }
-     | var apats rhs			{% validateFunBindDcl
-					     $ FunBindDcl $1 (reverse $2) $3 ut } --funlhs
+     | var apats rhs			{ FunBindDcl $1 (reverse $2) $3 ut } --funlhs
      | pat rhs				{ PatBindDcl $1 $2 }
 
 decls :: { [Declaration] }  -- one or more declarations
@@ -176,7 +174,7 @@ exp10 :	fexp				{ $1 }
       | '\\' apats '->' exp		{ LambdaExp $2 $4 ut }
       | 'let' lcb decls rcb 'in' exp    { LetExp (reverse $3) $6 (getType $6) }
       | 'if' exp 'then' exp 'else' exp  { IfExp $2 $4 $6 (getType $4) }
-      | 'case' exp 'of' lcb alts rcb   	{ CaseExp $2 
+      | 'case' exp 'of' lcb alts rcb   	{ CaseExp [$2] 
       	       	   	    	 	  	  (reverse $5) 
       	       	   	    	 	          (typeFromAlternative (head(reverse $5))) }
 
@@ -185,7 +183,7 @@ alts : alts alt				{ $2 : $1 }
      | alt  			       	{ [$1] }
 
 alt :: { Alternative }
-alt : pat '->' exp ';'			{ Alternative $1 $3 }
+alt : pat '->' exp ';'			{ Alternative [$1] $3 }
 
 fexp :: { Exp }
 fexp : fexp aexp			{ FExp $1 $2 (getType $1) } 
