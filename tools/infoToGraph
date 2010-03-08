@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+
+=begin
+  This file is part of HNH.
+
+    HNH is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    HNH is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    
+    Copyright 2010 Francisco Ferreira
+=end
+
+
+class ParseInfo
+  attr_accessor :infofile
+
+  def parse(fileName)
+    self.infofile = File.new(fileName, "r")
+
+    skip_to "States"
+
+    puts "digraph G {"
+    parse_states
+    puts "}"
+
+    infofile.close
+  end
+
+  def skip_to section
+    while(line = infofile.gets) && (line.strip != section)
+    end
+    infofile.gets
+  end
+
+  def parse_states
+    while (not infofile.eof?)
+      name = infofile.gets.strip.downcase.gsub(" ", "_")
+      break if name.strip.end_with?("-")
+      parse_next_state name
+    end
+  end
+
+  def parse_next_state name
+    puts "\n// State #{name}\n#{name};"
+
+    infofile.gets
+    #puts "Rules"
+    parse_rules
+    parse_shift_reduce_transitions name
+    parse_direct_transitions name
+
+  end
+
+  def parse_rules
+    while (line = infofile.gets) && (line.strip.length != 0)
+      #puts "rule: #{line}"
+    end
+  end
+
+  def parse_shift_reduce_transitions name
+    while (line = infofile.gets) && (line.strip.length != 0)
+      if line.split[1] =="shift," then # is this a transition?
+        puts '#{name} -> state_#{line.split.last} [label="#{line.split[0].gsub("'","")}"];' #'
+      end
+      infofile.gets if line.strip.end_with?(")")  # if this line is a conflict
+    end
+
+  end
+
+  def parse_direct_transitions name
+    while (line = infofile.gets) && (line.strip.length != 0)
+      puts "#{name} -> state_#{line.split.last};"
+    end
+  end
+end
+
+
+
+f = ParseInfo.new
+
+f.parse(ARGV[0])
