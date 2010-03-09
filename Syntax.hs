@@ -146,6 +146,7 @@ instance Pretty Type where
     pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
     pretty (VarType n) = pretty n
+    pretty (ConType n []) = pretty n
     pretty (ConType n params) = pretty n <> pretty"_"<> pretty params
     pretty (UnknownType) = pretty "?"
     pretty (MetaType i) = pretty "%" <> pretty i
