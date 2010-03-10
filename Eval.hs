@@ -20,6 +20,7 @@
 module Eval where --TODO add exported methods
 
 import Parser
+import PParser
 import Text.PrettyPrint.Leijen
 import Syntax
 
