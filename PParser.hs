@@ -33,6 +33,9 @@ import Control.Monad(liftM)
 parseHNH :: String -> Either ParseError Program
 parseHNH p = parse program "" p
 
+
+ut = UnknownType
+
 --- Combinators ---
 
 sepBy2 p sep = do  x1 <- p
@@ -83,8 +86,8 @@ literal = try float
 --- Variables and Constructors ---
 
 varid = do f <- many1 lower -- TODO should we avoid keywords?
-           r <- many (alphaNum <|> (oneOf ",_"))
---           whiteSpace
+           r <- many (alphaNum <|> (oneOf "'_"))
+           whiteSpace
            return $ f ++ r
 
 conid = do f <- many1 upper
@@ -96,7 +99,7 @@ symbol = oneOf "!#$%&*+./<=>?@\\^|-~"
 
 varsym = trailWS $ many1 symbol
 
-variable = trailWS (parens varsym <|> varid)
+variable = trailWS (parens varsym <|> varid <?> "variable")
            
 --- Utils ---           
 
@@ -118,7 +121,9 @@ declarations = many $ ws (do decl <- declaration
 declaration = try typeDecl
               <|> try dataDecl
               <|> try typeSigDecl
-              <|> fixityDecl
+              <|> try fixityDecl
+              <|> try varDecl
+              <|> try funDecl
               <?> "declaration"
 
 typeDecl = do string "type" ; whiteSpace 
@@ -133,11 +138,9 @@ dataDecl = do string "data" ; whiteSpace
               cs <- constrs ; whiteSpace
               return $ DataDcl n params cs           
            
-varSpc = do v <- varid; whiteSpace; return v
-        
 simpleType = do n <- conid
                 whiteSpace
-                params <- many varSpc
+                params <- many varid
                 whiteSpace
                 return (n, params)
                 
@@ -197,11 +200,48 @@ aType = trailWS (aConType
                  <|> aVarType
                  <|> aTupleType
                  <|> aListType
-                 <|> parens aType)
+                 <|> parens aType
+                 <?> "type"
+                )
         
 functionArrow = ws (string "->") >> return FuncType
 
 typeD = trailWS $ chainr1 aType functionArrow 
         
 
+--- Variable and function declarations ---
+
+varDecl = do p <- pattern ; ws (char '=') ; e <- expression ; (return $ PatBindDcl p e)
+             
+funDecl = do f <- variable ; whiteSpace
+             ps <- many1 (trailWS pattern)
+             ws (char '=')
+             e <- expression
+             return $ FunBindDcl f ps e ut
+
+--- Patterns ---
+
+varPat = do n <- variable ; return $ VarPat n ut
+listPat = do h <- variable ; ws (char ':') ; t <- variable ; return $ ConPat "Cons" [h, t] ut
+nilPat = char '[' >> whiteSpace >> char ']' >> (return $ ConPat "Nil" [] ut)
+conPat = do cons <- conid ; vars <- many (ws variable) ; return $ ConPat cons vars ut
+wildPat = char '_' >> (return $ WildcardPat ut) -- TODO add wildcards to other patterns too
+tuplePat = do char '(' ; whiteSpace
+              vs <- variable `sepBy2` (ws $ char ',')
+              whiteSpace ; char ')'
+              return $ TuplePat vs ut
+
+pattern = trailWS (try varPat
+                   <|> try listPat
+                   <|> try nilPat
+                   <|> try conPat
+                   <|> try tuplePat
+                   <|> try wildPat
+                   <|> try (parens pattern)
+                   <?> "pattern"
+                  )
+
+--- Expresions ---
+
+expression = trailWS (do n <- string "exp" ; return $ VarExp n ut)
 
