@@ -31,8 +31,10 @@ import Control.Monad(liftM)
 
 
 parseHNH :: String -> Either ParseError Program
-parseHNH _ = Right $ Program []
+parseHNH p = parse program "" p
 
+
+spcs = between spaces spaces
 
 --- Literals ---
 
@@ -85,8 +87,21 @@ variable = parens varsym <|> varid
 parens = between (char '(') (char ')')
 sqBrackets = between (char '[') (char ']')
 
+--- Program ---
+
+program = do decls <- declarations ; return $ Program decls
   
 --- Declarations ---  
+
+declarations = many $ spcs (do decl <- declaration 
+                               optional (spaces >> char ';')
+                               return decl
+                           )
+
+declaration = try typeDecl
+              <|> try dataDecl
+              <|> try typeSigDecl
+              <|> fixityDecl
 
 typeDecl = do string "type" ; spaces 
               (n, params) <- simpleType ; spaces
@@ -98,8 +113,7 @@ dataDecl = do string "data" ; spaces
               (n, params) <- simpleType ; spaces
               char '=' ; spaces
               cs <- constrs
-              return $ DataDcl n params cs
-           
+              return $ DataDcl n params cs           
            
 varSpc = do v <- varid; spaces; return v
         
@@ -107,6 +121,23 @@ simpleType = do n <- conid
                 spaces
                 params <- many varSpc
                 return (n, params)
+                
+typeSigDecl = do vs <- (spcs variable) `sepBy1` char ','
+                 string "::" ; spaces
+                 t <- typeD
+                 return $ TypeSigDcl vs t
+
+fixityDecl = do string "infix"                 
+                a <- assocChar
+                ops <- (spcs op) `sepBy1` char ','
+                return $ FixityDcl a 9 ops -- TODO add the parsing of the 9
+                
+assocChar = do char ' ' ; return NonAssoc
+            <|> do char 'l' ; return LeftAssoc
+            <|> do char 'r' ; return RightAssoc
+               
+op = do char '`' ; v <- varid ; char '`' ; return v
+     <|> varsym
                 
 --- 'data' declarations ---                
                 
