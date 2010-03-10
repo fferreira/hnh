@@ -34,7 +34,7 @@ parseHNH :: String -> Either ParseError Program
 parseHNH p = parse program "" p
 
 
-spcs = between spaces spaces
+spcs = between spaces spaces -- adds spaces around a parser
 
 --- Literals ---
 
@@ -148,7 +148,7 @@ op = do char '`' ; v <- varid ; char '`' ; return v
                 
 constrs = chainr1 constr barSep
 
-barSep = do spaces ; char '|' ; spaces ; return (++)
+barSep = spcs (char '|') >> return (++)
 
 constr = do n <- conid ; spaces                
             params <- many aTypeSpc
@@ -164,7 +164,7 @@ aConType = do n <- conid
               params <- many typeSpc
               return $ ConType n params
               
-aVarType = do spaces ; n <- varid ; spaces ; return $ VarType n              
+aVarType = do n <- spcs varid ; return $ VarType n              
 
 typeSpc = do spaces ; t <- typeD; spaces; return t
              
@@ -178,7 +178,7 @@ aTupleType = try $ parens (do ts <- typeD `sepBy2`(spaces >> char ',' >> spaces)
                               return $ TupleType ts)
              
 aListType = do spaces
-               t <- sqBrackets (do spaces; t <- typeD ; spaces ; return $ ConType "List" [t])
+               t <- sqBrackets (do t <- (spcs typeD) ; return $ ConType "List" [t])
                spaces ; return t
 
 aType = aConType
@@ -187,7 +187,7 @@ aType = aConType
         <|> aListType
         <|> parens aType
         
-functionArrow = do spaces ; string "->" ; spaces ; return FuncType
+functionArrow = spcs (string "->") >> return FuncType
 
 typeD = chainr1 aType functionArrow 
         
