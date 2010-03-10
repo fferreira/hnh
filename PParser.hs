@@ -88,11 +88,17 @@ sqBrackets = between (char '[') (char ']')
   
 --- Declarations ---  
 
-typeDecl = do string "type"; spaces 
+typeDecl = do string "type" ; spaces 
               (n, params) <- simpleType ; spaces
               char '=' ; spaces
               t <- typeD ; spaces
               return $ TypeDcl n params t
+              
+dataDecl = do string "data" ; spaces              
+              (n, params) <- simpleType ; spaces
+              char '=' ; spaces
+              cs <- constrs
+              return $ DataDcl n params cs
            
            
 varSpc = do v <- varid; spaces; return v
@@ -101,6 +107,18 @@ simpleType = do n <- conid
                 spaces
                 params <- many varSpc
                 return (n, params)
+                
+--- 'data' declarations ---                
+                
+constrs = chainr1 constr barSep
+
+barSep = do spaces ; char '|' ; spaces ; return (++)
+
+constr = do n <- conid ; spaces                
+            params <- many aTypeSpc
+            return $ [ConDcl n params]
+            
+aTypeSpc = do spaces ; aType            
                 
                 
 --- Types ---                
