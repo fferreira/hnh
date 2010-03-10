@@ -129,8 +129,13 @@ typeSigDecl = do vs <- (spcs variable) `sepBy1` char ','
 
 fixityDecl = do string "infix"                 
                 a <- assocChar
+                spaces
+                p <- (liftM charToInt $ digit) <|>  return 9
                 ops <- (spcs op) `sepBy1` char ','
-                return $ FixityDcl a 9 ops -- TODO add the parsing of the 9
+                return $ FixityDcl a p ops 
+                  where
+                    charToInt :: Char -> Int
+                    charToInt c = read [c]
                 
 assocChar = do char ' ' ; return NonAssoc
             <|> do char 'l' ; return LeftAssoc
