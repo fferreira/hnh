@@ -317,11 +317,8 @@ alt = do p <- pattern
          optional (ws $ char ';')
          return $ Alternative [p] e
              
-fExp = do e <- aExp
-          fExpCont e
-          
-fExpCont e1 = try (do e2 <- fExp; return $ FExp e1 e2 ut)
-              <|> return e1
+fExp = do es <- many1 aExp
+          return $ foldl (\e1 e2 ->FExp e1 e2 ut) (head es) (tail es)
 
 aExp :: Parser Exp
 aExp = try (do n <- conid ; return (ConExp n ut))
