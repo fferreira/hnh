@@ -262,14 +262,24 @@ pattern = trailWS (try listPat
 
 --- Expresions ---
 
-expression = expr --trailWS (do n <- string "exp" ; return $ VarExp n ut)
+expression = expr -- TODO eliminate
 
 expr = ws expi
        <?> "expression"
 
 expi :: Parser Exp
-expi = do e1 <- exp10 ; whiteSpace -- TODO add ~ and ~.
-          opExp e1
+expi = try minusExp
+       <|> try minusFloatExp
+       <|> do e1 <- exp10 ; whiteSpace -- TODO add ~ and ~.
+              opExp e1
+
+minusExp = do char '~'
+              e <- ws expi
+              return $ MinusExp e ut
+              
+minusFloatExp = do string "~."
+                   e <- ws expi
+                   return $ MinusFloatExp e ut
 
 opExp e1 = (do o <- op ; e2 <- (ws expi) ; return $ assembleInfixOperator e1 o e2) 
              <|> return e1
