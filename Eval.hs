@@ -52,7 +52,10 @@ evaluationTransform p =
       (res, (pretty p):docs) -- adding the original to the list
 
 rawParse :: String -> P.ParseResult Program
-rawParse = P.runParser parser
+--rawParse = P.runParser parser
+rawParse s = case parseHNH s of
+  Success p -> P.Ok [] p
+  Error err -> P.Failed ("", 0, 0) err
 
 runTransformations :: P.ParseResult Program -> (T.TransformResult Program, [Doc])
 runTransformations (P.Ok _ p) = evaluationTransform p

@@ -23,15 +23,20 @@ module PParser
   where
 
 import Syntax
+import TypeUtils(litToExp, assembleInfixOperator)
+import ErrorMonad(ErrorM(..))
+
 import Text.ParserCombinators.Parsec
 import qualified Text.ParserCombinators.Parsec.Token as T
-import Text.ParserCombinators.Parsec.Language(haskell)
+import Text.ParserCombinators.Parsec.Language(haskellDef)
 
 import Control.Monad(liftM)
 
 
-parseHNH :: String -> Either ParseError Program
-parseHNH p = parse program "" p
+parseHNH :: String -> ErrorM Program
+parseHNH p = case parse program "" p of
+  (Right prog) -> return prog
+  (Left err) -> fail (show err)
 
 
 ut = UnknownType
@@ -42,10 +47,21 @@ sepBy2 p sep = do  x1 <- p
                    x2 <- (sep >> p)
                    xs <- many (sep >> p)
                    return (x1:x2:xs)
+--- hnh lexer ---
+                   
+hnh = T.makeTokenParser $ haskellDef
+                          { T.identStart = lower
+                          , T.reservedNames = hnhReservedWords                       
+                          }
+
+hnhReservedWords = ["let","in","case","of","if","then","else",
+                    "data","type",
+                    "infix","infixl","infixr"
+                   ]
 
 --- white space and comments ---
 
-whiteSpace = T.whiteSpace haskell
+whiteSpace = T.whiteSpace hnh
 
 ws = between whiteSpace whiteSpace -- adds spaces around a parser
 
@@ -54,11 +70,11 @@ trailWS = (\p -> do v <- p; whiteSpace ; return v)
 --- Literals ---
 
 int :: Parser LiteralValue
-int = do i <- T.natural haskell
+int = do i <- T.natural hnh
          return $ LiteralInt ((fromInteger i)::Int)
 
 float :: Parser LiteralValue
-float = liftM LiteralFloat (T.float haskell)
+float = liftM LiteralFloat (T.float hnh)
 
 
 stringL :: Parser LiteralValue
@@ -85,10 +101,13 @@ literal = try float
           
 --- Variables and Constructors ---
 
+varid = T.identifier hnh
+{-
 varid = do f <- many1 lower -- TODO should we avoid keywords?
            r <- many (alphaNum <|> (oneOf "'_"))
            whiteSpace
            return $ f ++ r
+-}
 
 conid = do f <- many1 upper
            r <- many (alphaNum <|> (oneOf "'_"))
@@ -124,7 +143,7 @@ declaration = try typeDecl
               <|> try fixityDecl
               <|> try varDecl
               <|> try funDecl
-              <?> "declaration"
+--              <?> "declaration"
 
 typeDecl = do string "type" ; whiteSpace 
               (n, params) <- simpleType ; whiteSpace
@@ -231,17 +250,100 @@ tuplePat = do char '(' ; whiteSpace
               whiteSpace ; char ')'
               return $ TuplePat vs ut
 
-pattern = trailWS (try varPat
-                   <|> try listPat
+pattern = trailWS (try listPat
                    <|> try nilPat
                    <|> try conPat
                    <|> try tuplePat
                    <|> try wildPat
+                   <|> try varPat
                    <|> try (parens pattern)
                    <?> "pattern"
                   )
 
 --- Expresions ---
 
-expression = trailWS (do n <- string "exp" ; return $ VarExp n ut)
+expression = expr --trailWS (do n <- string "exp" ; return $ VarExp n ut)
 
+expr = ws expi
+       <?> "expression"
+
+expi :: Parser Exp
+expi = do e1 <- exp10 ; whiteSpace -- TODO add ~ and ~.
+          opExp e1
+
+opExp e1 = (do o <- op ; e2 <- (ws expi) ; return $ assembleInfixOperator e1 o e2) 
+             <|> return e1
+             
+exp10 :: Parser Exp
+exp10 = try lambdaExp
+        <|> try letExp
+        <|> try ifExp
+        <|> try caseExp
+        <|> try fExp
+
+lambdaExp = do char '\\'
+               pats <- many1 (ws pattern)
+               ws (string "->")
+               e <- expr
+               return $ LambdaExp pats e ut
+
+letExp = do string "let"
+            ws $ optional (char '{')
+            decls <- ws declarations
+            ws $ optional (char '}')
+            string "in"
+            e <- expr
+            return $ LetExp decls e ut
+
+ifExp = do  string "if"
+            e1 <- ws expr
+            string "then"
+            e2 <- ws expr
+            string "else"
+            e3 <- ws expr
+            return $ IfExp e1 e2 e3 ut
+
+caseExp = do string "case"
+             e <- ws expr
+             string "of"
+             ws $ optional (char '{')
+             alts <- alt `sepBy` whiteSpace
+             ws $ optional (char '}')
+             return $ CaseExp [e] alts ut
+             
+alt = do p <- pattern             
+         ws $ string "->"
+         e <- expr
+         optional (ws $ char ';')
+         return $ Alternative [p] e
+             
+fExp = do e <- aExp
+          fExpCont e
+          
+fExpCont e1 = try (do e2 <- fExp; return $ FExp e1 e2 ut)
+              <|> return e1
+
+aExp :: Parser Exp
+aExp = try (do n <- conid ; return (ConExp n ut))
+       <|> try (do l <- literal ; return (litToExp l))
+       <|> try listExp
+       <|> try parensExp
+       <|> try tupleExp
+       <|> try (do n <- variable ; return (VarExp n ut))
+       <?> "Expr"
+       
+parensExp = do whiteSpace ; char '(' ; whiteSpace       
+               e <- expr
+               t <- (try (string "::" >> whiteSpace >> typeD)) <|> return ut
+               ws (char ')')
+               return $ ParensExp e t
+
+tupleExp = do char '(' ; whiteSpace
+              es <- expr `sepBy2` (ws $ char ',')
+              whiteSpace ; char ')'
+              return $ TupleExp es ut
+              
+listExp = do char '[' ; whiteSpace
+             es <- expr `sepBy` (ws $ char ',')
+             whiteSpace ; char ']'
+             return $ ListExp es ut              

@@ -21,6 +21,7 @@ module Tools
     (
      traceVal
     ,traceP
+    ,D.trace
     )
     where
 
