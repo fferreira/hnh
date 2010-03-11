@@ -25,7 +25,7 @@ module ErrorMonad
 
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
-data ErrorM a = Success a | Error String
+data ErrorM a = Success a | Error String deriving Show
 
 instance Monad ErrorM where
     return t = Success t

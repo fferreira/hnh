@@ -22,8 +22,8 @@ module TypeUtils
      addType
     ,litToExp
     ,assembleInfixOperator
-    ,checkPat
-    ,addParam
+  --  ,checkPat
+   -- ,addParam
     ,getType
     ,resultingType
     ,typeFromAlternative
@@ -31,7 +31,7 @@ module TypeUtils
     where
 
 import Syntax
-import ParserMonad(ParserM, returnOk, returnError)
+--import ParserMonad(ParserM, returnOk, returnError)
 
 import Data.List(nub)
 
@@ -39,6 +39,7 @@ import Text.PrettyPrint.Leijen(pretty)
 
 import Tools
 
+{-
 -- checkPat checks that no variable is used twice in a pattern 
 --          (aka it is a linear pattern)
 checkPat :: Pattern -> ParserM Pattern
@@ -56,6 +57,7 @@ checkPat pat =
       vars (ConPat n ps _) = ps
       vars (TuplePat ps _) = ps
       vars (WildcardPat _) = []
+-}
 
 -- returns the type resuling for the application of FuncType
 -- or UnknownType if the type is not appropiate
@@ -82,11 +84,12 @@ getType (ListExp _ t) = t
 typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e
 
+{-
 -- addParam adds polymorphic parameters to a type
 addParam :: Type -> Type -> ParserM Type
 addParam (ConType n l) t = returnOk (ConType n (l++[t]))
 addParam t1 t2 = returnError "Only Constructor type can have parameters"
-
+-}
 
 -- addType adds type information to an expression
 addType :: Exp -> Type -> Exp
