@@ -87,8 +87,6 @@ printSteps docs =
     in
       result <> line <> epigraph
 
---------------------------------------------------------------------------------------
-
 type EvalState = [Env]
 
 
