@@ -16,11 +16,11 @@
     
     Copyright 2010 Francisco Ferreira
 -}
-module PParser
-{-  (
-    parseHNH
-  ) -}
-  where
+module Parser
+       (
+         parseHNH
+       ) 
+       where
 
 import Syntax
 import TypeUtils(litToExp, assembleInfixOperator)
