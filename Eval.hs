@@ -19,7 +19,6 @@
 
 module Eval where --TODO add exported methods
 
-import Parser
 import PParser
 import Text.PrettyPrint.Leijen
 import Syntax
@@ -27,7 +26,6 @@ import Syntax
 import ExprTransformer(correctPrecedence, toPrefix)
 import TreeSimplify(funToLambda, simplifyLambda, simplifyPatterns)
 
-import qualified ParserMonad as P
 import qualified TransformMonad as T
 import ErrorMonad
 
@@ -51,15 +49,9 @@ evaluationTransform p =
     in
       (res, (pretty p):docs) -- adding the original to the list
 
-rawParse :: String -> P.ParseResult Program
---rawParse = P.runParser parser
-rawParse s = case parseHNH s of
-  Success p -> P.Ok [] p
-  Error err -> P.Failed ("", 0, 0) err
-
-runTransformations :: P.ParseResult Program -> (T.TransformResult Program, [Doc])
-runTransformations (P.Ok _ p) = evaluationTransform p
-runTransformations (P.Failed p s) = error $ show (pretty p <+> pretty s)
+runTransformations :: ErrorM Program -> (T.TransformResult Program, [Doc])
+runTransformations (Success p) = evaluationTransform p
+runTransformations (Error s) = error $ show (pretty s)
 
 checkTransformation :: T.TransformResult Program -> Program
 checkTransformation (T.Ok program) = program
@@ -68,8 +60,8 @@ checkTransformation (T.Failed err) = error err
 loadAndEval :: String -> Name -> Bool -> IO Doc
 loadAndEval file main showSteps = do contents <- readFile file
                                      preludeContents <- readFile "prelude.hnh"
-                                     parsedPrelude <- return $ rawParse preludeContents
-                                     parsed <- return $ rawParse contents
+                                     parsedPrelude <- return $ parseHNH preludeContents
+                                     parsed <- return $ parseHNH contents
                                      (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
                                      program <- return $ checkTransformation programRes 
                                      doc <- return $ if showSteps then
@@ -78,10 +70,10 @@ loadAndEval file main showSteps = do contents <- readFile file
                                                          pretty $ eval program main
                                      return doc
 
-merge :: P.ParseResult Program -> P.ParseResult Program -> P.ParseResult Program
-merge (P.Ok _ (Program d1)) (P.Ok t (Program d2)) = P.Ok t (Program (d1++d2))
-merge (P.Failed p msg) _ = (P.Failed p msg)
-merge _ (P.Failed p msg) = (P.Failed p msg)
+merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
+merge (Success (Program d1)) (Success (Program d2)) = Success (Program (d1++d2))
+merge e@(Error msg) _ = e
+merge _ e@(Error msg) = e
 
 printSteps :: [Doc] -> Doc
 printSteps docs = 
@@ -90,11 +82,6 @@ printSteps docs =
         epigraph = pretty "Number of phases:" <> pretty ((length docs) - 1)
     in
       result <> line <> epigraph
-
---------------------------------------------------------------------------------------
-
-type EvalState = [Env]
-
 
 -- name should be a single var pattern i.e. main = 1 + 1
 eval :: Program -> Name -> Value
@@ -113,7 +100,7 @@ dataTypes (d:ds) = dataTypes ds
 dataTypes [] = []
 
 
-buildEvalEnv :: [Declaration] -> State EvalState [Env]
+buildEvalEnv :: [Declaration] -> State [Env] [Env]
 buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
     where
       declToValue (PatBindDcl pat e) = 
@@ -125,7 +112,7 @@ buildEvalEnv decls = mapM declToValue (filter isPatBind decls)
       isPatBind (PatBindDcl _ _) = True
       isPatBind _ = False
 
-evalExp :: Exp -> State EvalState Value
+evalExp :: Exp -> State [Env] Value
 evalExp (ParensExp e _) = evalExp e
 evalExp e@(LitExp (LiteralInt v) _) = return (IntVal v)
 evalExp e@(LitExp (LiteralFloat v) _) = return (FloatVal v)
@@ -194,7 +181,7 @@ evalExp (InfixOpExp _ _) = fail "InfixOpExp should not be evaluated"
 evalExp (MinusExp _ _) = fail "MinusExp should not be evalueted"
 evalExp (MinusFloatExp _ _) = fail "MinusFloatExp should not be evaluated"
 
-evalPat ::  (Pattern, Exp) -> State EvalState (Pattern, Value)
+evalPat ::  (Pattern, Exp) -> State [Env] (Pattern, Value)
 evalPat (p, e) =
     do
       env <- get
@@ -202,13 +189,13 @@ evalPat (p, e) =
       put $ (p, v):env
       return (p, v)
 
-applyFun :: Value -> Value -> State EvalState Value
+applyFun :: Value -> Value -> State [Env] Value
 applyFun (Closure (p:[]) env e) v = evalClosure (Closure [] ((p, v):env)  e)
 applyFun (Closure (p:ps) env e) v = return (Closure ps ((p, v):env) e)
 
 applyFun v1 _ = fail "Apply function requires a closure"
 
-evalClosure :: Value -> State EvalState Value
+evalClosure :: Value -> State [Env] Value
 evalClosure (Closure [] env (CExp e)) =
     do
       env' <- get
@@ -220,7 +207,7 @@ evalClosure (Closure [] env (CExp e)) =
 evalClosure (Closure [] env (CFun f)) = return $ f env
 evalClosure c = fail "evalClosure needs a closure to evaluate"
 
-findAlternative :: [Value] -> [Alternative] -> State EvalState Value
+findAlternative :: [Value] -> [Alternative] -> State [Env] Value
 findAlternative vs ((Alternative pats e):alts) = 
     do
       current <- checkAlternatives vs pats
@@ -230,7 +217,7 @@ findAlternative vs ((Alternative pats e):alts) =
           findAlternative vs alts
 findAlternative vs [] = fail "Exhausted alternatives!"
 
-checkAlternatives :: [Value] -> [Pattern] -> State EvalState Bool
+checkAlternatives :: [Value] -> [Pattern] -> State [Env] Bool
 checkAlternatives vs pats =
     do
       env <- get
@@ -242,7 +229,7 @@ checkAlternatives vs pats =
              put env
              return False
 
-checkAlternative :: Value -> Pattern -> State EvalState Bool
+checkAlternative :: Value -> Pattern -> State [Env] Bool
 checkAlternative v (WildcardPat _) = return True
 checkAlternative v p@(VarPat _ _) =
     do
