@@ -60,8 +60,8 @@ checkTransformation (T.Failed err) = error err
 loadAndEval :: String -> Name -> Bool -> IO Doc
 loadAndEval file main showSteps = do contents <- readFile file
                                      preludeContents <- readFile "prelude.hnh"
-                                     parsedPrelude <- return $ parseHNH preludeContents
-                                     parsed <- return $ parseHNH contents
+                                     parsedPrelude <- return $ parseHNH "prelude.hnh" preludeContents
+                                     parsed <- return $ parseHNH file contents
                                      (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
                                      program <- return $ checkTransformation programRes 
                                      doc <- return $ if showSteps then

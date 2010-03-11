@@ -33,8 +33,8 @@ import Text.ParserCombinators.Parsec.Language(haskellDef)
 import Control.Monad(liftM)
 
 
-parseHNH :: String -> ErrorM Program
-parseHNH p = case parse program "" p of
+parseHNH :: String -> String -> ErrorM Program
+parseHNH file p = case parse program file p of
   (Right prog) -> return prog
   (Left err) -> fail (show err)
 
