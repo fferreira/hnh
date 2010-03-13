@@ -20,33 +20,43 @@ addKnownTypes p@(Program decls) = transformTree
                                   p
     where
       env = env0 ++ (declsToEn decls)
-      adaptExpr (VarExp n UnknownType) = Just $ VarExp n (lookupWithDefault n env UnknownType)
+      
+      adaptExpr :: Monad m => Exp -> m Exp
+      adaptExpr (VarExp n UnknownType) = return $ VarExp n (lookupWithDefault n env UnknownType)
       adaptExpr (ConExp n _) = 
           do
-            t <- lookup n env -- Fails when the constructor does not exist
+            t <- lookupM n env -- Fails when the constructor does not exist
             return $ ConExp n t
-      adaptExpr (MinusExp _ _) = Nothing -- we are not supposed to have these at this point
-      adaptExpr (MinusFloatExp _ _) = Nothing 
-      adaptExpr (InfixOpExp _ _) = Nothing
-      adaptExpr (FExp e1 e2 _) = Just $ FExp e1 e2 (resultingType (getType e1))
-      adaptExpr (LetExp decls e _) = Just $ LetExp decls e (getType e)
+      adaptExpr (MinusExp _ _) = fail "Unexpected" -- we are not supposed to have these at this point
+      adaptExpr (MinusFloatExp _ _) = fail "Unexpected"
+      adaptExpr (InfixOpExp _ _) = fail "Unexpected"
+      adaptExpr (FExp e1 e2 _) = return $ FExp e1 e2 (resultingType (getType e1))
+      adaptExpr (LetExp decls e _) = return $ LetExp decls e (getType e)
       -- if a ParensExp has type annotations it won't take the type of its subexpression
-      adaptExpr (ParensExp e UnknownType) = Just $ ParensExp e (getType e) 
-      adaptExpr e = Just e
+      adaptExpr (ParensExp e UnknownType) = return $ ParensExp e (getType e) 
+      adaptExpr e = return e
 
-      adaptPattern (TuplePat vars _) = Just $ 
+      adaptPattern (TuplePat vars _) = return $ 
                                        TuplePat vars 
                                                 (TupleType (replicate (length vars) UnknownType))
 
       adaptPattern (ConPat name params _) =
           do
-            t <- lookup name env -- Fails when the constructor does not exist
+            t <- lookupM name env -- Fails when the constructor does not exist
             return (ConPat name params (getLastType t))
-      adaptPattern p = Just p
+      adaptPattern p = return p
 
       getLastType (FuncType _ t) = getLastType t
       getLastType t = t
       
+lookupM :: (Monad m, Eq a) => a -> [(a, b)] -> m b
+lookupM e l = 
+  let 
+    res = lookup e l 
+  in 
+   case res of 
+     (Just res') -> return res'
+     Nothing -> fail "lookup failed"
 
 lookupWithDefault ::Eq a => a -> [(a, b)] -> b -> b
 lookupWithDefault val list def = case lookup val list of
@@ -86,10 +96,10 @@ addTypeSignatureToLet p@(Program decls) = transformTree
                                   (defTrans {tExp = adaptExpr})
                                   p
     where
-      adaptExpr (LetExp decls e t) = Just $ (LetExp decls' e t)
+      adaptExpr (LetExp decls e t) = return $ (LetExp decls' e t)
           where
             decls' = addTypeSignatureToDeclarations decls
-      adaptExpr e = Just e
+      adaptExpr e = return e
 
 
 addTypeSignatureToDeclarations decls = map addType decls

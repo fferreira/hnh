@@ -89,11 +89,11 @@ addToExp (IfExp e1 e2 e3 t) =
       e3' <- addToExp e3
       return (IfExp e1' e2' e3' t)
 
-addToExp (CaseExp e alts t) =
+addToExp (CaseExp es alts t) =
     do
-      e' <- addToExp e
+      es' <- mapM addToExp es
       alts' <- mapM addToAlt alts
-      return (CaseExp e' alts' t)
+      return (CaseExp es' alts' t)
 
 addToExp (ParensExp e t) =
     do
@@ -113,11 +113,11 @@ addToExp (ListExp es t) =
 addToExp e = return e
 
 addToAlt :: Alternative -> State MTState Alternative
-addToAlt (Alternative p e) =
+addToAlt (Alternative ps e) =
     do
-      p' <- numberPattern p
+      ps' <- mapM numberPattern ps
       e' <- addToExp e
-      return (Alternative p' e')
+      return (Alternative ps' e')
 
 -- numberPattern: adds metatypes to the pattern UnknownType
 numberPattern :: Pattern -> State MTState Pattern
