@@ -21,6 +21,7 @@ module ExprTransformer
     (
      correctPrecedence
     ,toPrefix
+    ,literalStringElimination
     )
     where
 {-
@@ -138,3 +139,18 @@ toPrefix = transformTree
                                      UnknownType)
                                (prefixer e2) 
                                UnknownType
+
+-- literalStringElimination converts all LiteralExp String to lists of chars
+literalStringElimination :: Program -> TransformM Program
+literalStringElimination = transformTree
+                           "literalStringElimination: Unexpected Error (This should not fail)"
+                           defTrans { tExp = adaptExpr }
+                             where
+                               adaptExpr (LitExp (LiteralString s) _) = 
+                                 return $ strToConExp s
+                               adaptExpr e = return e
+                               
+                               strToConExp s = ListExp (map (\c -> (LitExp 
+                                                                    (LiteralChar [c]) 
+                                                                    UnknownType)) s)
+                                               UnknownType

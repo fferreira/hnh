@@ -23,7 +23,7 @@ import Parser
 import Text.PrettyPrint.Leijen
 import Syntax
 
-import ExprTransformer(correctPrecedence, toPrefix)
+import ExprTransformer(correctPrecedence, toPrefix,literalStringElimination)
 import TreeSimplify(funToLambda, simplifyLambda, simplifyPatterns)
 
 import qualified TransformMonad as T
@@ -41,6 +41,7 @@ import Debug.Trace
 evaluationTransform :: Program -> (T.TransformResult Program, [Doc])
 evaluationTransform p = 
     let (res, docs)  = T.runTransform (correctPrecedence p 
+                                       >>= literalStringElimination
                                        >>= toPrefix
                                        >>= funToLambda
                                        >>= simplifyPatterns
