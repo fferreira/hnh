@@ -38,7 +38,7 @@ import Tools
 import Debug.Trace
 
 
-evaluationTransform :: Program -> (T.TransformResult Program, [Doc])
+evaluationTransform :: Program -> (ErrorM Program, [Doc])
 evaluationTransform p = 
     let (res, docs)  = T.runTransform (correctPrecedence p 
                                        >>= literalStringElimination
@@ -50,13 +50,13 @@ evaluationTransform p =
     in
       (res, (pretty p):docs) -- adding the original to the list
 
-runTransformations :: ErrorM Program -> (T.TransformResult Program, [Doc])
+runTransformations :: ErrorM Program -> (ErrorM Program, [Doc])
 runTransformations (Success p) = evaluationTransform p
 runTransformations (Error s) = error $ show (pretty s)
 
-checkTransformation :: T.TransformResult Program -> Program
-checkTransformation (T.Ok program) = program
-checkTransformation (T.Failed err) = error err
+checkTransformation :: ErrorM Program -> Program
+checkTransformation (Success program) = program
+checkTransformation (Error err) = error err
 
 loadAndEval :: String -> Name -> Bool -> IO Doc
 loadAndEval file main showSteps = do contents <- readFile file
@@ -84,7 +84,6 @@ printSteps docs =
     in
       result <> line <> epigraph
 
--- name should be a single var pattern i.e. main = 1 + 1
 eval :: Program -> Name -> Value
 eval (Program decls) name =
     evalState (do

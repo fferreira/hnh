@@ -20,7 +20,6 @@
 module TransformMonad
     (
      TransformM
-    ,TransformResult(..)
     ,transformOk
     ,transformError
     ,runTransform
@@ -28,28 +27,28 @@ module TransformMonad
     )
     where
 
+import ErrorMonad(ErrorM(..))
+
 import Text.PrettyPrint.Leijen(Doc, Pretty, pretty)
 
-data TransformM a = TaM [Doc] (TransformResult a)
+data TransformM a = TaM [Doc] (ErrorM a)
 
-data TransformResult a = Ok a | Failed String
-
-runTransform :: TransformM a -> (TransformResult a, [Doc])
+runTransform :: TransformM a -> (ErrorM a, [Doc])
 runTransform (TaM l r) = (r, l)
 
 transformOk :: Pretty a => a -> TransformM a
-transformOk a = (TaM [pretty a] (Ok a))
+transformOk a = (TaM [pretty a] (Success a))
 
 transformError :: String -> TransformM a
 transformError s = fail s
 
 instance Monad TransformM where
-    return t = (TaM [] (Ok t))
-    (TaM l (Ok t)) >>= k = (TaM (l++l') t')
+    return t = (TaM [] (Success t))
+    (TaM l (Success t)) >>= k = (TaM (l++l') t')
         where (TaM l' t') = k t
-    (TaM l (Failed s)) >>= k = (TaM l (Failed s))
+    (TaM l (Error s)) >>= k = (TaM l (Error s))
     
-    fail msg = TaM [] (Failed msg)
+    fail msg = TaM [] (Error msg)
 
 nullTransform ::Pretty a => a -> TransformM a
 nullTransform = transformOk
