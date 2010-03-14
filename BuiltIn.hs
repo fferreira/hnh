@@ -38,4 +38,7 @@ env0 =
 -}
     ,("True", ConType "Bool" [])
     ,("False", ConType "Bool" [])
+     
+    ,("Nil", ConType "List" [VarType "a"])
+    ,("Cons", ConType "List" [VarType "a"])
     ]
