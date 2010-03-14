@@ -23,8 +23,7 @@ import Parser
 import Text.PrettyPrint.Leijen
 import Syntax
 
-import ExprTransformer(correctPrecedence, toPrefix,literalStringElimination)
-import TreeSimplify(funToLambda, simplifyLambda, simplifyPatterns)
+import CommonTransforms(commonTransforms)
 
 import qualified TransformMonad as T
 import ErrorMonad
@@ -40,12 +39,7 @@ import Debug.Trace
 
 compileTransform :: Program -> (ErrorM Program, [Doc])
 compileTransform p = 
-  let (res, docs)  = T.runTransform (correctPrecedence p 
-                                     >>= literalStringElimination
-                                     >>= toPrefix
-                                     >>= funToLambda
-                                     >>= simplifyPatterns
-                                     >>= simplifyLambda
+  let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= return)       
   in
    (res, (pretty p):docs) -- adding the original to the list
