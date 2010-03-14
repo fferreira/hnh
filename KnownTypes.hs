@@ -15,7 +15,7 @@ import Tools(traceVal)
 
 addKnownTypes :: Program -> TransformM Program
 addKnownTypes p@(Program decls) = transformTree
-                                  "addKnownTypes: Unable to type (type constructor not found)" 
+                                  "addKnownTypes"
                                   (defTrans {tExp=adaptExpr, tPat=adaptPattern})
                                   p
     where
@@ -49,14 +49,14 @@ addKnownTypes p@(Program decls) = transformTree
       getLastType (FuncType _ t) = getLastType t
       getLastType t = t
       
-lookupM :: (Monad m, Eq a) => a -> [(a, b)] -> m b
+lookupM :: (Monad m, Eq a, Show a) => a -> [(a, b)] -> m b
 lookupM e l = 
   let 
     res = lookup e l 
   in 
    case res of 
      (Just res') -> return res'
-     Nothing -> fail "lookup failed"
+     Nothing -> fail ("lookup of " ++ show e ++ " failed")
 
 lookupWithDefault ::Eq a => a -> [(a, b)] -> b -> b
 lookupWithDefault val list def = case lookup val list of
@@ -86,7 +86,7 @@ declsToEn decls = concatMap  build decls
 -- addTypeSignature, add declared type signatures to the corresponding pattern
 addTypeSignatures :: Program -> TransformM Program
 addTypeSignatures (Program decls) = 
-    (transformOk $ Program (addTypeSignatureToDeclarations decls))
+    (transformOk "addTypeSignatures" $ Program (addTypeSignatureToDeclarations decls))
     >>= addTypeSignatureToLet
 
 

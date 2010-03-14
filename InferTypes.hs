@@ -24,7 +24,7 @@ performTypeInference (Program decls) = typedProgram --(typeExpressions env0 (add
       typedDecls = addMetaTypes decls
       typedProgram = case typeDeclarations (env0 ++ declsToEn typedDecls) typedDecls of
                        Nothing -> transformError "PerformTypeInference: error" --TODO Improve this
-                       Just result -> transformOk $ Program result             --TODO Use ErrorM
+                       Just result -> transformOk "performTypeInference" $ Program result --TODO Use ErrorM
 
 ----------------------------------------------------
 
@@ -290,7 +290,7 @@ lookupEnv' :: Monad m => Name -> [EnvType] -> m Type
 lookupEnv' n env =
     do
       case lookup n (traceVal env) of
-        Nothing -> fail ("undefined " ++ n)
+        Nothing -> fail ("fundefined " ++ n)
         Just t -> return t
 
 -- getEnv: gets an environment with all the names declared by a list of declarations

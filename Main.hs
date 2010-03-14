@@ -19,7 +19,7 @@
 
 module Main where
 
-import Eval
+import Compile -- Eval
 import System.Environment(getArgs)
 
 main = do

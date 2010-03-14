@@ -62,7 +62,7 @@ renderSteps steps =
     titleDocs = map (\s -> line 
                            <> pretty ">>>" 
                            <+> pretty s 
-                           <+> pretty "transform:" <> line) titles
+                           <+> pretty "phase:" <> line) titles
     result = vsep $ combine titleDocs docs
     epigraph = pretty "Number of phases:" <> pretty ((length docs) - 1)
   in
