@@ -36,7 +36,7 @@ import Data.List(sort, group, groupBy, nub, intersperse)
 -}
 funToLambda:: Program -> TransformM Program
 funToLambda prog  = transformTree
-                    "funToLambda:"
+                    "funToLambda"
                     defTrans {tDecls  = declsToLambda }
                     prog
 
@@ -105,7 +105,7 @@ partition f [] = ([], [])
 -}
 simplifyLambda:: Program -> TransformM Program
 simplifyLambda prog  = transformTree
-                       "simplifyLambda:"
+                       "simplifyLambda"
                        defTrans {tExp  = transformLambda }
                        prog
 
@@ -140,7 +140,7 @@ transformLambda e = return e
 
 simplifyPatterns :: Program -> TransformM Program
 simplifyPatterns prog =  transformTree
-                         "simplifyPattern:"
+                         "simplifyPattern"
                          defTrans {tDecls  =  transformPatBinds }
                          prog
 

@@ -20,7 +20,7 @@
 module Compile where --TODO add exported methods
 
 import Parser
-import Text.PrettyPrint.Leijen
+import Text.PrettyPrint.Leijen(Doc, Pretty, pretty)
 import Syntax
 
 import CommonTransforms(commonTransforms)
@@ -30,21 +30,20 @@ import ErrorMonad
 
 import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv, envForData)
 
-import Data.List(intersperse)
 import Control.Monad.State
 
 import Tools
 import Debug.Trace
 
 
-compileTransform :: Program -> (ErrorM Program, [Doc])
+compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform p = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= return)       
   in
-   (res, (pretty p):docs) -- adding the original to the list
+   (res, ("original", (pretty p)):docs) -- adding the original to the list
    
-runTransformations :: ErrorM Program -> (ErrorM Program, [Doc])
+runTransformations :: ErrorM Program -> (ErrorM Program, [(String, Doc)])
 runTransformations (Success p) = compileTransform p
 runTransformations (Error s) = error $ show (pretty s)
 
@@ -60,7 +59,7 @@ loadAndEval file main showSteps = do contents <- readFile file
                                      (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
                                      program <- return $ checkTransformation programRes 
                                      doc <- return $ if showSteps then
-                                                       printSteps docs
+                                                       T.renderSteps docs
                                                      else
                                                        compile program main
                                      return doc
@@ -69,14 +68,6 @@ merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
 merge (Success (Program d1)) (Success (Program d2)) = Success (Program (d1++d2))
 merge e@(Error msg) _ = e
 merge _ e@(Error msg) = e
-
-printSteps :: [Doc] -> Doc
-printSteps docs = 
-  let
-    result = vsep $ intersperse (line <> pretty ">>> transforms to:" <> line) docs
-    epigraph = pretty "Number of phases:" <> pretty ((length docs) - 1)
-  in
-   result <> line <> epigraph
 
 -- compile :: Program -> Name -> Value
 compile (Program decls) name = undefined

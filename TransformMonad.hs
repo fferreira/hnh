@@ -24,20 +24,22 @@ module TransformMonad
     ,transformError
     ,runTransform
     ,nullTransform
+    ,renderSteps
     )
     where
 
 import ErrorMonad(ErrorM(..))
 
-import Text.PrettyPrint.Leijen(Doc, Pretty, pretty)
+import Data.List(intersperse)
+import Text.PrettyPrint.Leijen
 
-data TransformM a = TaM [Doc] (ErrorM a)
+data TransformM a = TaM [(String, Doc)] (ErrorM a)
 
-runTransform :: TransformM a -> (ErrorM a, [Doc])
+runTransform :: TransformM a -> (ErrorM a, [(String , Doc)])
 runTransform (TaM l r) = (r, l)
 
-transformOk :: Pretty a => a -> TransformM a
-transformOk a = (TaM [pretty a] (Success a))
+transformOk :: Pretty a => String -> a -> TransformM a
+transformOk s a = (TaM [(s, pretty a)] (Success a))
 
 transformError :: String -> TransformM a
 transformError s = fail s
@@ -51,4 +53,23 @@ instance Monad TransformM where
     fail msg = TaM [] (Error msg)
 
 nullTransform ::Pretty a => a -> TransformM a
-nullTransform = transformOk
+nullTransform = transformOk "nullTransform"
+
+renderSteps :: [(String, Doc)] -> Doc
+renderSteps steps = 
+  let
+    (titles, docs) = unzip steps
+    titleDocs = map (\s -> line 
+                           <> pretty ">>>" 
+                           <+> pretty s 
+                           <+> pretty "transform:" <> line) titles
+    result = vsep $ combine titleDocs docs
+    epigraph = pretty "Number of phases:" <> pretty ((length docs) - 1)
+  in
+   result <> line <> epigraph
+   
+      
+combine :: [Doc] -> [Doc] -> [Doc]   
+combine (a:as) (b:bs) = a:b:(combine as bs)
+combine [] b = b 
+combine a [] = a

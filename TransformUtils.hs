@@ -48,10 +48,10 @@ defTrans = Transformer idM idM idM
 -- access to expressions or other constructs
 
 transformTree :: String -> Transformer -> Program -> TransformM Program
-transformTree msg transform prog@(Program decls) =
+transformTree name transform prog@(Program decls) =
     case decls' of
-      Success d -> transformOk $ Program d
-      Error msg' -> transformError (msg ++ " " ++ msg')
+      Success d -> transformOk name $ Program d
+      Error msg' -> transformError (name ++ ": " ++ msg')
     where
       decls' =
           do

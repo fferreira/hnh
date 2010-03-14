@@ -43,7 +43,7 @@ type FixityDesc = (Operator, Precedence, Associativity)
 
 correctPrecedence:: Program -> TransformM Program
 correctPrecedence prog  = transformTree
-                          "correctPrecedence:"
+                          "correctPrecedence"
                           defTrans {tExp  = adaptExpr }
                           prog
     where
@@ -110,7 +110,7 @@ lst _ t = return t
 -- toPrefix converts all the OpExp to FExp calls (prefix syntax)
 toPrefix :: Program -> TransformM Program
 toPrefix = transformTree
-           "toPrefix: Unexpected Error (This should not fail)"
+           "toPrefix"
            defTrans { tExp = adaptExpr }
     where
 
@@ -143,7 +143,7 @@ toPrefix = transformTree
 -- literalStringElimination converts all LiteralExp String to lists of chars
 literalStringElimination :: Program -> TransformM Program
 literalStringElimination = transformTree
-                           "literalStringElimination: Unexpected Error (This should not fail)"
+                           "literalStringElimination"
                            defTrans { tExp = adaptExpr }
                              where
                                adaptExpr (LitExp (LiteralString s) _) = 
