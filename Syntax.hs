@@ -85,6 +85,10 @@ data ConstructorDeclaration -- No support for named field types
 
 --- Expressions & Patterns
 
+data Identifier
+     = Id Name Int
+     deriving (Show, Eq)
+
 data OpExp
     = LeafExp Exp
     | Op Operator OpExp OpExp
@@ -105,10 +109,12 @@ data Exp
     | ParensExp Exp Type
     | TupleExp [Exp] Type -- a tuple of expresions
     | ListExp [Exp] Type  -- a list of expresions
+    | IdentExp Identifier Type -- an identifier, translated from a VarExp
       deriving (Show, Eq)
 
 data Pattern
     = VarPat Name Type
+    | IdentPat Identifier Type
     | ConPat Name [Name] Type -- a type constructor 
     | TuplePat [Name] Type
     | WildcardPat Type
@@ -154,11 +160,16 @@ instance Pretty Type where
 instance Pretty ConstructorDeclaration where
     pretty (ConDcl n t) = pretty n <!> pretty t
 
+instance Pretty Identifier where
+  pretty (Id n num) = pretty n <> pretty "_" <> pretty num
+
 instance Pretty OpExp where
     pretty (LeafExp e) = pretty e
     pretty (Op o e1 e2) = parens $ pretty o <+> pretty e1 <+> pretty e2
+    
 instance Pretty Exp where
     pretty (VarExp n t) = parens $ pretty n <> colon <> pretty t
+    pretty (IdentExp i t) = parens $ pretty i <> colon <> pretty t
     pretty (ConExp n t) = parens $ pretty n <> colon <> pretty t
     pretty (LitExp v t) = parens $ pretty v <> colon <> pretty t
     pretty (InfixOpExp e t) = parens $ pretty e <> colon <> pretty t
@@ -183,7 +194,8 @@ instance Pretty Exp where
     pretty (ListExp e t) = parens $ pretty e <> colon <> pretty t
 
 instance Pretty Pattern where
-    pretty (VarPat n t)    = pretty n <> colon <> pretty t
+    pretty (VarPat n t)   = pretty n <> colon <> pretty t
+    pretty (IdentPat i t) = pretty i <> colon <> pretty t
     pretty (ConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
     pretty (TuplePat tuple t)  = pretty "#" <> pretty tuple <> colon <> pretty t
     pretty (WildcardPat t) = pretty '_' <> colon <> pretty t
