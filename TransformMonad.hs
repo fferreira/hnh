@@ -42,7 +42,7 @@ transformOk :: Pretty a => String -> a -> TransformM a
 transformOk s a = (TaM [(s, pretty a)] (Success a))
 
 transformError :: String -> TransformM a
-transformError s = fail s
+transformError s = (TaM [(s, empty)] (Error s))
 
 instance Monad TransformM where
     return t = (TaM [] (Success t))

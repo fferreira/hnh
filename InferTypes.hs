@@ -198,7 +198,7 @@ typeExp env (IfExp e1 e2 e3 t) =
       e1' <- typeExp env e1
       e2' <- typeExp env e2
       e3' <- typeExp env e3
-      tbool <- checkType (getType e1') (ConType "Bool" []) -- e1 hast to be a boolean expression
+      tbool <- checkType (getType e1') (ConType "Bool" []) -- e1 has to be a boolean expression
       tes <- checkType (getType e2') (getType e3') -- e2 and e3 have to share the type
       tres <- checkType tes t -- the if exp has to have the same type as e2, e3
       return (IfExp (addType e1' (ConType "Bool" [])) (addType e2' tres) (addType e3' tres) tres)
@@ -231,7 +231,7 @@ typeExp env (CaseExp e alts t) = undefined
 
 -}
 
-{- Complicated expression follow :P
+{- Complicated expression follows :P
 typeExp env (FExp Exp Exp Type 
 
 typeExp env (LambdaExp [Pattern] Exp Type
@@ -290,7 +290,7 @@ lookupEnv' :: Monad m => Name -> [EnvType] -> m Type
 lookupEnv' n env =
     do
       case lookup n (traceVal env) of
-        Nothing -> fail ("fundefined " ++ n)
+        Nothing -> fail ("undefined name: " ++ n)
         Just t -> return t
 
 -- getEnv: gets an environment with all the names declared by a list of declarations
