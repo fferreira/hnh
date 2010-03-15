@@ -24,7 +24,8 @@ import Text.PrettyPrint.Leijen(Doc, Pretty, pretty)
 import Syntax
 
 import CommonTransforms(commonTransforms)
-import KnownTypes (addKnownTypes)
+-- import KnownTypes (addKnownTypes)
+import AddIdentifiers(addIdentifiers)
 import InferTypes(performTypeInference)
 
 import qualified TransformMonad as T
@@ -41,8 +42,9 @@ import Debug.Trace
 compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform p = 
   let (res, docs)  = T.runTransform (commonTransforms p
-                                     >>= addKnownTypes
-                                     >>= performTypeInference
+                                     >>= addIdentifiers
+                                     -- >>= addKnownTypes
+--                                     >>= performTypeInference
                                      >>= return)       
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list

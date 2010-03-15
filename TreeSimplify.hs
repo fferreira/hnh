@@ -50,7 +50,7 @@ mergePatternsInCase decls =
         mapM convertGroup groups
       
 convertGroup :: Monad m => [Declaration] -> m Declaration
-convertGroup funs@((FunBindDcl _ _ _ _):fs) =
+convertGroup funs@((FunBindDcl _ _ _):fs) =
     do
         name <- getFunName (head funs)
         patterns <- mapM getFunPattern funs
@@ -82,16 +82,16 @@ generateLambdas prs = return (LambdaExp pats
       exps = map (\s -> (VarExp s UnknownType)) names
       names = map (\i -> "p#"++ show i) [1..((length.fst.head) prs)] 
 
-sameName (FunBindDcl n1 _ _ _) (FunBindDcl n2 _ _ _) = n1 == n2
+sameName (FunBindDcl n1 _ _) (FunBindDcl n2 _ _) = n1 == n2
 sameName _ _ = False
 
-getFunName (FunBindDcl n _ _ _) = return n
+getFunName (FunBindDcl n _ _) = return n
 getFunName _ = fail "Unexpected getFunName called with something other than a function"
 
-getFunPattern (FunBindDcl _ p _ _) = return p
+getFunPattern (FunBindDcl _ p _) = return p
 getFunPattern _ = fail "getFunPattern: called with something other than a function"
 
-getFunRhs (FunBindDcl _ _ r _) = return r
+getFunRhs (FunBindDcl _ _ r) = return r
 getFunRhs _ = fail "getFunRhs: called with something ohter than a function"
 
 partition :: (a->Bool) -> [a] ->([a],[a])                   

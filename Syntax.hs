@@ -32,6 +32,7 @@ module Syntax
     ,Exp(..)
     ,Pattern(..)
     ,Alternative(..)
+    ,Identifier(..)
     )
     where
 
@@ -58,7 +59,7 @@ data Declaration
     | DataDcl Name [Name] [ConstructorDeclaration] 
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
-    | FunBindDcl Name [Pattern] Exp Type --this is the type of the function to be inferred
+    | FunBindDcl Name [Pattern] Exp
     | PatBindDcl Pattern Exp
       deriving(Show, Eq)
 
@@ -86,7 +87,7 @@ data ConstructorDeclaration -- No support for named field types
 --- Expressions & Patterns
 
 data Identifier
-     = Id Name Int
+     = Nm Name | Id Name Int
      deriving (Show, Eq)
 
 data OpExp
@@ -137,16 +138,15 @@ instance Pretty LiteralValue where
     pretty (LiteralChar c) = pretty c
 
 instance Pretty Declaration where
-    pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
-    pretty (DataDcl n ns ts) = pretty "data " <> pretty n <> pretty ns <> equals <!> pretty ts
-    pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
-    pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
-    pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
-    pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
-    pretty (FunBindDcl n ps r t) = pretty n 
-                                   <> pretty ps <> equals <> pretty r
-                                   <> colon <> pretty t
-    pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
+  pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
+  pretty (DataDcl n ns ts) = pretty "data " <> pretty n <> pretty ns <> equals <!> pretty ts
+  pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
+  pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
+  pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
+  pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
+  pretty (FunBindDcl n ps r) = pretty n 
+                               <> pretty ps <> equals <> pretty r
+  pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
 
 instance Pretty Type where
     pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
@@ -162,6 +162,7 @@ instance Pretty ConstructorDeclaration where
 
 instance Pretty Identifier where
   pretty (Id n num) = pretty n <> pretty "_" <> pretty num
+  pretty (Nm n) = pretty n
 
 instance Pretty OpExp where
     pretty (LeafExp e) = pretty e

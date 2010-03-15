@@ -236,7 +236,7 @@ funDecl = do f <- variable ; whiteSpace
              ps <- many1 (trailWS pattern)
              ws (char '=')
              e <- expression
-             return $ FunBindDcl f ps e ut
+             return $ FunBindDcl f ps e
 
 --- Patterns ---
 

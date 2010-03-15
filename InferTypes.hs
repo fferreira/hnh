@@ -5,21 +5,20 @@ module InferTypes
     where
 
 import Syntax
-import BuiltIn(EnvType, env0)
+-- import BuiltIn(EnvType, env0)
 import TransformMonad (TransformM, transformOk, transformError)
-import KnownTypes(declsToEn)
-import TypeUtils(addType, getType)
+-- import KnownTypes(declsToEn)
+-- import TypeUtils(addType, getType)
 
-import Control.Monad.State
+import Control.Monad.State(evalState, State, put, get)
 import Data.List(nub)
 
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
-import Debug.Trace
 import Tools(traceVal)
 
 performTypeInference :: Program -> TransformM Program
-performTypeInference (Program decls) = return $ Program decls
+performTypeInference p = addMetaTypesAndIdents p
 
 {-performTypeInference (Program decls) = typedProgram --(typeExpressions env0 (addMetaTypes decls))
     where
@@ -37,6 +36,23 @@ performTypeInference (Program decls) = return $ Program decls
 -}
 
 
+addMetaTypesAndIdents :: Program -> TransformM Program
+addMetaTypesAndIdents (Program decls) = transformOk "addMetaTypesAndIdents" (Program decls')
+  where
+    decls' = processDecls decls
 
 
+data MetaState = MetaState {
+  nextVarNum :: Int
+  , nextTypeNum :: Int
+  , env :: [(Name, Type)] 
+  }
 
+initialState = MetaState 0 0 []
+
+processDecls :: [Declaration] -> [Declaration]
+processDecls decls =
+  evalState (do put initialState ; mapM processDecl decls) initialState
+  
+processDecl :: Declaration -> State MetaState Declaration  
+processDecl d = return d

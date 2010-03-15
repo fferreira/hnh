@@ -35,11 +35,11 @@ idM :: Monad m => a -> m a
 idM = return 
 
 data Transformer = Transformer {
-                   tExp :: Exp -> ErrorM Exp
-                  ,tPat  :: Pattern -> ErrorM Pattern
-                  ,tDecls :: [Declaration] -> ErrorM [Declaration]
-                  -- add other transformers as needed here
-    }
+  tExp :: Exp -> ErrorM Exp
+  ,tPat  :: Pattern -> ErrorM Pattern
+  ,tDecls :: [Declaration] -> ErrorM [Declaration]
+   -- add other transformers as needed here
+  }
 
 defTrans = Transformer idM idM idM
 
@@ -58,11 +58,11 @@ transformTree name transform prog@(Program decls) =
             decls'' <- tDecls transform $ decls
             mapM adaptDeclaration decls''
 
-      adaptDeclaration (FunBindDcl n pats e t) =
+      adaptDeclaration (FunBindDcl n pats e) =
           do
             e' <- adaptExp e
             pats' <- mapM (tPat transform) pats
-            return $ FunBindDcl n pats' e' t
+            return $ FunBindDcl n pats' e'
 
       adaptDeclaration (PatBindDcl pat e) = 
           do
