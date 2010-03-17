@@ -87,7 +87,7 @@ data ConstructorDeclaration -- No support for named field types
 --- Expressions & Patterns
 
 data Identifier
-     = Nm Name | Id Name Int
+     = Id Name Int
      deriving (Show, Eq)
 
 data OpExp
@@ -115,10 +115,14 @@ data Exp
 
 data Pattern
     = VarPat Name Type
-    | IdentPat Identifier Type
     | ConPat Name [Name] Type -- a type constructor 
     | TuplePat [Name] Type
+    
     | WildcardPat Type
+      
+    | IdVarPat Identifier Type
+    | IdConPat Name [Identifier] Type
+    | IdTuplePat [Identifier] Type
       deriving (Show, Eq)
 
 data Alternative
@@ -162,7 +166,6 @@ instance Pretty ConstructorDeclaration where
 
 instance Pretty Identifier where
   pretty (Id n num) = pretty n <> pretty "_" <> pretty num
-  pretty (Nm n) = pretty n
 
 instance Pretty OpExp where
     pretty (LeafExp e) = pretty e
@@ -196,10 +199,14 @@ instance Pretty Exp where
 
 instance Pretty Pattern where
     pretty (VarPat n t)   = pretty n <> colon <> pretty t
-    pretty (IdentPat i t) = pretty i <> colon <> pretty t
     pretty (ConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
-    pretty (TuplePat tuple t)  = pretty "#" <> pretty tuple <> colon <> pretty t
+    pretty (TuplePat tuple t) = pretty "#" <> pretty tuple <> colon <> pretty t
+    
     pretty (WildcardPat t) = pretty '_' <> colon <> pretty t
+    
+    pretty (IdVarPat i t) = pretty i <> colon <> pretty t
+    pretty (IdConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
+    pretty (IdTuplePat tuple t) = pretty "#" <> pretty tuple <> colon <> pretty t
 
 instance Pretty Alternative where
     pretty (Alternative p e) = pretty p <> pretty " -> " <!> pretty e

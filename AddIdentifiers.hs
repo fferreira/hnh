@@ -24,23 +24,105 @@ module AddIdentifiers
 
 import Syntax
 import TransformMonad(TransformM, transformOk)
+import BuiltIn(env0)
+
 import Control.Monad.State(evalState, State, put, get)
 
 addIdentifiers :: Program -> TransformM Program
 addIdentifiers (Program decls) = transformOk "addIdentifiers" (Program decls')
   where
-    decls' = evalState (processDecls decls) initialState
+    decls' = evalState (processDecls decls) initialSt
     
-data IdentState = IdentState {    
+data IdentSt = IdentSt {    
   nextVar :: Int
-  , env :: [(Name, Identifier)]
+  , currEnv :: [(Name, Identifier)]
   }
+
+-- initialSt taking into account the env0 of builtIns --TODO check out this
+initialSt = IdentSt (length env0) (map 
+                                   (\(n,num) -> (n, Id n num)) 
+                                   (zip 
+                                    (fst (unzip env0)) 
+                                    [0..(length env0 - 1)]))
                   
-initialState = IdentState 0 []
+getEnv :: State IdentSt [(Name, Identifier)]                  
+getEnv = get >>= (return. currEnv)
+    
+getNext :: State IdentSt Int
+getNext = get >>= (return . nextVar)
     
 processDecls decls = mapM processDecl decls
 
-processDecl (PatBindDcl pats e) = undefined
+processDecl (PatBindDcl p e) =
+  do p' <- addFromPattern p
+     e' <- adaptExp e
+     return (PatBindDcl p' e')
 processDecl d = return d
-  
 
+addFromPattern :: Pattern -> State IdentSt Pattern
+addFromPattern (VarPat n t) =
+  do IdentSt next env <- get
+     put $ IdentSt (next + 1) ((n, Id n next):env)
+     return $ IdVarPat (Id n next) t
+    
+addFromPattern (ConPat n ns t) =
+  do IdentSt next env <- get
+     ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
+     put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
+     return $ IdConPat n ids t
+     
+addFromPattern (TuplePat ns t) =
+  do IdentSt next env <- get
+     ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
+     put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
+     return $ IdTuplePat ids t
+
+adaptExp :: Exp -> State IdentSt Exp
+adaptExp (VarExp n t) = 
+  do env <- getEnv
+     id <- return $ lookup n env
+     case id of
+       (Just id) -> return $ IdentExp id t
+       Nothing -> error ("Variable " ++ n ++ " not found")
+       
+adaptExp (FExp e1 e2 t) =       
+  do e1' <- adaptExp e1
+     e2' <- adaptExp e2
+     return $ FExp e1' e2' t
+     
+adaptExp (IfExp e1 e2 e3 t) =
+  do e1' <- adaptExp e1
+     e2' <- adaptExp e2
+     e3' <- adaptExp e3
+     return $ (IfExp e1' e2' e3' t)
+
+adaptExp (ParensExp e t) = do e' <- adaptExp e ; return $ ParensExp e' t
+adaptExp (TupleExp es t) = do es' <- mapM adaptExp es ; return $ TupleExp es' t
+adaptExp (ListExp es t) = do es' <- mapM adaptExp es ; return $ ListExp es' t
+adaptExp (LambdaExp pats e t) =
+  do IdentSt _ env <- get
+     pats' <- mapM addFromPattern pats
+     e' <- adaptExp e
+     IdentSt next _ <- get
+     put $ IdentSt next env
+     return $ LambdaExp pats' e' t
+adaptExp (CaseExp es alts t) = 
+  do es' <- mapM adaptExp es
+     alts' <- mapM adaptAlt alts
+     return $ CaseExp es' alts' t
+adaptExp (LetExp decls e t) = 
+  do IdentSt _ env <- get
+     decls' <- processDecls decls
+     e' <- adaptExp e
+     IdentSt next _ <- get
+     put $ IdentSt next env
+     return $ LetExp decls' e' t
+adaptExp e = return e
+
+adaptAlt (Alternative pats e) =
+  do IdentSt _ env <- get
+     pats' <- mapM addFromPattern pats
+     e' <- adaptExp e
+     IdentSt next _ <- get
+     put $ IdentSt next env
+     return $ Alternative pats' e'
