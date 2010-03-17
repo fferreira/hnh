@@ -40,5 +40,8 @@ env0 =
     ,("False", ConType "Bool" [])
      
     ,("Nil", ConType "List" [VarType "a"])
-    ,("Cons", ConType "List" [VarType "a"])
+    ,("Cons", FuncType (VarType "a") (FuncType 
+                                      (ConType "List" [VarType "a"])
+                                      (ConType "List" [VarType "a"])))
+                                    
     ]

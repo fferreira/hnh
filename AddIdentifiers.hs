@@ -18,7 +18,8 @@
 -}
 module AddIdentifiers
   (
-    addIdentifiers
+    addIdentifiers,
+    idEnv0
   )
   where
 
@@ -44,6 +45,13 @@ initialSt = IdentSt (length env0) (map
                                    (zip 
                                     (fst (unzip env0)) 
                                     [0..(length env0 - 1)]))
+            
+idEnv0 :: [(Identifier, Type)]
+idEnv0 = map (\(n, t) -> (findId n, t)) env0
+  where
+    findId n = case lookup n (currEnv initialSt) of
+      Just i -> i
+      Nothing -> error "Unexpected"
                   
 getEnv :: State IdentSt [(Name, Identifier)]                  
 getEnv = get >>= (return. currEnv)
@@ -82,8 +90,16 @@ adaptExp (VarExp n t) =
   do env <- getEnv
      id <- return $ lookup n env
      case id of
-       (Just id) -> return $ IdentExp id t
+       (Just id) -> return $ IdVarExp id t
        Nothing -> error ("Variable " ++ n ++ " not found")
+       
+adaptExp (ConExp n t) = 
+  do env <- getEnv
+     id <- return $ lookup n env
+     case id of
+       (Just id) -> return $ IdConExp id t
+       Nothing -> error ("Variable " ++ n ++ " not found")
+       
        
 adaptExp (FExp e1 e2 t) =       
   do e1' <- adaptExp e1

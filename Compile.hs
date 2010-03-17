@@ -44,7 +44,7 @@ compileTransform p =
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= addIdentifiers
                                      -- >>= addKnownTypes
---                                     >>= performTypeInference
+                                    >>= performTypeInference
                                      >>= return)       
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list

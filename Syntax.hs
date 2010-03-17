@@ -80,7 +80,7 @@ data Type -- for type declarations
     | UnknownType
       deriving(Show, Eq)
 
-data ConstructorDeclaration -- No support for named field types
+data ConstructorDeclaration 
     = ConDcl Name [Type]
       deriving(Show, Eq)
 
@@ -98,7 +98,7 @@ data OpExp
 data Exp 
     = VarExp Name Type
     | ConExp Name Type
-    | LitExp LiteralValue Type
+    | LitExp LiteralValue Type --TODO should this be just a value?
     | InfixOpExp OpExp Type
     | FExp Exp Exp Type -- function application expression          
     | MinusExp Exp Type
@@ -110,7 +110,8 @@ data Exp
     | ParensExp Exp Type
     | TupleExp [Exp] Type -- a tuple of expresions
     | ListExp [Exp] Type  -- a list of expresions
-    | IdentExp Identifier Type -- an identifier, translated from a VarExp
+    | IdVarExp Identifier Type -- an identifier, translated from a VarExp
+    | IdConExp Identifier Type
       deriving (Show, Eq)
 
 data Pattern
@@ -173,8 +174,9 @@ instance Pretty OpExp where
     
 instance Pretty Exp where
     pretty (VarExp n t) = parens $ pretty n <> colon <> pretty t
-    pretty (IdentExp i t) = parens $ pretty i <> colon <> pretty t
+    pretty (IdVarExp i t) = parens $ pretty i <> colon <> pretty t
     pretty (ConExp n t) = parens $ pretty n <> colon <> pretty t
+    pretty (IdConExp i t) = parens $ pretty i <> colon <> pretty t
     pretty (LitExp v t) = parens $ pretty v <> colon <> pretty t
     pretty (InfixOpExp e t) = parens $ pretty e <> colon <> pretty t
     pretty (FExp e1 e2 t) = parens $ pretty e1 <!> pretty e2 <> colon <> pretty t
