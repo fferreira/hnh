@@ -54,24 +54,24 @@ getNext = get >>= (return . nextVar)
 processDecls decls = mapM processDecl decls
 
 processDecl (PatBindDcl p e) =
-  do p' <- addFromPattern p
+  do p' <- adaptPattern p
      e' <- adaptExp e
      return (PatBindDcl p' e')
 processDecl d = return d
 
-addFromPattern :: Pattern -> State IdentSt Pattern
-addFromPattern (VarPat n t) =
+adaptPattern :: Pattern -> State IdentSt Pattern
+adaptPattern (VarPat n t) =
   do IdentSt next env <- get
      put $ IdentSt (next + 1) ((n, Id n next):env)
      return $ IdVarPat (Id n next) t
     
-addFromPattern (ConPat n ns t) =
+adaptPattern (ConPat n ns t) =
   do IdentSt next env <- get
      ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
      put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
      return $ IdConPat n ids t
      
-addFromPattern (TuplePat ns t) =
+adaptPattern (TuplePat ns t) =
   do IdentSt next env <- get
      ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
      put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
@@ -101,7 +101,7 @@ adaptExp (TupleExp es t) = do es' <- mapM adaptExp es ; return $ TupleExp es' t
 adaptExp (ListExp es t) = do es' <- mapM adaptExp es ; return $ ListExp es' t
 adaptExp (LambdaExp pats e t) =
   do IdentSt _ env <- get
-     pats' <- mapM addFromPattern pats
+     pats' <- mapM adaptPattern pats
      e' <- adaptExp e
      IdentSt next _ <- get
      put $ IdentSt next env
@@ -121,7 +121,7 @@ adaptExp e = return e
 
 adaptAlt (Alternative pats e) =
   do IdentSt _ env <- get
-     pats' <- mapM addFromPattern pats
+     pats' <- mapM adaptPattern pats
      e' <- adaptExp e
      IdentSt next _ <- get
      put $ IdentSt next env
