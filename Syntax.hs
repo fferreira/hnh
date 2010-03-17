@@ -27,7 +27,7 @@ module Syntax
     ,Precedence
     ,Associativity(..)
     ,Type(..)
-    ,ConstructorDeclaration(..)
+    ,Constructor(..)
     ,OpExp(..)
     ,Exp(..)
     ,Pattern(..)
@@ -56,7 +56,7 @@ data LiteralValue
 
 data Declaration
     = TypeDcl Name [Name] Type 
-    | DataDcl Name [Name] [ConstructorDeclaration] 
+    | DataDcl Name [Name] [Constructor] 
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl Name [Pattern] Exp
@@ -80,9 +80,10 @@ data Type -- for type declarations
     | UnknownType
       deriving(Show, Eq)
 
-data ConstructorDeclaration 
+data Constructor 
     = ConDcl Name [Type]
-      deriving(Show, Eq)
+    | IdConDcl Identifier [Type]
+    deriving(Show, Eq)
 
 --- Expressions & Patterns
 
@@ -162,8 +163,9 @@ instance Pretty Type where
     pretty (UnknownType) = pretty "?"
     pretty (MetaType i) = pretty "%" <> pretty i
 
-instance Pretty ConstructorDeclaration where
+instance Pretty Constructor where
     pretty (ConDcl n t) = pretty n <!> pretty t
+    pretty (IdConDcl i t) = pretty i <!> pretty t
 
 instance Pretty Identifier where
   pretty (Id n num) = pretty n <> pretty "_" <> pretty num

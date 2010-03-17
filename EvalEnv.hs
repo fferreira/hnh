@@ -147,7 +147,7 @@ consToList (ConVal "Nil" _) = []
 consToList _ = [] 
 
 -- builds a closure to represent a data type constructor
-envForData :: Name -> [ConstructorDeclaration] -> [Env]
+envForData :: Name -> [Constructor] -> [Env]
 envForData n ((ConDcl nCons types):cs) = ((VarPat nCons) UnknownType, 
                                           if length types == 0 
                                           then (ConVal nCons []) 

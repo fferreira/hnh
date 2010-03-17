@@ -75,13 +75,17 @@ lookupId i =
   do MetaSt _ env <- get
      case lookup i env of
        Just i -> return i
-       Nothing -> error ("Identifier " ++ (show i) ++ " not found")
+       Nothing -> error ("Identifier " ++ (show i) ++ " not found in "++ show env)
 
 processDecls :: [Declaration] -> [Declaration]
 processDecls decls =
   evalState (do mapM processDecl decls) initialSt
   
 processDecl :: Declaration -> State MetaSt Declaration  
+processDecl d@(DataDcl n params cons) =
+  do mapM (typeCons n params) cons
+     return d
+     
 processDecl (PatBindDcl p e) = 
   do p' <- typePattern p
      e' <- typeExp e
@@ -90,6 +94,18 @@ processDecl (PatBindDcl p e) =
 processDecl (FunBindDcl _ _ _) = -- TODO Improve error handling
   error "Unexpected function declartion at this point"
 processDecl d = return d
+
+typeCons :: Name -> [Name] -> Constructor -> State MetaSt Constructor
+typeCons n ps c@(IdConDcl i ts) =
+  do MetaSt next env <- get
+     put $ MetaSt next ((i, (toFun (ts ++ [ConType n ps']))):env)
+     return c
+     where
+       toFun (t:[]) = t
+       toFun (t:ts) = FuncType t (toFun ts)
+       ps' = map (\param -> (VarType param)) ps
+
+
 
 typePattern :: Pattern -> State MetaSt Pattern
 typePattern (VarPat _ _) = error "Error Id??? pattern expected" 
