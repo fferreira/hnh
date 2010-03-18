@@ -20,7 +20,7 @@
 module Compile where --TODO add exported methods
 
 import Parser
-import Text.PrettyPrint.Leijen(Doc, Pretty, pretty)
+import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 import Syntax
 
 import CommonTransforms(commonTransforms)
@@ -75,5 +75,9 @@ merge e@(Error msg) _ = e
 merge _ e@(Error msg) = e
 
 
-compile p@(Program decls) name = pretty (generateConstraints p)
+compile p@(Program decls) name = (pretty $ map prettify (generateConstraints p))
+                                 <> line
+                                 <> pretty "number of constraints:"
+                                 <+> pretty (length (generateConstraints p))
 
+prettify (t1, t2, d) = pretty t1 <+> pretty "=" <+> pretty t2 <> line <> pretty d <> line
