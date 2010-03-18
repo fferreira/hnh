@@ -18,15 +18,16 @@
 -}
 
 module TypeUtils
-    (
-     addType  -- TODO eliminate unused functions
-    ,litToExp
-    ,assembleInfixOperator
-    ,getType
-    ,resultingType
-    ,typeFromAlternative
-    )
-    where
+       (
+         addType  -- TODO eliminate unused functions
+       , litToExp
+       , assembleInfixOperator
+       , getType
+       , getPatType
+       , resultingType
+       , typeFromAlternative
+       )
+       where
 
 import Syntax
 
@@ -56,6 +57,14 @@ getType (TupleExp _ t) = t
 getType (ListExp _ t) = t
 getType (IdVarExp _ t) = t
 getType (IdConExp _ t) = t
+
+getPatType :: Pattern -> Type
+getPatType (VarPat _ t) = t
+getPatType (ConPat _ _ t) = t
+getPatType (TuplePat _ t) = t
+getPatType (WildcardPat t) = t
+getPatType (IdVarPat _ t) = t
+getPatType (IdConPat _ _ _ t) = t
 
 typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e

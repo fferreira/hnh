@@ -10,7 +10,7 @@ import AddMetaTypes(addMetaTypes)
 
 {-
   Type inferences is done in 3 phases:
-    1- add type variables to all unknown types (additionally, convert vars to idents)
+    1- add type variables to all unknown types 
     2- generate equations to represent the type of expressions (check for impossible types)
     3- unify all the types
 -}
