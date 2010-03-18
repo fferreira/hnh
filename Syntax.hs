@@ -72,7 +72,7 @@ data Associativity
       deriving(Show, Eq)
 
 data Type -- for type declarations
-    = FuncType Type Type -- TODO rename to FunType for consistency
+    = FunType Type Type
     | TupleType [Type]
     | VarType Name      -- a polymorphic type parameter
     | ConType Name [Type]     -- the constructor of the type and its polymorphic params
@@ -123,7 +123,7 @@ data Pattern
     | WildcardPat Type
       
     | IdVarPat Identifier Type
-    | IdConPat Name [Identifier] Type
+    | IdConPat Name [Identifier] [Type] Type
     | IdTuplePat [Identifier] Type
       deriving (Show, Eq)
 
@@ -155,7 +155,7 @@ instance Pretty Declaration where
   pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
 
 instance Pretty Type where
-    pretty (FuncType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
+    pretty (FunType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
     pretty (VarType n) = pretty n
     pretty (ConType n []) = pretty n
@@ -209,8 +209,12 @@ instance Pretty Pattern where
     pretty (WildcardPat t) = pretty '_' <> colon <> pretty t
     
     pretty (IdVarPat i t) = pretty i <> colon <> pretty t
-    pretty (IdConPat n p t) = pretty n <!> pretty p <> colon <> pretty t
-    pretty (IdTuplePat tuple t) = pretty "#" <> pretty tuple <> colon <> pretty t
+    pretty (IdConPat n p ts t) = pretty n <!> pretty p 
+                                 <> (parens $ pretty ts) 
+                                 <> colon <> pretty t
+    
+    pretty (IdTuplePat tuple t) = pretty "#" <> pretty tuple 
+                                     <> colon <> pretty t
 
 instance Pretty Alternative where
     pretty (Alternative p e) = pretty p <> pretty " -> " <!> pretty e

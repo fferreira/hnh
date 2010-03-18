@@ -223,7 +223,7 @@ aType = trailWS (aConType
                  <?> "type"
                 )
         
-functionArrow = ws (string "->") >> return FuncType
+functionArrow = ws (string "->") >> return FunType
 
 typeD = trailWS $ chainr1 aType functionArrow 
         

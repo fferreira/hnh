@@ -36,7 +36,7 @@ import Text.PrettyPrint.Leijen(pretty)
 -- returns the type resuling for the application of FuncType
 -- or UnknownType if the type is not appropiate
 resultingType :: Type -> Type
-resultingType (FuncType _ t) = t
+resultingType (FunType _ t) = t
 resultingType _ = UnknownType
 
 getType :: Exp -> Type
@@ -54,6 +54,8 @@ getType (CaseExp _ _ t) = t
 getType (ParensExp _ t) = t
 getType (TupleExp _ t) = t
 getType (ListExp _ t) = t
+getType (IdVarExp _ t) = t
+getType (IdConExp _ t) = t
 
 typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e

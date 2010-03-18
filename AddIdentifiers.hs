@@ -88,7 +88,7 @@ adaptPattern (ConPat n ns t) =
   do IdentSt next env <- get
      ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
      put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
-     return $ IdConPat n ids t
+     return $ IdConPat n ids [] t
      
 adaptPattern (TuplePat ns t) =
   do IdentSt next env <- get
