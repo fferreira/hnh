@@ -56,7 +56,7 @@ data LiteralValue
 
 data Declaration
     = TypeDcl Name [Name] Type 
-    | DataDcl Name [Name] [Constructor] 
+    | DataDcl Type{-Name [Name]-} [Constructor]  -- has to be a DataType
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl Name [Pattern] Exp
@@ -76,6 +76,7 @@ data Type -- for type declarations
     | TupleType [Type]
     | VarType Name      -- a polymorphic type parameter
     | ConType Name [Type]     -- the constructor of the type and its polymorphic params
+    | DataType Name [Type] -- the datatype declaration
     | MetaType Int -- a meta variable for the unification process
     | UnknownType
       deriving(Show, Eq)
@@ -145,7 +146,7 @@ instance Pretty LiteralValue where
 
 instance Pretty Declaration where
   pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
-  pretty (DataDcl n ns ts) = pretty "data " <> pretty n <> pretty ns <> equals <!> pretty ts
+  pretty (DataDcl t ts) = pretty "data " <> pretty t <> equals <!> pretty ts
   pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
   pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
   pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
@@ -159,7 +160,9 @@ instance Pretty Type where
     pretty (TupleType t) = pretty t
     pretty (VarType n) = pretty n
     pretty (ConType n []) = pretty n
-    pretty (ConType n params) = pretty n <> pretty"_"<> pretty params
+    pretty (DataType t []) = pretty t
+    pretty (ConType n params) = pretty n <> pretty "_"<> pretty params
+    pretty (DataType t params) = pretty t <> pretty"_"<> pretty params
     pretty (UnknownType) = pretty "?"
     pretty (MetaType i) = pretty "%" <> pretty i
 

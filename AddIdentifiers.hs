@@ -65,14 +65,14 @@ processDecl (PatBindDcl p e) =
   do p' <- adaptPattern p
      e' <- adaptExp e
      return (PatBindDcl p' e')
-processDecl (DataDcl n params cons) =      
-  do cons' <- mapM (adaptCons n params) cons
-     return $ DataDcl n params cons'
+processDecl (DataDcl t cons) =      
+  do cons' <- mapM adaptCons cons
+     return $ DataDcl t cons'
      
 processDecl d = return d
 
-adaptCons :: Name -> [Name] -> Constructor -> State IdentSt Constructor
-adaptCons n ps (ConDcl conName ts) = 
+adaptCons :: Constructor -> State IdentSt Constructor
+adaptCons (ConDcl conName ts) = 
   do IdentSt next env <- get
      i <- return $ Id conName next
      put $ IdentSt (next + 1) ((conName, i):env)

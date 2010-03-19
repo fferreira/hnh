@@ -155,7 +155,7 @@ dataDecl = do string "data" ; whiteSpace
               (n, params) <- simpleType ; whiteSpace
               char '=' ; whiteSpace
               cs <- constrs ; whiteSpace
-              return $ DataDcl n params cs           
+              return $ DataDcl (DataType n (map VarType params)) cs
            
 simpleType = do n <- conid
                 whiteSpace

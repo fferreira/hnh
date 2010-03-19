@@ -74,8 +74,8 @@ processDecls decls =
   evalState (do mapM processDecl decls) initialSt
   
 processDecl :: Declaration -> State MetaSt Declaration  
-processDecl d@(DataDcl n params cons) =
-  do mapM (typeCons n params) cons
+processDecl d@(DataDcl t cons) =
+  do mapM (typeCons t) cons
      return d
      
 processDecl (PatBindDcl p e) = 
@@ -87,15 +87,15 @@ processDecl (FunBindDcl _ _ _) = -- TODO Improve error handling
   error "Unexpected function declartion at this point"
 processDecl d = return d
 
-typeCons :: Name -> [Name] -> Constructor -> State MetaSt Constructor
-typeCons n ps c@(IdConDcl i ts) =
+typeCons :: Type -> Constructor -> State MetaSt Constructor
+typeCons t c@(IdConDcl i ts) =
   do MetaSt next env <- get
-     put $ MetaSt next ((i, (toFun (ts ++ [ConType n ps']))):env)
+     put $ MetaSt next ((i, (toFun (ts ++ [t]))):env)
      return c
      where
        toFun (t:[]) = t
        toFun (t:ts) = FunType t (toFun ts)
-       ps' = map (\param -> (VarType param)) ps
+
 
 typePattern :: Pattern -> State MetaSt Pattern
 typePattern (VarPat _ _) = error "Error Id??? pattern expected" 
