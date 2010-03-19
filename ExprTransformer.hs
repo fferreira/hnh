@@ -44,7 +44,7 @@ type FixityDesc = (Operator, Precedence, Associativity)
 correctPrecedence:: Program -> TransformM Program
 correctPrecedence prog  = transformTree
                           "correctPrecedence"
-                          defTrans {tExp  = adaptExpr }
+                          defTrans {tExp  = adaptExpr, tDecls = adaptDecls }
                           prog
     where
       adaptExpr (InfixOpExp e t) = 
@@ -53,7 +53,10 @@ correctPrecedence prog  = transformTree
             e' <- transform precedences e
             return $ InfixOpExp e' t
       adaptExpr e = return e
-
+      
+      adaptDecls decls = return $ filter (not . isFixity) decls
+      isFixity (FixityDcl _ _ _) = True
+      isFixity _ = False
 
 buildPrecedenceTable :: Monad m => Program -> m [FixityDesc]
 buildPrecedenceTable (Program decls) =
