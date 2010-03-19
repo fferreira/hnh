@@ -33,7 +33,8 @@ unifyTypes :: [Constraint] -> ErrorM [Subst]
 unifyTypes cs = genSubst cs []
 
 data UnificationRes = SameType
-                    | NewSubst Subst
+                    | New Subst
+                    | Push [Constraint]
 
 type Subst = (Type, Type) -- substitution put first type in place of the second
 
@@ -41,7 +42,8 @@ genSubst :: Monad m => [Constraint] -> [Subst] -> m[Subst]
 genSubst ((t1, t2, d):cs) sub = 
   do res <- unify d t1 t2 
      case res of SameType -> genSubst cs sub -- ignore zero info substitutions
-                 NewSubst s -> contWithSubst s cs sub
+                 New s -> contWithSubst s cs sub
+                 Push c -> genSubst (c++cs) sub
 genSubst [] sub = return sub
 
 contWithSubst :: Monad m => Subst -> [Constraint] -> [Subst] -> m[Subst]
@@ -55,27 +57,27 @@ contWithSubst (t1, t2) cs sub =  genSubst cs' ((t1,t2):sub')
     repConst ((ta, tb, d):cs) = (rep ta, rep tb, d): repConst cs
     repConst [] = []
     
-    rep t = if (t == t2) then t1 else t
+    rep = typeRep (t1, t2) -- TODO find types within types!
 
+typeRep :: (Type, Type) -> Type -> Type      
+-- looks for t in t2 if so then it replaces by t1 otherwise it return t
+typeRep c@(t1, t2) (FunType ta tb) = (FunType (typeRep c ta) (typeRep c tb))
+typeRep (t1, t2) t = if t == t2 then t1 else t -- COnsider composit t's
+      
 unify :: Monad m => Declaration -> Type -> Type -> m UnificationRes
 unify d t1@(MetaType _) t2@(MetaType _) =
   if t1 == t2 then return SameType
-  else return $ NewSubst (t1, t2)
+  else return $ New (t1, t2)
        
-unify d t1@(MetaType _) t2 = return $ NewSubst (t2, t1)
-unify d t1 t2@(MetaType _) = return $ NewSubst (t1, t2)
-       
-unify d t1 t2 = fail $ show (pretty "Unable to unify"
-                             <+> pretty t1 <+> pretty "and"
-                             <+> pretty t2 <> line
-                             <> pretty "in" <+> pretty d)
+unify d t1@(MetaType _) t2 = return $ New (t2, t1)
+unify d t1 t2@(MetaType _) = return $ New (t1, t2)
 
+unify d (FunType t11 t12) (FunType t21 t22) = return $ Push [(t11, t21, d), (t12, t22, d)]
+       
+unify d t1 t2 = 
+  if t1 == t2 then return $ SameType
+  else fail $ show (pretty "Unable to unify"
+                    <+> pretty t1 <+> pretty "and"
+                    <+> pretty t2 <> line
+                    <> pretty "in" <+> pretty d)
 
-test = [(MetaType 1, MetaType 2, nd)
-       ,(ConType "Float" [], MetaType 12, nd)
-       ,(MetaType 3, MetaType 4, nd)
-       ,(MetaType 4, MetaType 12, nd)
-       ,(MetaType 1, ConType "Int" [], nd)]
-       
-       
-nd = TypeSigDcl [] UnknownType       

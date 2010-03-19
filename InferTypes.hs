@@ -13,6 +13,8 @@ import TransformMonad (TransformM, transformOk, transformError)
 import TransformUtils(transformTree, Transformer(..), defTrans)
 import ErrorMonad(ErrorM(..))
 
+import Tools
+
 {-
   Type inferences is done in 3 phases:
     1- add type variables to all unknown types (adMetaTypes)
@@ -25,15 +27,13 @@ performTypeInference :: Program -> TransformM Program
 performTypeInference p = addMetaTypes p
                          >>= performSubstitutions
 
-
-
 performSubstitutions :: Program -> TransformM Program
 performSubstitutions prog = transformTree
                             "performSubstitutions"
                             defTrans { tExp = adaptExp subs, tPat = adaptPat subs }
                             prog
                               where
-                                constraints = generateConstraints prog
+                                constraints = traceP $ generateConstraints prog
                                 subs = case unifyTypes constraints of
                                   Success ss -> ss
                                   Error msg -> error msg --TODO improve error handling
