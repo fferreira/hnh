@@ -72,7 +72,8 @@ unify d t1@(MetaType _) t2@(MetaType _) =
 unify d t1@(MetaType _) t2 = return $ New (t2, t1)
 unify d t1 t2@(MetaType _) = return $ New (t1, t2)
 
-unify d (FunType t11 t12) (FunType t21 t22) = return $ Push [(t11, t21, d), (t12, t22, d)]
+unify d (FunType t11 t12) (FunType t21 t22) = 
+  return $ Push [(t11, t21, d), (t12, t22, d)]
        
 unify d t1 t2 = 
   if t1 == t2 then return $ SameType
