@@ -89,7 +89,6 @@ addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
 addType (IdVarExp i _) t = IdVarExp i t
 addType (IdConExp i _) t = IdConExp i t
-addType t _ = error ("Unexpected " ++ show t)
 
 addPatType :: Pattern -> Type -> Pattern
 addPatType (VarPat n _ ) t = (VarPat n t)
