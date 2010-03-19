@@ -20,6 +20,7 @@
 module TypeUtils
        (
          addType  -- TODO eliminate unused functions
+       , addPatType
        , litToExp
        , assembleInfixOperator
        , getType
@@ -65,6 +66,7 @@ getPatType (TuplePat _ t) = t
 getPatType (WildcardPat t) = t
 getPatType (IdVarPat _ t) = t
 getPatType (IdConPat _ _ _ t) = t
+getPatType (IdTuplePat _ t) = t
 
 typeFromAlternative :: Alternative -> Type
 typeFromAlternative (Alternative _ e) = getType e
@@ -85,6 +87,15 @@ addType (CaseExp e a _) t = CaseExp e a t
 addType (ParensExp e _) t = ParensExp e t
 addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
+
+addPatType :: Pattern -> Type -> Pattern
+addPatType (VarPat n _ ) t = (VarPat n t)
+addPatType (ConPat n ns _) t = (ConPat n ns t)
+addPatType (TuplePat ns _) t = (TuplePat ns t)
+addPatType (WildcardPat _) t = (WildcardPat t)
+addPatType (IdVarPat i _) t = (IdVarPat i t)
+addPatType (IdConPat n ids ts _) t = (IdConPat n ids ts t)
+addPatType (IdTuplePat ids _) t = (IdTuplePat ids t)
 
 -- litToExp creates an Expresion from a literal (with the right type)
 litToExp :: LiteralValue -> Exp

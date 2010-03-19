@@ -19,6 +19,7 @@
 module UnifyTypes
   (
     unifyTypes
+  , Subst
   )
   where
   
