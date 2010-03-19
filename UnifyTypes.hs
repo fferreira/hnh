@@ -27,6 +27,8 @@ import Syntax
 import GenerateConstraints(Constraint)
 import ErrorMonad (ErrorM)
 
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+
 unifyTypes :: [Constraint] -> ErrorM [Subst]
 unifyTypes cs = genSubst cs []
 
@@ -63,10 +65,11 @@ unify d t1@(MetaType _) t2@(MetaType _) =
 unify d t1@(MetaType _) t2 = return $ NewSubst (t2, t1)
 unify d t1 t2@(MetaType _) = return $ NewSubst (t1, t2)
        
-unify d t1 t2 = fail ("Unable to unify "       
-                      ++ show t1 ++ " and "
-                      ++ show t2 ++ " in "
-                      ++ show d) -- TOOD use pretty
+unify d t1 t2 = fail $ show (pretty "Unable to unify"
+                             <+> pretty t1 <+> pretty "and"
+                             <+> pretty t2 <> line
+                             <> pretty "in" <+> pretty d)
+
 
 test = [(MetaType 1, MetaType 2, nd)
        ,(ConType "Float" [], MetaType 12, nd)
