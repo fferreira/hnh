@@ -11,37 +11,37 @@ import Syntax
 type EnvType = (Name, Type)
 
 
-listType = ConType "List" [VarType "a"] -- The defaultType of list 
+listType = DataType "List" [VarType "a"] -- The defaultType of list 
 
 env0 :: [EnvType] -- the initial environment, containing all the builin functions
 env0 = 
-    [("+", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Int" [])))
-    ,("-", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Int" [])))
-{-    ,("*", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Int" [])))
-    ,("/", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Int" [])))
-    ,("^", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Int" []))) -}
-    ,("~", FunType (ConType "Int" []) (ConType "Int" []))
+    [("+", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    ,("-", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+{-    ,("*", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    ,("/", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    ,("^", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int"))) -}
+    ,("~", FunType (PrimType "Int") (PrimType "Int"))
 
-    ,("==", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Bool" [])))
-    ,( ">", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Bool" [])))
-    ,( "<", FunType (ConType "Int" []) (FunType (ConType "Int" []) (ConType "Bool" [])))
+    ,("==", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
+    ,( ">", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
+    ,( "<", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
 {-
-    ,("+.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Float" [])))
-    ,("-.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Float" [])))
-    ,("*.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Float" [])))
-    ,("/.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Float" [])))
-    ,("^.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Float" [])))
+    ,("+.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("-.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("*.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("/.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("^.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
 
-    ,("==.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Bool" [])))
-    ,( ">.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Bool" [])))
-    ,( "<.", FunType (ConType "Float" []) (FunType (ConType "Float" []) (ConType "Bool" [])))
+    ,("==.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+    ,( ">.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+    ,( "<.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
 -}
-    ,("True", ConType "Bool" [])
-    ,("False", ConType "Bool" [])
+    ,("True", DataType "Bool" [])
+    ,("False", DataType "Bool" [])
      
-    ,("Nil", ConType "List" [VarType "a"])
+    ,("Nil", DataType "List" [VarType "a"])
     ,("Cons", FunType (VarType "a") (FunType 
-                                      (ConType "List" [VarType "a"])
-                                      (ConType "List" [VarType "a"])))
+                                      (DataType "List" [VarType "a"])
+                                      (DataType "List" [VarType "a"])))
                                     
     ]

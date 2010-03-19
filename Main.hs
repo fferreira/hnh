@@ -19,10 +19,13 @@
 
 module Main where
 
-import Compile -- Eval
+import qualified Eval as E
+import qualified Compile as C
 import System.Environment(getArgs)
 
 main = do
   args <- getArgs
-  p <- loadAndEval (args!!0) (args!!1) (if ((length args) >= 3) then True else False)
+  loadAndEval <- return $ if length args >= 1 && (args!!0) == "e" 
+                          then E.loadAndEval else C.loadAndEval
+  p <- loadAndEval (args!!1) (args!!2) (if ((length args) >= 4) then True else False)
   print p

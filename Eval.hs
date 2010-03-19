@@ -81,7 +81,7 @@ eval (Program decls) name =
                   _ -> fail (name ++ " not found or not the right from")) (env0++dataTypes decls)
 
 dataTypes :: [Declaration] -> [Env]
-dataTypes ((DataDcl n _ cons):ds) = ((envForData n cons)++(dataTypes ds))
+dataTypes ((DataDcl (DataType n _)  cons):ds) = ((envForData n cons)++(dataTypes ds))
 dataTypes (d:ds) = dataTypes ds
 dataTypes [] = []
 

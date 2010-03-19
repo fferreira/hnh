@@ -43,52 +43,52 @@ env0 = [
   --- Integer Operations ---
  (VarPat "+" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun add)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun add)),
  (VarPat "-" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun sub)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun sub)),
  (VarPat "*" UnknownType,
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun mul)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun mul)),
  (VarPat "/" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun idiv)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun idiv)),
  (VarPat "~" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" [])] [] (CFun neg)),
+         [VarPat "a" (PrimType "Int")] [] (CFun neg)),
 
  (VarPat "==" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun eq)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun eq)),
  
  (VarPat ">" UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" []), VarPat "b" (ConType "Int" [])] [] (CFun gt)),
+         [VarPat "a" (PrimType "Int"), VarPat "b" (PrimType "Int")] [] (CFun gt)),
 
   --- Float Operations ---
  (VarPat "+." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fadd)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun fadd)),
  (VarPat "-." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fsub)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun fsub)),
  (VarPat "*." UnknownType,
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fmul)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun fmul)),
  (VarPat "/." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fdiv)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun fdiv)),
  (VarPat "~." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Int" [])] [] (CFun fneg)),
+         [VarPat "a" (PrimType "Int")] [] (CFun fneg)),
 
  (VarPat "==." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun feq)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun feq)),
  
  (VarPat ">." UnknownType, 
          Closure 
-         [VarPat "a" (ConType "Float" []), VarPat "b" (ConType "Float" [])] [] (CFun fgt)),
+         [VarPat "a" (PrimType "Float"), VarPat "b" (PrimType "Float")] [] (CFun fgt)),
  
   --- Support for lists ---
  (VarPat "Nil" UnknownType,

@@ -80,7 +80,7 @@ processExp d (IfExp e1 e2 e3 t) =
      processExp d e3
      addConstraint d (getType e2) (getType e3)
      addConstraint d t (getType e2)
-     addConstraint d (getType e1) (ConType "Bool" [])
+     addConstraint d (getType e1) (DataType "Bool" [])
      
 processExp d (CaseExp es alts t) =
   do mapM (processExp d) es
@@ -90,7 +90,7 @@ processExp d (CaseExp es alts t) =
 processExp d (ListExp es t) = 
   do mapM (processExp d) es
      allSameType d es
-     case es of [] -> addConstraint d t (ConType "List" [VarType "a"])
+     case es of [] -> addConstraint d t (DataType "List" [VarType "a"])
                 _  -> addConstraint d t (getType (head es))
 
 processExp d e = return ()

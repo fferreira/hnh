@@ -75,9 +75,9 @@ data Type -- for type declarations
     = FunType Type Type
     | TupleType [Type]
     | VarType Name      -- a polymorphic type parameter
-    | ConType Name [Type]     -- the constructor of the type and its polymorphic params
     | DataType Name [Type] -- the datatype declaration
     | MetaType Int -- a meta variable for the unification process
+    | PrimType Name -- a primitive type TODO change String to ?
     | UnknownType
       deriving(Show, Eq)
 
@@ -118,7 +118,7 @@ data Exp
 
 data Pattern
     = VarPat Name Type
-    | ConPat Name [Name] Type -- a type constructor 
+    | ConPat Name [Name] Type -- a type constructor pattern
     | TuplePat [Name] Type
     
     | WildcardPat Type
@@ -159,12 +159,11 @@ instance Pretty Type where
     pretty (FunType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2
     pretty (TupleType t) = pretty t
     pretty (VarType n) = pretty n
-    pretty (ConType n []) = pretty n
     pretty (DataType t []) = pretty t
-    pretty (ConType n params) = pretty n <> pretty "_"<> pretty params
     pretty (DataType t params) = pretty t <> pretty"_"<> pretty params
     pretty (UnknownType) = pretty "?"
     pretty (MetaType i) = pretty "%" <> pretty i
+    pretty (PrimType s) = pretty s
 
 instance Pretty Constructor where
     pretty (ConDcl n t) = pretty n <!> pretty t

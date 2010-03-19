@@ -203,7 +203,7 @@ constr = do n <- conid ; whiteSpace
 aConType = do n <- conid
               whiteSpace
               params <- many typeD
-              return $ ConType n params
+              return $ DataType n params
               
 aVarType = do n <- ws varid ; return $ VarType n              
 
@@ -212,7 +212,7 @@ aTupleType = try $ parens (do ts <- typeD `sepBy2`(whiteSpace >> char ',' >> whi
                               return $ TupleType ts)
              
 aListType = do whiteSpace
-               t <- sqBrackets (do t <- (ws typeD) ; return $ ConType "List" [t])
+               t <- sqBrackets (do t <- (ws typeD) ; return $ DataType "List" [t])
                whiteSpace ; return t
 
 aType = trailWS (aConType
