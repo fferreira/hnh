@@ -84,21 +84,22 @@ processExp d (IfExp e1 e2 e3 t) =
      
 processExp d (CaseExp es alts t) =
   do mapM (processExp d) es
-     mapM (processAlt d (map getType es)) alts
+     mapM (processAlt d t (map getType es)) alts
      return ()
      
 processExp d (ListExp es t) = 
   do mapM (processExp d) es
      allSameType d es
      case es of [] -> addConstraint d t (DataType "List" [VarType "a"])
-                _  -> addConstraint d t (getType (head es))
+                _  -> addConstraint d t (DataType "List" [(getType (head es))])
 
 processExp d e = return ()
 
-processAlt d ts (Alternative ps e) =
-  do processExp d e --TODO complete
+processAlt d caseT ts (Alternative ps e) =
+  do processExp d e 
      mapM 
-       (\(t, p)-> return $ addConstraint d t (getPatType p)) 
+       (\(t, p)-> do addConstraint d caseT (getPatType p)
+                     return $ addConstraint d t (getPatType p)) 
        (zip ts ps)
 
 allSameType d (e1:e2:es) =

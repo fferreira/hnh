@@ -1,17 +1,16 @@
 module BuiltIn
-    (
-     EnvType
-    ,listType
-    ,env0
-    )
-    where
+       (
+         EnvType
+       , env0
+       , builtInDataTs
+       )
+       where
 
 import Syntax
+import TypeUtils(DataType)
 
 type EnvType = (Name, Type)
 
-
-listType = DataType "List" [VarType "a"] -- The defaultType of list 
 
 env0 :: [EnvType] -- the initial environment, containing all the builin functions
 env0 = 
@@ -45,3 +44,15 @@ env0 =
                                       (DataType "List" [VarType "a"])))
                                     
     ]
+    
+    
+builtInDataTs :: [DataType]    
+builtInDataTs = [(DataType "List" [VarType "a"], [ConDcl "Cons" [VarType "a"
+                                                                ,DataType "List" [VarType "a"]
+                                                                ]
+                                                 ,ConDcl "Nil" []
+                                                 ])
+                ,(DataType "Bool" [], [ConDcl "True" []
+                                      ,ConDcl "False" []
+                                      ])
+                ]

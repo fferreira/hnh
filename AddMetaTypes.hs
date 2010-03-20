@@ -24,15 +24,19 @@ module AddMetaTypes
 
 import Syntax
 import AddIdentifiers (idEnv0)
+import BuiltIn (builtInDataTs)
 import TransformMonad (TransformM, transformOk, transformError)
-import TypeUtils(getType)
+import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams)
+
+import Tools
 
 import Control.Monad.State(evalState, State, put, get)
 
 addMetaTypes :: Program -> TransformM Program
-addMetaTypes (Program decls) = transformOk "addMetaTypes" (Program decls')
+addMetaTypes p@(Program decls) = transformOk "addMetaTypes" (Program decls')
   where
-    decls' = processDecls decls
+    decls' = processDecls dataTs decls
+    dataTs = builtInDataTs ++ getDataTypes p
 
 
 data MetaSt = MetaSt {
@@ -67,25 +71,25 @@ lookupId i =
   do MetaSt _ env <- get
      case lookup i env of
        Just i -> return i
-       Nothing -> error ("Identifier " ++ (show i) ++ " not found in "++ show env)
+       Nothing -> error ("xIdentifier " ++ (show i) ++ " not found in "++ show env)
 
-processDecls :: [Declaration] -> [Declaration]
-processDecls decls =
-  evalState (do mapM processDecl decls) initialSt
+processDecls :: [DataType] -> [Declaration] -> [Declaration]
+processDecls dts decls =
+  evalState (do mapM (processDecl dts) decls) initialSt
   
-processDecl :: Declaration -> State MetaSt Declaration  
-processDecl d@(DataDcl t cons) =
+processDecl :: [DataType] -> Declaration -> State MetaSt Declaration  
+processDecl dts d@(DataDcl t cons) =
   do mapM (typeCons t) cons
      return d
      
-processDecl (PatBindDcl p e) = 
-  do p' <- typePattern p
-     e' <- typeExp e
+processDecl dts (PatBindDcl p e) = 
+  do p' <- typePattern dts p
+     e' <- typeExp dts e
      return $ PatBindDcl p' e'
      
-processDecl (FunBindDcl _ _ _) = -- TODO Improve error handling
+processDecl dts (FunBindDcl _ _ _) = -- TODO Improve error handling
   error "Unexpected function declartion at this point"
-processDecl d = return d
+processDecl _ d = return d
 
 typeCons :: Type -> Constructor -> State MetaSt Constructor
 typeCons t c@(IdConDcl i ts) =
@@ -97,99 +101,103 @@ typeCons t c@(IdConDcl i ts) =
        toFun (t:ts) = FunType t (toFun ts)
 
 
-typePattern :: Pattern -> State MetaSt Pattern
-typePattern (VarPat _ _) = error "Error Id??? pattern expected" 
-typePattern (ConPat _ _ _) = error "Error Id??? pattern expected" 
-typePattern (TuplePat _ _) = error "Error Id??? pattern expected" 
+typePattern :: [DataType] -> Pattern -> State MetaSt Pattern
+typePattern _ (VarPat _ _) = error "Error Id??? pattern expected" 
+typePattern _ (ConPat _ _ _) = error "Error Id??? pattern expected" 
+typePattern _ (TuplePat _ _) = error "Error Id??? pattern expected" 
      
-typePattern (WildcardPat UnknownType) =
+typePattern _ (WildcardPat UnknownType) =
   do t <- getMeta
      return $ WildcardPat t
 
-typePattern (IdVarPat i UnknownType) =
+typePattern _ (IdVarPat i UnknownType) =
   do t <- getMeta
      addMeta i t
      return $ IdVarPat i t     
-typePattern (IdConPat n ids ts UnknownType) =
+typePattern dts (IdConPat n ids ts UnknownType) =
   do t <- getMeta 
-     ts' <- getNMetas (length ids)
-     addMetas ids ts'
+     -- ts' <- getNMetas (length ids)
+     -- ts' <- return $ (traceVal (getConsTypes (Program ds) n)) -- TODO Finish this
+     ts' <- return $ case getConstTypeParams dts n of 
+       Just res -> res
+       Nothing -> error ("Error "++ n ++ " not found")
+     addMetas ids ts' -- TODO validate length ids == length ts'
      return $ IdConPat n ids ts' t
 
-typePattern (IdTuplePat ids UnknownType) =     
+typePattern _ (IdTuplePat ids UnknownType) =     
   do ts <- getNMetas (length ids)
      addMetas ids ts
      return $ IdTuplePat ids (TupleType ts)
      
-typePattern p = return p
+typePattern _ p = return p
 
-typeExp :: Exp -> State MetaSt Exp
+typeExp :: [DataType] -> Exp -> State MetaSt Exp
 -- TODO improve error handling
-typeExp (VarExp _ _) = error "Unexpected VarExp"
-typeExp (ConExp _ _) = error "Unexpected ConExp"
-typeExp (InfixOpExp _ _) = error "Unexpected InfixOpExp"
-typeExp (MinusExp _ _) = error "Unexpected MinusExp"
-typeExp (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
-typeExp (IdVarExp i t) =
+typeExp _ (VarExp _ _) = error "Unexpected VarExp"
+typeExp _ (ConExp _ _) = error "Unexpected ConExp"
+typeExp _ (InfixOpExp _ _) = error "Unexpected InfixOpExp"
+typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
+typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
+typeExp _ (IdVarExp i t) =
   do t' <- lookupId i
      return $ IdVarExp i (choose t t')
 
-typeExp (IdConExp i t) =
+typeExp _ (IdConExp i t) =
   do t' <- lookupId i
      return $ IdConExp i (choose t t')
 
-typeExp (FExp e1 e2 t) = 
-  do e1' <- typeExp e1
-     e2' <- typeExp e2
+typeExp dts (FExp e1 e2 t) = 
+  do e1' <- typeExp dts e1
+     e2' <- typeExp dts e2
      t' <- getMeta
      return $ FExp e1' e2' (choose t t')
-typeExp (LambdaExp ps e t) =
+typeExp dts (LambdaExp ps e t) =
   do MetaSt _ env <- get
-     ps' <- mapM typePattern ps
-     e' <- typeExp e
+     ps' <- mapM (typePattern dts) ps
+     e' <- typeExp dts e
      t' <- getMeta
      MetaSt num _ <- get
      put $ MetaSt num env
      return $ LambdaExp ps' e' (choose t t')
      
-typeExp (LetExp decls e t) =
+typeExp dts (LetExp decls e t) =
   do MetaSt _ env <- get 
-     decls' <- mapM processDecl decls
-     e' <- typeExp e
+     decls' <- mapM (processDecl dts) decls
+     e' <- typeExp dts e
      t' <- getMeta
      MetaSt num _ <- get
      put $ MetaSt num env
      return $ LetExp decls' e' (choose t t')
      
-typeExp (IfExp e1 e2 e3 t) =
-  do e1' <- typeExp e1
-     e2' <- typeExp e2
-     e3' <- typeExp e3
+typeExp dts (IfExp e1 e2 e3 t) =
+  do e1' <- typeExp dts e1
+     e2' <- typeExp dts e2
+     e3' <- typeExp dts e3
      return $ IfExp e1' e2' e3' (choose t (getType e2'))
 
-typeExp (CaseExp es alts t) = 
-  do es' <- mapM typeExp es
-     alts' <- mapM typeAlt alts
+typeExp dts (CaseExp es alts t) = 
+  do es' <- mapM (typeExp dts) es
+     alts' <- mapM (typeAlt dts) alts
      t' <- getMeta
      return $ CaseExp es' alts' (choose t t')
 
-typeExp (ParensExp e t) =
-  do e' <- typeExp e
+typeExp dts (ParensExp e t) =
+  do e' <- typeExp dts e
      return $ ParensExp e' (choose t (getType e'))
      
-typeExp (TupleExp es t) =
-  do es' <- mapM typeExp es
+typeExp dts (TupleExp es t) =
+  do es' <- mapM (typeExp dts) es
      return $ TupleExp es' (choose t (TupleType (map getType es')))
-typeExp (ListExp es t) = 
-  do es' <- mapM typeExp es
+typeExp dts (ListExp es t) = 
+  do es' <- mapM (typeExp dts) es
      t' <- getMeta
      return $ ListExp es' (choose t t')
-typeExp e = return e
+typeExp _ e = return e
 
-typeAlt (Alternative ps e) =
+typeAlt dts (Alternative ps e) =
   do MetaSt _ env <- get
-     ps' <- mapM typePattern ps
-     e' <- typeExp e
+     ps' <- mapM (typePattern dts) ps
+     e' <- typeExp dts e
      MetaSt num _ <- get
      put $ MetaSt num env
      return $ Alternative ps' e'

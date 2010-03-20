@@ -27,13 +27,18 @@ module TypeUtils
        , getPatType
        , resultingType
        , typeFromAlternative
+       , getDataTypes
+       , DataType
+       , getConstTypeParams
        )
        where
 
 import Syntax
 
-import Data.List(nub)
+import Data.List(nub, find)
 import Text.PrettyPrint.Leijen(pretty)
+
+import Tools
 
 -- returns the type resuling for the application of FuncType
 -- or UnknownType if the type is not appropiate
@@ -120,3 +125,28 @@ assembleInfixOperator e op (InfixOpExp opEx _) = InfixOpExp
 assembleInfixOperator e1 op e2 = InfixOpExp
                                  (Op op (LeafExp e1) (LeafExp e2))
                                  UnknownType
+
+
+type DataType = (Type, [Constructor])
+
+getDataTypes :: Program -> [DataType]
+getDataTypes (Program decls) = map getDataT (filter isDataT decls)
+    where
+      isDataT (DataDcl _ _) = True
+      isDataT _ = False
+      
+      getDataT (DataDcl t cs) = (t,cs)
+    
+      
+getConstTypeParams :: [DataType] -> Name -> Maybe [Type]
+getConstTypeParams dts n =
+  find isCon cons >>= return . getConType
+    where
+      cons = concat . snd . unzip $ dts
+      isCon (ConDcl n' _) = n == n'
+      isCon (IdConDcl (Id n' _) _) = n == n'
+      getConType (ConDcl _ ts) = ts
+      getConType (IdConDcl _ ts) = ts
+    
+
+    

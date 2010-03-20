@@ -56,7 +56,7 @@ data LiteralValue
 
 data Declaration
     = TypeDcl Name [Name] Type 
-    | DataDcl Type{-Name [Name]-} [Constructor]  -- has to be a DataType
+    | DataDcl Type [Constructor]  -- has to be a DataType
     | TypeSigDcl [Name] Type 
     | FixityDcl Associativity Precedence [Operator]
     | FunBindDcl Name [Pattern] Exp
@@ -166,8 +166,8 @@ instance Pretty Type where
     pretty (PrimType s) = pretty s
 
 instance Pretty Constructor where
-    pretty (ConDcl n t) = pretty n <!> pretty t
-    pretty (IdConDcl i t) = pretty i <!> pretty t
+    pretty (ConDcl n ts) = pretty n <!> pretty ts
+    pretty (IdConDcl i ts) = pretty i <!> pretty ts
 
 instance Pretty Identifier where
   pretty (Id n num) = pretty n <> pretty "_" <> pretty num
