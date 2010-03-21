@@ -74,11 +74,22 @@ unify d t1 t2@(MetaType _) = return $ New (t1, t2)
 
 unify d (FunType t11 t12) (FunType t21 t22) = 
   return $ Push [(t11, t21, d), (t12, t22, d)]
+  
+unify d (TupleType t1s) (TupleType t2s) =
+  return $ Push ts
+    where
+      ts = map (\(a,b) -> (a,b,d))(zip t1s t2s)
+      
+-- TODO Wrong!! has to use the constructor      
+unify d t1@(DataType n1 t1s) t2@(DataType n2 t2s) = 
+  if n1 == n2 then return $ Push ( map (\(a,b) -> (a,b,d))(zip t1s t2s))
+  else fail $ unifyError t1 t2 d
        
 unify d t1 t2 = 
   if t1 == t2 then return $ SameType
-  else fail $ show (pretty "Unable to unify"
-                    <+> pretty t1 <+> pretty "and"
-                    <+> pretty t2 <> line
-                    <> pretty "in" <+> pretty d)
+  else fail $ unifyError t1 t2 d
 
+unifyError t1 t2 d = show (pretty "Unable to unify"
+                           <+> pretty t1 <+> pretty "and"
+                           <+> pretty t2 <> line
+                           <> pretty "in" <+> pretty d)
