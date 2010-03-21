@@ -80,10 +80,13 @@ unify d (TupleType t1s) (TupleType t2s) =
     where
       ts = map (\(a,b) -> (a,b,d))(zip t1s t2s)
       
--- TODO Wrong!! has to use the constructor      
+{- Two datatypes are unified if they are the same
+   type and they push their parameters to unify the
+   possibly polymorphic parameters -}
 unify d t1@(DataType n1 t1s) t2@(DataType n2 t2s) = 
   if n1 == n2 then return $ Push ( map (\(a,b) -> (a,b,d))(zip t1s t2s))
   else fail $ unifyError t1 t2 d
+
        
 unify d t1 t2 = 
   if t1 == t2 then return $ SameType
