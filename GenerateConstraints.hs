@@ -24,7 +24,9 @@ module GenerateConstraints
        where
 
 import Syntax
-import TypeUtils(getType, getPatType)
+import TypeUtils(getType, getPatType, getAltType, getAltPatTypes)
+
+import Tools
 
 import Control.Monad.State(execState, State, get, put)
 
@@ -63,10 +65,10 @@ processExp d (FExp e1 e2 t) =
      
 processExp d (LambdaExp ps e t) =
   do processExp d e
-     addConstraint d t t'
+     addConstraint d t ts'
     where
-      ts = (map getPatType ps) ++ [getType e]
-      t' = foldr FunType (head ts) (tail ts)
+      ts = map getPatType ps
+      ts'= foldr FunType (traceVal (getType e)) ts
       
 processExp d (LetExp decls e t) = 
   do processDecls decls 
@@ -85,11 +87,20 @@ processExp d (IfExp e1 e2 e3 t) =
 processExp d (CaseExp es alts t) =
   do mapM (processExp d) es
      mapM (processAlt d t (map getType es)) alts
+     -- all the exps in alts must have the same type
+     allSameType d (map getAltType alts) 
+     -- the alt exps should be the same type as the case
+     addConstraint d t (getAltType (head alts)) 
+     -- all the patterns in the alts should have the same type
+     mapM (allSameType d) (rows2cols (map getAltPatTypes alts))
+     -- the exps and the patterns should have the same type
+     mapM (allSameType d) (rows2cols [(map getType es)
+                                     ,(getAltPatTypes (head alts))])
      return ()
      
 processExp d (ListExp es t) = 
   do mapM (processExp d) es
-     allSameType d es
+     allSameType d (map getType es)
      case es of [] -> addConstraint d t (DataType "List" [VarType "a"])
                 _  -> addConstraint d t (DataType "List" [(getType (head es))])
 
@@ -102,8 +113,21 @@ processAlt d caseT ts (Alternative ps e) =
                      return $ addConstraint d t (getPatType p)) 
        (zip ts ps)
 
-allSameType d (e1:e2:es) =
-  do addConstraint d (getType e1) (getType e2)
-     allSameType d (e2:es)
+allSameType d (t1:t2:ts) =
+  do addConstraint d t1 t2
+     allSameType d (t2:ts)
 allSameType d _ = return ()    
 
+
+
+{-
+rows2cols takes some lists, and returns a list of 
+the list of the first element of each list and the
+list of the second element of each list etc...
+-}
+
+rows2cols :: [[ a ]] -> [[ a ]]
+rows2cols t = if (length . head $ t) > 1 then 
+                (map head t):rows2cols (map tail t)
+              else
+                t

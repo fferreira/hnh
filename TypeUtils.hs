@@ -26,7 +26,8 @@ module TypeUtils
        , getType
        , getPatType
        , resultingType
-       , typeFromAlternative
+       , getAltType
+       , getAltPatTypes
        , getDataTypes
        , DataType
        , getConstTypeParams
@@ -73,8 +74,11 @@ getPatType (IdVarPat _ t) = t
 getPatType (IdConPat _ _ _ t) = t
 getPatType (IdTuplePat _ t) = t
 
-typeFromAlternative :: Alternative -> Type
-typeFromAlternative (Alternative _ e) = getType e
+getAltType :: Alternative -> Type
+getAltType (Alternative _ e) = getType e
+
+getAltPatTypes :: Alternative -> [Type]
+getAltPatTypes (Alternative ps _) = map getPatType ps
 
 -- addType adds type information to an expression
 addType :: Exp -> Type -> Exp
