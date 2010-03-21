@@ -27,10 +27,11 @@ import AddIdentifiers (idEnv0)
 import BuiltIn (builtInDataTs)
 import TransformMonad (TransformM, transformOk, transformError)
 import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams)
+import PolyType(transformType, initialPoly, getNext)
 
 import Tools
 
-import Control.Monad.State(evalState, State, put, get)
+import Control.Monad.State(evalState, runState, State, put, get)
 
 addMetaTypes :: Program -> TransformM Program
 addMetaTypes p@(Program decls) = transformOk "addMetaTypes" (Program decls')
@@ -45,6 +46,8 @@ data MetaSt = MetaSt {
   }
 
 initialSt = MetaSt 0 idEnv0
+
+--- State Manipulation functions
 
 getMeta :: State MetaSt Type
 getMeta =
@@ -71,7 +74,12 @@ lookupId i =
   do MetaSt _ env <- get
      case lookup i env of
        Just i -> return i
-       Nothing -> error ("xIdentifier " ++ (show i) ++ " not found in "++ show env)
+       Nothing -> error ("xIdentifier " ++ (show i) --TODO remove debugging x
+                         ++ " not found in "++ show env)
+
+--- Tree transformation functions
+       
+
 
 processDecls :: [DataType] -> [Declaration] -> [Declaration]
 processDecls dts decls =
@@ -106,30 +114,31 @@ typePattern _ (VarPat _ _) = error "Error Id??? pattern expected"
 typePattern _ (ConPat _ _ _) = error "Error Id??? pattern expected" 
 typePattern _ (TuplePat _ _) = error "Error Id??? pattern expected" 
      
-typePattern _ (WildcardPat UnknownType) =
-  do t <- getMeta
-     return $ WildcardPat t
+typePattern _ (WildcardPat t) =
+  do t' <- polyType t
+     return $ WildcardPat t'
 
-typePattern _ (IdVarPat i UnknownType) =
-  do t <- getMeta
-     addMeta i t
-     return $ IdVarPat i t     
-typePattern dts (IdConPat n ids ts UnknownType) =
-  do t <- getMeta 
-     -- ts' <- getNMetas (length ids)
-     -- ts' <- return $ (traceVal (getConsTypes (Program ds) n)) -- TODO Finish this
-     ts' <- return $ case getConstTypeParams dts n of 
+typePattern _ (IdVarPat i t) =
+  do t' <- polyType t
+     addMeta i t'
+     return $ IdVarPat i t'
+     
+typePattern dts (IdConPat n ids ts t) =
+  do t' <- polyType t
+     ts' <- mapM polyType $ case getConstTypeParams dts n of 
        Just res -> res
        Nothing -> error ("Error "++ n ++ " not found")
      addMetas ids ts' -- TODO validate length ids == length ts'
-     return $ IdConPat n ids ts' t
+     return $ IdConPat n ids ts' t'
 
-typePattern _ (IdTuplePat ids UnknownType) =     
-  do ts <- getNMetas (length ids)
-     addMetas ids ts
-     return $ IdTuplePat ids (TupleType ts)
+typePattern _ (IdTuplePat ids t) =     
+  do ts' <- case t of (TupleType ts) -> if (length ids /= length ts) 
+                                        then getNMetas (length ids)
+                                        else mapM polyType ts
+                      _ -> getNMetas (length ids)
+     addMetas ids ts'
+     return $ IdTuplePat ids (TupleType ts')
      
-typePattern _ p = return p
 
 typeExp :: [DataType] -> Exp -> State MetaSt Exp
 -- TODO improve error handling
@@ -139,59 +148,69 @@ typeExp _ (InfixOpExp _ _) = error "Unexpected InfixOpExp"
 typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
 typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
 typeExp _ (IdVarExp i t) =
-  do t' <- lookupId i
-     return $ IdVarExp i (choose t t')
+  do tl <- lookupId i
+     t' <- polyType (choose t tl)
+     return $ IdVarExp i t'
 
 typeExp _ (IdConExp i t) =
-  do t' <- lookupId i
-     return $ IdConExp i (choose t t')
+  do tl <- lookupId i
+     t' <- polyType (choose t tl)
+     return $ IdConExp i t'
 
 typeExp dts (FExp e1 e2 t) = 
   do e1' <- typeExp dts e1
      e2' <- typeExp dts e2
-     t' <- getMeta
-     return $ FExp e1' e2' (choose t t')
+     tl <- getMeta
+     t' <- polyType (choose t tl)
+     return $ FExp e1' e2' t'
 typeExp dts (LambdaExp ps e t) =
   do MetaSt _ env <- get
      ps' <- mapM (typePattern dts) ps
      e' <- typeExp dts e
-     t' <- getMeta
+     tl <- getMeta
      MetaSt num _ <- get
      put $ MetaSt num env
-     return $ LambdaExp ps' e' (choose t t')
+     t' <- polyType (choose t tl)
+     return $ LambdaExp ps' e' t'
      
 typeExp dts (LetExp decls e t) =
   do MetaSt _ env <- get 
      decls' <- mapM (processDecl dts) decls
      e' <- typeExp dts e
-     t' <- getMeta
+     tl <- getMeta
      MetaSt num _ <- get
      put $ MetaSt num env
-     return $ LetExp decls' e' (choose t t')
+     t' <- polyType (choose t tl)
+     return $ LetExp decls' e' t'
      
 typeExp dts (IfExp e1 e2 e3 t) =
   do e1' <- typeExp dts e1
      e2' <- typeExp dts e2
      e3' <- typeExp dts e3
-     return $ IfExp e1' e2' e3' (choose t (getType e2'))
+     t' <- polyType (choose t (getType e2'))
+     return $ IfExp e1' e2' e3' t'
 
 typeExp dts (CaseExp es alts t) = 
   do es' <- mapM (typeExp dts) es
      alts' <- mapM (typeAlt dts) alts
-     t' <- getMeta
-     return $ CaseExp es' alts' (choose t t')
+     tl <- getMeta
+     t' <- polyType (choose t tl)
+     return $ CaseExp es' alts' t'
 
 typeExp dts (ParensExp e t) =
   do e' <- typeExp dts e
-     return $ ParensExp e' (choose t (getType e'))
+     t' <- polyType (choose t (getType e'))
+     return $ ParensExp e' t'
      
 typeExp dts (TupleExp es t) =
   do es' <- mapM (typeExp dts) es
-     return $ TupleExp es' (choose t (TupleType (map getType es')))
+     t' <- polyType (choose t (TupleType (map getType es')))
+     return $ TupleExp es' t'
 typeExp dts (ListExp es t) = 
   do es' <- mapM (typeExp dts) es
-     t' <- getMeta
-     return $ ListExp es' (choose t t')
+     tl <- getMeta
+     t' <- polyType (choose t tl)
+     return $ ListExp es' t'
 typeExp _ e = return e
 
 typeAlt dts (Alternative ps e) =
@@ -206,4 +225,20 @@ choose :: Type -> Type -> Type
 choose UnknownType t = t
 choose t _ = t
 
+--- Polymorphic Type Transformation
+{-       
+  This type transformation will replace all VarTypes
+  by MetaTypes using it's own environment to replace
+  the same variable by the same meta
+-}
 
+polyType :: Type -> State MetaSt Type
+polyType t = 
+  do MetaSt next env <- get
+     (t,s) <- return $ runState (transformType t) (initialPoly next)
+     put $ MetaSt (getNext s)  env
+     return t
+
+     
+     
+     
