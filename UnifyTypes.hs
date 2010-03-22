@@ -61,14 +61,24 @@ contWithSubst (t1, t2) cs sub =  genSubst cs' ((t1,t2):sub')
 
 typeRep :: (Type, Type) -> Type -> Type      
 -- looks for t in t2 if so then it replaces by t1 otherwise it return t
-typeRep c@(t1, t2) (FunType ta tb) = (FunType (typeRep c ta) (typeRep c tb))
-typeRep (t1, t2) t = if t == t2 then t1 else t -- COnsider composit t's
+typeRep c@(t1, t2) t = if t == t2 
+                       then t1 
+                       else case t of (FunType ta tb) -> 
+                                        (FunType (typeRep c ta) (typeRep c tb))
+                                      (DataType n ts) -> 
+                                        (DataType n (map (typeRep c) ts))
+                                      (TupleType ts) ->
+                                        (TupleType (map (typeRep c) ts)) 
+                                      _ -> t
       
 unify :: Monad m => Declaration -> Type -> Type -> m UnificationRes
-unify d t1@(MetaType _) t2@(MetaType _) =
-  if t1 == t2 then return SameType
-  else return $ New (t1, t2)
+
+unify d t1@(VarType _) t2 = -- TODO is this correct?
+  return $ New (t2, t1)
        
+unify d t1 t2@(VarType _)  =
+  return $ New (t1, t2)
+
 unify d t1@(MetaType _) t2 = return $ New (t2, t1)
 unify d t1 t2@(MetaType _) = return $ New (t1, t2)
 
@@ -83,11 +93,13 @@ unify d (TupleType t1s) (TupleType t2s) =
 {- Two datatypes are unified if they are the same
    type and they push their parameters to unify the
    possibly polymorphic parameters -}
+
 unify d t1@(DataType n1 t1s) t2@(DataType n2 t2s) = 
   if n1 == n2 then return $ Push ( map (\(a,b) -> (a,b,d))(zip t1s t2s))
   else fail $ unifyError t1 t2 d
 
-       
+
+
 unify d t1 t2 = 
   if t1 == t2 then return $ SameType
   else fail $ unifyError t1 t2 d

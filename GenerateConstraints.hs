@@ -68,7 +68,7 @@ processExp d (LambdaExp ps e t) =
      addConstraint d t ts'
     where
       ts = map getPatType ps
-      ts'= foldr FunType (traceVal (getType e)) ts
+      ts'= foldr FunType (getType e) ts
       
 processExp d (LetExp decls e t) = 
   do processDecls decls 
@@ -109,7 +109,7 @@ processExp d e = return ()
 processAlt d caseT ts (Alternative ps e) =
   do processExp d e 
      mapM 
-       (\(t, p)-> do addConstraint d caseT (getPatType p)
+       (\(t, p)-> do {-addConstraint d caseT (getPatType p)-}
                      return $ addConstraint d t (getPatType p)) 
        (zip ts ps)
 
@@ -130,4 +130,4 @@ rows2cols :: [[ a ]] -> [[ a ]]
 rows2cols t = if (length . head $ t) > 1 then 
                 (map head t):rows2cols (map tail t)
               else
-                t
+                [concat t]
