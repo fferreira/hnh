@@ -46,8 +46,8 @@ getNewMeta =
 addNewMeta :: Type -> State PolySt Type     
 addNewMeta t =
   do PolySt next env <- get
-     put $ PolySt (next + 1) ((t, MetaType (next + 1)): env)
-     return $ MetaType (next + 1)
+     put $ PolySt (next + 1) ((t, MetaType next): env)
+     return $ MetaType next
      
 transformType :: Type -> State PolySt Type     
 transformType t@(PrimType _) = return t
