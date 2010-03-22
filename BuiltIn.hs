@@ -2,7 +2,7 @@ module BuiltIn
        (
          EnvType
        , env0
-       , builtInDataTs
+       , builtInDecls
        )
        where
 
@@ -35,24 +35,18 @@ env0 =
     ,( ">.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
     ,( "<.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
 -}
-    ,("True", DataType "Bool" [])
-    ,("False", DataType "Bool" [])
-     
-    ,("Nil", DataType "List" [VarType "a"])
-    ,("Cons", FunType (VarType "a") (FunType 
-                                      (DataType "List" [VarType "a"])
-                                      (DataType "List" [VarType "a"])))
-                                    
     ]
     
-    
-builtInDataTs :: [DataType]    
-builtInDataTs = [(DataType "List" [VarType "a"], [ConDcl "Cons" [VarType "a"
-                                                                ,DataType "List" [VarType "a"]
-                                                                ]
-                                                 ,ConDcl "Nil" []
-                                                 ])
-                ,(DataType "Bool" [], [ConDcl "True" []
-                                      ,ConDcl "False" []
-                                      ])
-                ]
+builtInDecls :: [Declaration]                
+builtInDecls = [DataDcl 
+                (DataType "List" [VarType "a"]) [ConDcl "Cons" [VarType "a"
+                                                               ,DataType "List" [VarType "a"]
+                                                                       ]
+                                                ,ConDcl "Nil" []
+                                                ]
+               ,DataDcl
+                (DataType "Bool" []) [ConDcl "True" []
+                                     ,ConDcl "False" []
+                                     ]
+               ]
+                

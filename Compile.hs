@@ -20,12 +20,14 @@
 module Compile where --TODO add exported methods
 
 import Parser
-import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
+
 import Syntax
 
 import CommonTransforms(commonTransforms)
 import AddIdentifiers(addIdentifiers)
 import InferTypes(performTypeInference)
+import BuiltIn(builtInDecls)
+
 import GenerateConstraints --TODO debugging only
 
 import qualified TransformMonad as T
@@ -34,17 +36,18 @@ import ErrorMonad
 import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv, envForData)
 
 import Control.Monad.State
+import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 
 import Tools
-import Debug.Trace
 
 
 compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
-compileTransform p = 
+compileTransform (Program decls) = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= addIdentifiers
                                      >>= performTypeInference
-                                     >>= return)       
+                                     >>= return)
+      p = (Program (builtInDecls ++ decls)) 
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list
    
