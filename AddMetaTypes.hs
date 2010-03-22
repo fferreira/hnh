@@ -25,7 +25,7 @@ module AddMetaTypes
 import Syntax
 import AddIdentifiers (idEnv0)
 import TransformMonad (TransformM, transformOk, transformError)
-import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams)
+import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams, getConstType)
 import PolyType(transformType, initialPoly, getNext)
 
 import Tools
@@ -123,7 +123,8 @@ typePattern _ (IdVarPat i t) =
      return $ IdVarPat i t'
      
 typePattern dts (IdConPat n ids ts t) =
-  do t' <- polyType t
+  do t' <- case getConstType dts n of Just tc -> polyType tc
+                                      Nothing -> error "algo"
      ts' <- mapM polyType $ case getConstTypeParams dts n of 
        Just res -> res
        Nothing -> error ("Error "++ n ++ " not found")

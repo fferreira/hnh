@@ -30,6 +30,7 @@ module TypeUtils
        , getAltPatTypes
        , getDataTypes
        , DataType
+       , getConstType
        , getConstTypeParams
        )
        where
@@ -142,6 +143,16 @@ getDataTypes (Program decls) = map getDataT (filter isDataT decls)
       getDataT (DataDcl t cs) = (t,cs)
     
       
+getConstType :: [DataType] -> Name -> Maybe Type
+getConstType dts n =
+  find isData dts >>= return . fst
+    where
+      isData (_, cons) = case find isCon cons of Just _ -> True
+                                                 Nothing -> False
+      isCon (ConDcl n' _) = n == n'
+      isCon (IdConDcl (Id n' _) _) = n == n'
+
+
 getConstTypeParams :: [DataType] -> Name -> Maybe [Type]
 getConstTypeParams dts n =
   find isCon cons >>= return . getConType
