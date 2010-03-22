@@ -24,7 +24,6 @@ module AddMetaTypes
 
 import Syntax
 import AddIdentifiers (idEnv0)
-import BuiltIn (builtInDataTs)
 import TransformMonad (TransformM, transformOk, transformError)
 import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams)
 import PolyType(transformType, initialPoly, getNext)
@@ -37,7 +36,7 @@ addMetaTypes :: Program -> TransformM Program
 addMetaTypes p@(Program decls) = transformOk "addMetaTypes" (Program decls')
   where
     decls' = processDecls dataTs decls
-    dataTs = builtInDataTs ++ getDataTypes p
+    dataTs = getDataTypes p
 
 
 data MetaSt = MetaSt {
@@ -74,7 +73,7 @@ lookupId i =
   do MetaSt _ env <- get
      case lookup i env of
        Just i -> return i
-       Nothing -> error ("xIdentifier " ++ (show i) --TODO remove debugging x
+       Nothing -> error ("Identifier " ++ (show i) 
                          ++ " not found in "++ show env)
 
 --- Tree transformation functions
