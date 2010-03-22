@@ -270,7 +270,7 @@ expr = ws expi
 expi :: Parser Exp
 expi = try minusExp
        <|> try minusFloatExp
-       <|> do e1 <- exp10 ; whiteSpace -- TODO add ~ and ~.
+       <|> do e1 <- exp10 ; whiteSpace
               opExp e1
 
 minusExp = do char '~'
