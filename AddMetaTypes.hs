@@ -107,7 +107,6 @@ typeCons t c@(IdConDcl i ts) =
        toFun (t:[]) = t
        toFun (t:ts) = FunType t (toFun ts)
 
-
 typePattern :: [DataType] -> Pattern -> State MetaSt Pattern
 typePattern _ (VarPat _ _) = error "Error Id??? pattern expected" 
 typePattern _ (ConPat _ _ _) = error "Error Id??? pattern expected" 
@@ -123,18 +122,19 @@ typePattern _ (IdVarPat i t) =
      return $ IdVarPat i t'
      
 typePattern dts (IdConPat n ids ts t) =
-  do t' <- case getConstType dts n of Just tc -> polyType tc
-                                      Nothing -> error "algo"
-     ts' <- mapM polyType $ case getConstTypeParams dts n of 
+  do t' <- case getConstType dts n of Just tc -> return tc
+                                      Nothing -> error (n ++ " not found")
+     ts' <- return $ case getConstTypeParams dts n of 
        Just res -> res
        Nothing -> error ("Error "++ n ++ " not found")
-     addMetas ids ts' -- TODO validate length ids == length ts'
-     return $ IdConPat n ids ts' t'
+     (t'', ts'') <- polyTypePair ([t'], ts')  
+     addMetas ids ts'' -- TODO validate length ids == length ts'
+     return $ IdConPat n ids ts' (head t'')
 
 typePattern _ (IdTuplePat ids t) =     
   do ts' <- case t of (TupleType ts) -> if (length ids /= length ts) 
                                         then getNMetas (length ids)
-                                        else mapM polyType ts
+                                        else polyTypes ts
                       _ -> getNMetas (length ids)
      addMetas ids ts'
      return $ IdTuplePat ids (TupleType ts')
@@ -239,6 +239,20 @@ polyType t =
      put $ MetaSt (getNext s)  env
      return t
 
+polyTypes :: [Type] -> State MetaSt [Type]     
+polyTypes ts = 
+  do MetaSt next env <- get
+     (ts', s) <- return $ runState (mapM transformType ts) (initialPoly next)
+     put $ MetaSt (getNext s) env
+     return ts';
      
-     
+polyTypePair :: ([Type], [Type]) -> State MetaSt ([Type], [Type])     
+polyTypePair (ta, tb) =
+  do MetaSt next env <- get
+     (tab, s) <- return $ runState (do ta' <- mapM transformType ta
+                                       tb' <- mapM transformType tb
+                                       return (ta', tb')
+                                   ) (initialPoly next)
+     put $ MetaSt (getNext s) env
+     return tab;     
      
