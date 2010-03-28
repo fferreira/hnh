@@ -29,6 +29,8 @@ import ErrorMonad (ErrorM)
 
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
+import Tools
+
 unifyTypes :: [Constraint] -> ErrorM [Subst]
 unifyTypes cs = genSubst cs []
 
@@ -57,7 +59,7 @@ contWithSubst (t1, t2) cs sub =  genSubst cs' ((t1,t2):sub')
     repConst ((ta, tb, d):cs) = (rep ta, rep tb, d): repConst cs
     repConst [] = []
     
-    rep = typeRep (t1, t2) -- TODO find types within types!
+    rep = typeRep (t1, t2) 
 
 typeRep :: (Type, Type) -> Type -> Type      
 -- looks for t in t2 if so then it replaces by t1 otherwise it return t

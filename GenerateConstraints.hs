@@ -20,6 +20,7 @@ module GenerateConstraints
        (
          generateConstraints
        , Constraint
+       , declarationConstraints
        )
        where
 
@@ -35,11 +36,18 @@ type Constraint = (Type, Type, Declaration)
 addConstraint :: Declaration -> Type -> Type -> State [Constraint] ()
 addConstraint d t1 t2 = 
   do st <- get
-     put ((t1, t2, d):st)
+     if t1 == t2 
+       then return ()
+       else put ((t1, t2, d):st)
 
 generateConstraints :: Program -> [Constraint]
 generateConstraints (Program decls) = 
   execState (processDecls decls) []
+  
+declarationConstraints :: Declaration -> [Constraint]  
+declarationConstraints d =
+  execState (processDecl d) []
+
 
 processDecls :: [Declaration] -> State [Constraint] ()
 processDecls decls = do mapM processDecl decls; return ()

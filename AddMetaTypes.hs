@@ -19,6 +19,7 @@
 module AddMetaTypes
        (
          addMetaTypes
+       , declarationMeta
        )
        where
 
@@ -38,10 +39,17 @@ addMetaTypes p@(Program decls) = transformOk "addMetaTypes" (Program decls')
     decls' = processDecls dataTs decls
     dataTs = getDataTypes p
 
+declarationMeta ::  [DataType] 
+                    -> [(Identifier, Type)] 
+                    -> Declaration 
+                    -> (Declaration, [(Identifier, Type)])
+declarationMeta dts env d = 
+  let (d', (MetaSt _ env')) = runState (processDecl dts d) (MetaSt 0 env)
+  in (d', env')
 
 data MetaSt = MetaSt {
   nextNum :: Int
-  , env :: [(Identifier, Type)] 
+  , env :: [(Identifier, Type)]
   }
 
 initialSt = MetaSt 0 idEnv0
@@ -69,16 +77,14 @@ addMetas ids ts =
      put $ MetaSt num ((zip ids ts) ++ env)
      
 lookupId :: Identifier -> State MetaSt Type     
-lookupId i =
+lookupId i = 
   do MetaSt _ env <- get
-     case lookup i env of
-       Just i -> return i
+     case lookup i (traceP env) of
+       Just i -> return (traceVal i)
        Nothing -> error ("Identifier " ++ (show i) 
                          ++ " not found in "++ show env)
 
 --- Tree transformation functions
-       
-
 
 processDecls :: [DataType] -> [Declaration] -> [Declaration]
 processDecls dts decls =
@@ -148,9 +154,9 @@ typeExp _ (InfixOpExp _ _) = error "Unexpected InfixOpExp"
 typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
 typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
 typeExp _ (IdVarExp i t) =
-  do tl <- lookupId i
-     t' <- polyType (choose t tl)
-     return $ IdVarExp i t'
+  do tl <- lookupId (traceVal i)
+     t' <- polyType tl --(choose (traceVal t) (traceVal tl))
+     return $ traceVal (IdVarExp i t')
 
 typeExp _ (IdConExp i t) =
   do tl <- lookupId i
