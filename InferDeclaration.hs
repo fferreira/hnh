@@ -18,24 +18,48 @@
 -}
 module InferDeclaration
        (
-         declarationMeta
+         inferDeclType
        )
        where
 
 import Syntax
 import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams, getConstType)
 import PolyType(transformType, initialPoly, getNext)
+import GenerateConstraints(getConstraints)
+import GeneralizeTypes(generalizeTypes)
+import UnifyTypes(unifyTypes)
+import Substitutions(replaceInDecl)
+import ErrorMonad(ErrorM(..))
 
 import Tools
 
 import Control.Monad.State(evalState, runState, State, put, get)
 
+inferDeclType :: [DataType] -> Declaration -> State [(Identifier, Type)] Declaration
+inferDeclType dts d = 
+  do env <- get
+     (metaD, env') <- return $ addDeclMeta dts env d
+     d' <- return $ inferFromMeta metaD
+     put $ addDeclToEnv d' env'
+     return d'
+     
+inferFromMeta :: Declaration -> Declaration     
+inferFromMeta d = case unifyTypes (getConstraints d) of
+  Success subs -> generalizeTypes (replaceInDecl subs d)
+  Error msg -> error msg
 
-declarationMeta ::  [DataType] 
-                    -> [(Identifier, Type)] 
-                    -> Declaration 
-                    -> (Declaration, [(Identifier, Type)])
-declarationMeta dts env d = 
+addDeclsToEnv (d:ds) env = addDeclsToEnv ds (addDeclToEnv d env)
+addDeclsToEnv [] env = env
+
+addDeclToEnv :: Declaration -> [(Identifier, Type)] -> [(Identifier, Type)]
+addDeclToEnv (PatBindDcl (IdVarPat i t) _) env = (i,t):env
+addDeclToEnv _ env = env
+
+addDeclMeta ::  [DataType] 
+                -> [(Identifier, Type)] 
+                -> Declaration 
+                -> (Declaration, [(Identifier, Type)])
+addDeclMeta dts env d = 
   let (d', (MetaSt _ env')) = runState (processDecl dts d) (MetaSt 0 env)
   in (d', env')
 
@@ -168,12 +192,14 @@ typeExp dts (LambdaExp ps e t) =
 typeExp dts (LetExp decls e t) =
   do MetaSt _ env <- get 
      decls' <- mapM (processDecl dts) decls
+     st@(MetaSt n _) <- get
+     put (MetaSt n (addDeclsToEnv (map inferFromMeta decls') env))
      e' <- typeExp dts e
      tl <- getMeta
      MetaSt num _ <- get
      put $ MetaSt num env
      t' <- polyType (choose t tl)
-     return $ LetExp decls' e' t'
+     return $ LetExp (map inferFromMeta decls') e' t'
      
 typeExp dts (IfExp e1 e2 e3 t) =
   do e1' <- typeExp dts e1
