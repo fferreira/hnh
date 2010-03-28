@@ -18,19 +18,30 @@
 -}
 
 module Tools
-    (
-     traceVal
-    ,traceP
-    ,D.trace
-    )
-    where
+       (
+         traceVal
+       , traceVal'
+       , traceP
+       , traceP'
+       , D.trace
+       )
+       where
 
 import qualified Debug.Trace as D
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
 traceVal :: Show a => a -> a
 traceVal v = D.trace ("\ntrace:\n" ++ show v ++"\nEnd trace.\n") v
---traceVal v = v
+
+traceVal' :: Show a => String -> a -> a
+traceVal' s v = D.trace ("\n" ++s 
+                         ++":\n" 
+                         ++ show v ++"\nEnd trace.\n") v
 
 traceP :: Pretty a => a -> a
 traceP v = D.trace (show $ line<>pretty v<>line) v
+
+traceP' :: Pretty a => String -> a -> a
+traceP' s v = D.trace (show $ line <> pretty s 
+                       <> line <> pretty v 
+                       <>line) v
