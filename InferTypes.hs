@@ -5,11 +5,10 @@ module InferTypes
     where
 
 import Syntax
-import AddMetaTypes(addMetaTypes)
-import Substitutions(performSubstitutions)
---import InferDeclType(inferDeclType)
-import TransformMonad(TransformM)
-import TransformUtils (transformTree, Transformer(..), defTrans)
+-- import AddMetaTypes(addMetaTypes)
+-- import Substitutions(performSubstitutions)
+import TransformMonad(TransformM, transformOk)
+-- import TransformUtils (transformTree, Transformer(..), defTrans)
 import TypeUtils(DataType, getDataTypes)
 
 import AddIdentifiers(idEnv0)
@@ -33,25 +32,14 @@ import Tools
 -}
 
 performTypeInference :: Program -> TransformM Program
-performTypeInference p = inferTypesPerDecl dts p
+performTypeInference p = inferTypesProg dts p
   where
     dts = getDataTypes p
-  {- addMetaTypes p
-                         -- >>= performSubstitutions
-                         >>= inferTypesPerDecl
--}
 
-inferTypesPerDecl :: [DataType] -> Program -> TransformM Program
-inferTypesPerDecl dts prog = transformTree
-                             "inferTypesPerDecl"
-                             defTrans {tDecls = (fun dts)}
-                             prog
-                                                     
-                         
-                         
-fun dts decls = return (evalState (mapM (inferDeclType dts) decls) idEnv0)
-
-
+inferTypesProg :: [DataType] -> Program -> TransformM Program
+inferTypesProg dts (Program decls) = 
+  transformOk "inferTypes" (Program 
+                            (evalState (mapM (inferDeclType dts) decls) idEnv0))
 
 inferDeclType :: [DataType] -> Declaration -> State [(Identifier, Type)] Declaration
 inferDeclType dts d = 
@@ -61,7 +49,8 @@ inferDeclType dts d =
      subs <- case unifyTypes constraints of Success subs -> return subs
                                             --TODO improve error handling
                                             Error msg -> error msg
-     d' <- return $ replaceInDecl subs metaD
+     d' <- return (replaceInDecl subs metaD)
+     
      d'' <- return $ generalizeTypes d'
      put $ add d'' env'
      return d''

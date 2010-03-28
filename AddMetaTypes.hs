@@ -18,14 +18,11 @@
 -}
 module AddMetaTypes
        (
-         addMetaTypes
-       , declarationMeta
+         declarationMeta
        )
        where
 
 import Syntax
-import AddIdentifiers (idEnv0)
-import TransformMonad (TransformM, transformOk, transformError)
 import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams, getConstType)
 import PolyType(transformType, initialPoly, getNext)
 
@@ -33,11 +30,6 @@ import Tools
 
 import Control.Monad.State(evalState, runState, State, put, get)
 
-addMetaTypes :: Program -> TransformM Program
-addMetaTypes p@(Program decls) = transformOk "addMetaTypes" (Program decls')
-  where
-    decls' = processDecls dataTs decls
-    dataTs = getDataTypes p
 
 declarationMeta ::  [DataType] 
                     -> [(Identifier, Type)] 
@@ -51,8 +43,6 @@ data MetaSt = MetaSt {
   nextNum :: Int
   , env :: [(Identifier, Type)]
   }
-
-initialSt = MetaSt 0 idEnv0
 
 --- State Manipulation functions
 
@@ -86,10 +76,6 @@ lookupId i =
 
 --- Tree transformation functions
 
-processDecls :: [DataType] -> [Declaration] -> [Declaration]
-processDecls dts decls =
-  evalState (do mapM (processDecl dts) decls) initialSt
-  
 processDecl :: [DataType] -> Declaration -> State MetaSt Declaration  
 processDecl dts d@(DataDcl t cons) =
   do mapM (typeCons t) cons
@@ -155,7 +141,7 @@ typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
 typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
 typeExp _ (IdVarExp i t) =
   do tl <- lookupId i
-     t' <- polyType tl --(choose (traceVal t) (traceVal tl))
+     t' <- polyType (choose t tl)
      return (IdVarExp i t')
 
 typeExp _ (IdConExp i t) =

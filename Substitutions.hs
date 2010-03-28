@@ -18,8 +18,7 @@
 -}
 module Substitutions
        (
-         performSubstitutions
-       , replaceInDecl
+         replaceInDecl
        )
        where
 
@@ -27,25 +26,12 @@ import Syntax
 import GenerateConstraints(generateConstraints)
 import UnifyTypes(unifyTypes, Subst)
 import TypeUtils(addType, getType, addPatType, getPatType)
-import TransformMonad (TransformM, transformOk, transformError)
 import TransformUtils(transformTree, Transformer(..), defTrans)
 import ErrorMonad(ErrorM(..))
+import Control.Monad.State(get, State, evalState)
 
 import Tools
   
-performSubstitutions :: Program -> TransformM Program
-performSubstitutions prog = transformTree
-                            "performSubstitutions"
-                            defTrans { tExp = (return . (replaceInExp subs))
-                                     , tPat = (return . (replaceInPat subs)) }
-                            prog
-                              where
-                                constraints =  generateConstraints prog
-                                subs = case unifyTypes constraints of
-                                  Success ss -> ss
-                                  Error msg -> error msg --TODO improve error handling
-                                  
-
 replaceInDecl :: [Subst] -> Declaration -> Declaration
 replaceInDecl subs (PatBindDcl p e) = 
   PatBindDcl (replaceInPat subs p) (replaceInExp subs e)
@@ -53,11 +39,83 @@ replaceInDecl _ (FunBindDcl _ _ _) = error "Not expected function declaration"
 replaceInDecl _ d = d
 
 replaceInExp :: [Subst] -> Exp -> Exp
-replaceInExp subs e  = addType e (rep subs (getType e))
+replaceInExp subs (FExp e1 e2 t) = (FExp 
+                                    (replaceInExp subs e1)
+                                    (replaceInExp subs e2)
+                                    (repType subs t))
+                                 
+replaceInExp subs (LambdaExp pats e t) = (LambdaExp 
+                                          (map (replaceInPat subs) pats)
+                                          (replaceInExp subs e)
+                                          (repType subs t))
+
+replaceInExp subs (LetExp decls e t) = (LetExp
+                                        (map (replaceInDecl subs) decls)
+                                        (replaceInExp subs e)
+                                        (repType subs t))
+
+replaceInExp subs (IfExp e1 e2 e3 t) = (IfExp
+                                        (replaceInExp subs e1)
+                                        (replaceInExp subs e3)
+                                        (replaceInExp subs e3)                                   
+                                        (repType subs t))
+
+replaceInExp subs (CaseExp es alts t) = (CaseExp
+                                         (map (replaceInExp subs) es)
+                                         (map (replaceInAlt subs) alts)
+                                         (repType subs t))
+                                        
+replaceInExp subs (ParensExp e t) = (ParensExp
+                                     (replaceInExp subs e)
+                                     (repType subs t))
+                                    
+replaceInExp subs (TupleExp es t) = (TupleExp
+                                     (map (replaceInExp subs) es)
+                                     (repType subs t))
+
+replaceInExp subs (ListExp es t) = (ListExp
+                                    (map (replaceInExp subs) es)
+                                    (repType subs t))
+                                  
+replaceInExp subs e  = addType e (repType subs (getType e))
 
 replaceInPat :: [Subst] -> Pattern -> Pattern
-replaceInPat subs p = addPatType p (rep subs (getPatType p))
+replaceInPat subs (IdConPat n ids ts t) = (IdConPat n ids
+                                           (map (repType subs) ts)
+                                           (repType subs t))
+                                           
+replaceInPat subs p = addPatType p (repType subs (getPatType p))
+
+replaceInAlt :: [Subst] -> Alternative -> Alternative
+replaceInAlt subs (Alternative pats e) = (Alternative
+                                          (map (replaceInPat subs) pats)
+                                          (replaceInExp subs e))
                                   
-rep :: [Subst] -> Type -> Type
-rep ((t1, t2):subs) t = if t == t2 then t1 else rep subs t
-rep [] t = t
+repType :: [Subst] -> Type -> Type
+repType subs t = evalState (rep' t) subs
+
+rep' :: Type -> State [Subst] Type
+rep' t@(FunType t1 t2) =
+  repOrAct t (do t1' <- rep' t1
+                 t2' <- rep' t2
+                 return (FunType t1' t2'))
+
+rep' t@(TupleType ts) =
+  repOrAct t (do ts' <- mapM rep' ts
+                 return (TupleType ts'))
+  
+rep' t@(DataType n ts) =
+  repOrAct t (do ts' <- mapM rep' ts
+                 return (DataType n ts'))
+  
+rep' t = repOrAct t (return t)
+       
+
+repOrAct :: Type -> State [Subst] Type -> State [Subst] Type              
+repOrAct t act = do subs <- get
+                    case lookup t (inv subs) of
+                      Just t' -> return t'
+                      Nothing -> act
+                 where
+                   invPair (a,b) = (b,a)       
+                   inv = ((\(a,b) -> zip a b) . invPair . unzip)
