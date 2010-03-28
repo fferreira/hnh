@@ -79,8 +79,8 @@ addMetas ids ts =
 lookupId :: Identifier -> State MetaSt Type     
 lookupId i = 
   do MetaSt _ env <- get
-     case lookup i (traceP env) of
-       Just i -> return (traceVal i)
+     case lookup i env of 
+       Just t -> return t
        Nothing -> error ("Identifier " ++ (show i) 
                          ++ " not found in "++ show env)
 
@@ -154,9 +154,9 @@ typeExp _ (InfixOpExp _ _) = error "Unexpected InfixOpExp"
 typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
 typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
 typeExp _ (IdVarExp i t) =
-  do tl <- lookupId (traceVal i)
+  do tl <- lookupId i
      t' <- polyType tl --(choose (traceVal t) (traceVal tl))
-     return $ traceVal (IdVarExp i t')
+     return (IdVarExp i t')
 
 typeExp _ (IdConExp i t) =
   do tl <- lookupId i

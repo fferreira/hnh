@@ -56,14 +56,14 @@ fun dts decls = return (evalState (mapM (inferDeclType dts) decls) idEnv0)
 inferDeclType :: [DataType] -> Declaration -> State [(Identifier, Type)] Declaration
 inferDeclType dts d = 
   do env <- get
-     (metaD, env') <- return $ declarationMeta dts (traceVal env) d 
+     (metaD, env') <- return $ declarationMeta dts env d
      constraints <- return $ declarationConstraints metaD
      subs <- case unifyTypes constraints of Success subs -> return subs
                                             --TODO improve error handling
                                             Error msg -> error msg
      d' <- return $ replaceInDecl subs metaD
      d'' <- return $ generalizeTypes d'
-     put $ add d (traceVal env')
+     put $ add d'' env'
      return d''
 
 add :: Declaration -> [(Identifier, Type)] -> [(Identifier, Type)]

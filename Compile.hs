@@ -78,9 +78,11 @@ merge e@(Error msg) _ = e
 merge _ e@(Error msg) = e
 
 
-compile p@(Program decls) name = (pretty $ map prettify (generateConstraints p))
-                                 <> line
-                                 <> pretty "number of constraints:"
-                                 <+> pretty (length (generateConstraints p))
+compile p name = pretty p
+
+-- compile p@(Program decls) name = (pretty $ map prettify (generateConstraints p))
+--                                  <> line
+--                                  <> pretty "number of constraints:"
+--                                  <+> pretty (length (generateConstraints p))
 
 prettify (t1, t2, d) = pretty t1 <+> pretty "=" <+> pretty t2 <> line <> pretty d <> line
