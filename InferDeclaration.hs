@@ -16,7 +16,7 @@
     
     Copyright 2010 Francisco Ferreira
 -}
-module AddMetaTypes
+module InferDeclaration
        (
          declarationMeta
        )

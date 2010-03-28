@@ -18,9 +18,8 @@
 -}
 module GenerateConstraints
        (
-         generateConstraints
-       , Constraint
-       , declarationConstraints
+       Constraint
+       , getConstraints
        )
        where
 
@@ -33,21 +32,16 @@ import Control.Monad.State(execState, State, get, put)
 
 type Constraint = (Type, Type, Declaration)
 
+getConstraints :: Declaration -> [Constraint]  
+getConstraints d =
+  execState (processDecl d) []
+
 addConstraint :: Declaration -> Type -> Type -> State [Constraint] ()
 addConstraint d t1 t2 = 
   do st <- get
      if t1 == t2 
        then return ()
        else put ((t1, t2, d):st)
-
-generateConstraints :: Program -> [Constraint]
-generateConstraints (Program decls) = 
-  execState (processDecls decls) []
-  
-declarationConstraints :: Declaration -> [Constraint]  
-declarationConstraints d =
-  execState (processDecl d) []
-
 
 processDecls :: [Declaration] -> State [Constraint] ()
 processDecls decls = do mapM processDecl decls; return ()
@@ -56,7 +50,6 @@ processDecl d@(PatBindDcl pat e) =
   do processExp d e
      addConstraint d (getPatType pat) (getType e)
 processDecl decl = return ()
-
 
 processExp d (ParensExp e t) = 
   do processExp d e

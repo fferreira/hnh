@@ -23,7 +23,6 @@ module Substitutions
        where
 
 import Syntax
-import GenerateConstraints(generateConstraints)
 import UnifyTypes(unifyTypes, Subst)
 import TypeUtils(addType, getType, addPatType, getPatType)
 import TransformUtils(transformTree, Transformer(..), defTrans)
