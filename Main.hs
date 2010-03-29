@@ -25,7 +25,10 @@ import System.Environment(getArgs)
 
 main = do
   args <- getArgs
-  loadAndEval <- return $ if length args >= 1 && (args!!0) == "e" 
-                          then E.loadAndEval else C.loadAndEval
-  p <- loadAndEval (args!!1) (args!!2) (if ((length args) >= 4) then True else False)
+  p <- case args of --TODO add support for the extra parameters
+    (cmd:file:extra) -> case cmd of "e"  -> E.loadAndEval file "main" False
+                                    "ed" -> E.loadAndEval file "main" True
+                                    "c"  -> C.loadAndEval file "main" False
+                                    "cd" -> C.loadAndEval file "main" True
+    _ -> error "Usage: hnh [e|ed|c|cd] program"
   print p
