@@ -27,6 +27,7 @@ import Syntax
 import GenerateConstraints(Constraint)
 import ErrorMonad (ErrorM)
 
+import Data.List(find)
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
 import Tools
@@ -41,12 +42,35 @@ data UnificationRes = SameType
 type Subst = (Type, Type) -- substitution put first type in place of the second
 
 genSubst :: Monad m => [Constraint] -> [Subst] -> m[Subst]
-genSubst ((t1, t2, d):cs) sub = 
+genSubst cs'@((t1, t2, d):cs) sub = 
   do res <- unify d t1 t2 
      case res of SameType -> genSubst cs sub -- ignore zero info substitutions
-                 New s -> contWithSubst s cs sub
+                 New s -> validateSubst s >> contWithSubst s cs (s:sub)
                  Push c -> genSubst (c++cs) sub
 genSubst [] sub = return sub
+
+validateSubst (ta, tb) = if ta == tb then 
+                           return ()
+                         else
+                           if tb `occursIn` ta then
+                             fail (show (pretty "Error: recursive application"
+                                         <+>pretty tb 
+                                         <+> pretty "occurs in" 
+                                         <+> pretty ta))
+                           else
+                             return ()
+                             
+occursIn :: Type -> Type -> Bool
+occursIn ta tb = case find (\t -> t == ta) (flatten tb) of
+  Nothing -> False
+  Just _ -> True
+  where
+    flatten t@(FunType t1 t2) = t:(flatten t2 ++ flatten t2)
+    flatten t@(TupleType ts) = t:(concatMap flatten ts)
+    flatten t@(DataType _ ts) = t:(concatMap flatten ts)
+    flatten t = [t]
+
+
 
 contWithSubst :: Monad m => Subst -> [Constraint] -> [Subst] -> m[Subst]
 contWithSubst (t1, t2) cs sub =  genSubst cs' ((t1,t2):sub')
@@ -87,7 +111,7 @@ unify d t1 t2@(MetaType _) = return $ New (t1, t2)
 unify d (FunType t11 t12) (FunType t21 t22) = 
   return $ Push [(t11, t21, d), (t12, t22, d)]
   
-unify d (TupleType t1s) (TupleType t2s) =
+unify d (TupleType t1s) (TupleType t2s) = 
   return $ Push ts
     where
       ts = map (\(a,b) -> (a,b,d))(zip t1s t2s)
