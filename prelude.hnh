@@ -42,4 +42,11 @@ filter f l =
 not True = False;
 not False = True;
 
+and True True = True;
+and _ _ = False;
+
+or False False = False;
+or _ _ = True;
+
 (<=) a b = not (a > b);
+(<) a b  = (not (a > b)) `and` (not (a == b));

@@ -95,6 +95,8 @@ adaptPattern (TuplePat ns t) =
      ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
      put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
      return $ IdTuplePat ids t
+     
+adaptPattern (WildcardPat t) = return (WildcardPat t)     
 
 adaptExp :: Exp -> State IdentSt Exp
 adaptExp (VarExp n t) = 
