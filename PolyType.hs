@@ -26,12 +26,9 @@ module PolyType
 
 import Syntax
 
-import Control.Monad.State(evalState, State, put, get)
+import Control.Monad.State(State, put, get)
 
-data PolySt = PolySt {
-  nextMeta :: Int
-  , typeEnv :: [(Type, Type)] -- replace the first by the second 
-  }
+data PolySt = PolySt Int [(Type, Type)] -- replace the first by the second 
               
 initialPoly n = PolySt n []
 

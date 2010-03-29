@@ -30,7 +30,6 @@ module TransformMonad
 
 import ErrorMonad(ErrorM(..))
 
-import Data.List(intersperse)
 import Text.PrettyPrint.Leijen
 
 data TransformM a = TaM [(String, Doc)] (ErrorM a)

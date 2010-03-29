@@ -26,10 +26,10 @@ module TreeSimplify
     where
 
 import Syntax
-import TransformMonad (TransformM, transformOk)
+import TransformMonad (TransformM)
 import TransformUtils(transformTree, Transformer(..), defTrans)
 
-import Data.List(sort, group, groupBy, nub, intersperse)
+import Data.List(sort, group, groupBy, intersperse)
 
 {-
   funToLambda: eliminates all the FunBindDcl transforming them to lambdas
@@ -50,7 +50,7 @@ mergePatternsInCase decls =
         mapM convertGroup groups
       
 convertGroup :: Monad m => [Declaration] -> m Declaration
-convertGroup funs@((FunBindDcl _ _ _):fs) =
+convertGroup funs@((FunBindDcl _ _ _):_) =
     do
         name <- getFunName (head funs)
         patterns <- mapM getFunPattern funs
@@ -93,12 +93,6 @@ getFunPattern _ = fail "getFunPattern: called with something other than a functi
 
 getFunRhs (FunBindDcl _ _ r) = return r
 getFunRhs _ = fail "getFunRhs: called with something ohter than a function"
-
-partition :: (a->Bool) -> [a] ->([a],[a])                   
-partition f (x:xs) = (if f x then ([x], []) else ([], [x])) +-+ partition f xs
-    where
-      (+-+) (a, b) (c, d) = (a++c, b++d)
-partition f [] = ([], [])                   
 
 {-
   simplifyLambda: pushes all complex pattern matching to case expressions

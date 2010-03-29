@@ -23,7 +23,7 @@ module InferDeclaration
        where
 
 import Syntax
-import TypeUtils(getType, getDataTypes, DataType, getConstTypeParams, getConstType)
+import TypeUtils(getType, DataType, getConstTypeParams, getConstType)
 import PolyType(transformType, initialPoly, getNext)
 import GenerateConstraints(getConstraints)
 import GeneralizeTypes(generalizeTypes)
@@ -31,9 +31,7 @@ import UnifyTypes(unifyTypes)
 import Substitutions(replaceInDecl)
 import ErrorMonad(ErrorM(..))
 
-import Tools
-
-import Control.Monad.State(evalState, runState, State, put, get)
+import Control.Monad.State(runState, State, put, get)
 
 inferDeclType :: [DataType] -> Declaration -> State [(Identifier, Type)] Declaration
 inferDeclType dts d = 
@@ -63,10 +61,7 @@ addDeclMeta dts env d =
   let (d', (MetaSt _ env')) = runState (processDecl dts d) (MetaSt 0 env)
   in (d', env')
 
-data MetaSt = MetaSt {
-  nextNum :: Int
-  , env :: [(Identifier, Type)]
-  }
+data MetaSt = MetaSt Int [(Identifier, Type)]
 
 --- State Manipulation functions
 

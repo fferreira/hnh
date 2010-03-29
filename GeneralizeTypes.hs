@@ -27,8 +27,6 @@ import TypeUtils(getType, addType, getPatType, addPatType)
 
 import Control.Monad.State(evalState, State, get, put)
 
-import Tools
-
 generalizeTypes :: Declaration -> Declaration
 generalizeTypes d =
   evalState (transDecl d) (GenSt 0 [])

@@ -23,14 +23,10 @@ module Substitutions
        where
 
 import Syntax
-import UnifyTypes(unifyTypes, Subst)
+import UnifyTypes(Subst)
 import TypeUtils(addType, getType, addPatType, getPatType)
-import TransformUtils(transformTree, Transformer(..), defTrans)
-import ErrorMonad(ErrorM(..))
 import Control.Monad.State(get, State, evalState)
 
-import Tools
-  
 replaceInDecl :: [Subst] -> Declaration -> Declaration
 replaceInDecl subs (PatBindDcl p e) = 
   PatBindDcl (replaceInPat subs p) (replaceInExp subs e)

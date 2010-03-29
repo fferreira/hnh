@@ -56,9 +56,6 @@ idEnv0 = map (\(n, t) -> (findId n, t)) env0
 getEnv :: State IdentSt [(Name, Identifier)]                  
 getEnv = get >>= (return. currEnv)
     
-getNext :: State IdentSt Int
-getNext = get >>= (return . nextVar)
-    
 processDecls decls = mapM processDecl decls
 
 processDecl (PatBindDcl p e) =

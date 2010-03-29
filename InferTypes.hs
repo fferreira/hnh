@@ -10,9 +10,8 @@ import TypeUtils(DataType, getDataTypes)
 import AddIdentifiers(idEnv0)
 import InferDeclaration(inferDeclType)
 
-import Control.Monad.State(evalState, runState, State, put, get)
+import Control.Monad.State(evalState)
 
-import Tools
 {-
   Type inferences is done in these phases:
     1- add type variables to all unknown types (adMetaTypes)

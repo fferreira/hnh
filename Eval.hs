@@ -30,12 +30,7 @@ import ErrorMonad
 
 import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv, envForData)
 
-import Data.List(intersperse)
 import Control.Monad.State
-
-import Tools
-import Debug.Trace
-
 
 evaluationTransform :: Program -> (ErrorM Program, [(String, Doc)])
 evaluationTransform p = 

@@ -2,7 +2,8 @@
 complete: compile
 
 compile: 
-	ghc --make Main -o hnh
+	ghc --make Main -o hnh	
+#	ghc -fwarn-unused-imports -fwarn-unused-binds --make Main -o hnh
 
 clean:
 	rm *.hi *.o

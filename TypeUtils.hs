@@ -37,10 +37,7 @@ module TypeUtils
 
 import Syntax
 
-import Data.List(nub, find)
-import Text.PrettyPrint.Leijen(pretty)
-
-import Tools
+import Data.List(find)
 
 -- returns the type resuling for the application of FuncType
 -- or UnknownType if the type is not appropiate

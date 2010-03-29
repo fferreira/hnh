@@ -26,8 +26,6 @@ module GenerateConstraints
 import Syntax
 import TypeUtils(getType, getPatType, getAltType, getAltPatTypes)
 
-import Tools
-
 import Control.Monad.State(execState, State, get, put)
 
 type Constraint = (Type, Type, Declaration)

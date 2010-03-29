@@ -28,18 +28,11 @@ import AddIdentifiers(addIdentifiers)
 import InferTypes(performTypeInference)
 import BuiltIn(builtInDecls)
 
-import GenerateConstraints --TODO debugging only
-
 import qualified TransformMonad as T
 import ErrorMonad
 
-import EvalEnv(Env, env0, Value(..), ClosureAction(..), lookupEvalEnv, envForData)
-
 import Control.Monad.State
 import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
-
-import Tools
-
 
 compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform (Program decls) = 

@@ -30,8 +30,6 @@ import ErrorMonad (ErrorM)
 import Data.List(find)
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
 
-import Tools
-
 unifyTypes :: [Constraint] -> ErrorM [Subst]
 unifyTypes cs = genSubst cs []
 

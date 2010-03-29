@@ -7,7 +7,6 @@ module BuiltIn
        where
 
 import Syntax
-import TypeUtils(DataType)
 
 type EnvType = (Name, Type)
 
