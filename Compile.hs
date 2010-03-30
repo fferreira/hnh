@@ -26,6 +26,7 @@ import Syntax
 import CommonTransforms(commonTransforms)
 import AddIdentifiers(addIdentifiers)
 import InferTypes(performTypeInference)
+import CPS(cpsTransform)
 import BuiltIn(builtInDecls)
 
 import qualified TransformMonad as T
@@ -34,21 +35,22 @@ import ErrorMonad
 import Control.Monad.State
 import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 
-compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
+-- compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform (Program decls) = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= addIdentifiers
                                      >>= performTypeInference
+                                     >>= cpsTransform
                                      >>= return)
       p = (Program (builtInDecls ++ decls)) 
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list
    
-runTransformations :: ErrorM Program -> (ErrorM Program, [(String, Doc)])
+-- runTransformations :: ErrorM Program -> (ErrorM Program, [(String, Doc)])
 runTransformations (Success p) = compileTransform p
 runTransformations (Error s) = error $ show (pretty s)
 
-checkTransformation :: ErrorM Program -> Program
+-- checkTransformation :: ErrorM Program -> Program
 checkTransformation (Success program) = program
 checkTransformation (Error err) = error err
 
@@ -65,7 +67,7 @@ loadAndEval file main showSteps = do contents <- readFile file
                                                        compile program main
                                      return doc
 
-merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
+-- merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
 merge (Success (Program d1)) (Success (Program d2)) = Success (Program (d1++d2))
 merge e@(Error msg) _ = e
 merge _ e@(Error msg) = e
