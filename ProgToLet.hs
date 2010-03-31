@@ -34,9 +34,12 @@ progToLet :: Program -> TransformM Program
 progToLet (Program decls) = 
   case findMain decls of 
     Error msg -> transformError msg
-    Success main -> transformOk "progToLet" (Program 
-                                             (dataDecls
-                                              ++ [mainToLet main varDecls]))
+    Success main -> transformOk 
+                    "progToLet" 
+                    (Program 
+                     (dataDecls
+                      ++ [mainToLet 
+                          main (filter (not . isMain) varDecls)]))
       where
         (varDecls, dataDecls) = partition isVarDecl decls
 
@@ -44,17 +47,18 @@ findMain :: Monad m => [Declaration] -> m Declaration
 findMain decls = 
   case find isMain decls of Just d -> return d
                             Nothing -> fail "main symbol not found"
-    where
-      isMain (PatBindDcl p e) = case p of (IdVarPat (Id "main"_) _) -> True
-                                          _ -> False
-      isMain d = False
+
+
+isMain (PatBindDcl p e) = case p of (IdVarPat (Id "main"_) _) -> True
+                                    _ -> False
+isMain d = False
 
 isVarDecl (PatBindDcl _ _) = True
 isVarDecl _ = False
 
 mainToLet :: Declaration -> [Declaration] -> Declaration
 mainToLet d@(PatBindDcl p e) decls = 
-  if length decls > 0 then
+  if length decls > 1 then
     (PatBindDcl p (LetExp decls e (getType e)))
   else
     d
