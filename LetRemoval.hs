@@ -54,4 +54,39 @@ processExp (LetExp decls e t) =
      put (decls' ++ st)
      processExp e
      
+processExp (FExp e1 e2 t) =
+  do e1' <- processExp e1
+     e2' <- processExp e2
+     return (FExp e1' e2' t)
+     
+processExp (LambdaExp pats e t) =     
+  do e' <- processExp e
+     return (LambdaExp pats e' t)
+     
+processExp (IfExp ec e1 e2 t) =     
+  do ec' <- processExp ec
+     e1' <- processExp e1
+     e2' <- processExp e2
+     return (IfExp ec' e1' e2' t)
+     
+processExp (CaseExp es alts t) =     
+  do es' <- mapM processExp es
+     alts' <- mapM processAlt alts
+     return (CaseExp es' alts' t)
+     
+processExp (ParensExp e t) =
+  do e' <- processExp e
+     return (ParensExp e' t)
+     
+processExp (TupleExp es t) =     
+  do es' <- mapM processExp es
+     return (TupleExp es' t)
+     
+processExp (ListExp es t) =     
+  do es' <- mapM processExp es
+     return (ListExp es' t)
 processExp e = return e
+
+processAlt (Alternative pats e) =
+  do e' <- processExp e
+     return (Alternative pats e')
