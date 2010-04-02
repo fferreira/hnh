@@ -43,19 +43,19 @@ declToK d = []
 getMainK :: [(Identifier, (Identifier, KExp) -> KExp)] -> KExp
 getMainK conts  = 
   case find (\((Id n _), _) -> n == "main") conts of
-    Just (_, f) -> f (Id "end" 42, HaltK (VarType "a")) --TODO what id should it be passed?
+    Just (_, f) -> f (Id "end" 42, HaltK) --TODO what id should it be passed?
     Nothing -> error "Unable to find function main"
   
--- TODO what to do with types ???  
+
 data KExp = IfK Identifier KExp KExp Type
           | LitK LiteralValue KExp Type
-          | AppK Identifier Identifier Type
+          | AppK Identifier [Identifier]
 -- params, function body, prev res, after definition, type            
           | FunK [Identifier] KExp Identifier KExp Type
-          | VarK
+          | LetK [Identifier] [KExp] KExp
           | TupleK
           | ListK
-          | HaltK Type -- TODO ??
+          | HaltK
           deriving (Show, Eq)
                    
 instance Pretty KExp where                   
@@ -74,34 +74,39 @@ newVar = do next <- get
             return (Id "cont" next)
 
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
-cps (LitExp val t) (v, k) = return $ LitK val k t
+cps (LitExp val t) (v, k) = return $ LitK val k t -- TODO is this correct?
 cps (FExp e1 e2 t) (v, k) = return $ k
      
 cps (LambdaExp pats e t) (v, k) = 
   do xk <- newVar
      res <- newVar
-     ke <- cps e (res, AppK xk res UnknownType) --TODO types?
+     ke <- cps e (res, AppK xk [res])
      return (FunK (map patToId pats) ke v k t)
      
      
-cps (LetExp decls e t) (v, k) = return $ HaltK UnknownType
+cps (LetExp decls e t) (v, k) =
+  do exit <- newVar 
+     ke <- cps e (exit, k)
+     linkL ids exps (v, ke)
+       where
+         (ids, exps) = unzip $ map (\(PatBindDcl (IdVarPat i _) e) -> (i, e)) decls
+
+
+  
+  
 cps (IfExp ec e1 e2 t) (v, k) =
   do xc <- newVar
      k1 <- (cps e1 (v, k))
      k2 <- (cps e2 (v, k))
      cps ec (xc, IfK xc k1 k2 t)
 
--- cps (IfExp ec e1 e2 t) (v, k) =
---   do xc <- newVar
---      k1 <- (cps e1 (v, k))
---      k2 <- (cps e2 (v, k))
---      cps ec (xc, IfK xc k1 k2 t)
-
 cps (CaseExp es alts t) (v, k) = return $ k
 cps (ParensExp e t) (v, k) = cps e (v,k)
 cps (TupleExp es t) (v, k) = return $ k
 cps (ListExp es t) (v, k) = return $ k
-cps (IdVarExp i t) (v, k) = return $ k --TODO ??
+cps (IdVarExp i t) (v, k) = 
+  do f <- newVar
+     return $ FunK [v] k f (AppK f [i]) t -- TODO WRONG TYPE! --TODO what about VarK?
 cps (IdConExp i t) (v, k) = return $ k
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
@@ -110,6 +115,24 @@ cps (InfixOpExp _ _) (_, _)    = error "Unexpected InfixOpExp"
 cps (MinusFloatExp _ _) (_, _) = error "Unexpected MinusFloatExp"
 cps (MinusExp _ _) (_, _)      = error "Unexpected MinusExp"
 
+cpsL :: [Exp] -> [Identifier]
+cpsL = undefined
+
+
+{-
+ link takes an identifier, a variable and a continuation
+ it executes the continuation where the variable is bound to the expresion
+-}
+link :: Identifier -> Exp -> (Identifier, KExp)  -> State CPSSt KExp --TODO add (v, k)
+link i e (v, k)=
+  do --fke <- cps e 
+     i' <- newVar
+     f <- newVar
+     x <- newVar
+     cps e (v, (FunK [i'] k f  (AppK f [x]) UnknownType)) --TODO type?
+     
+linkL :: [Identifier] -> [Exp] -> (Identifier, KExp) -> State CPSSt KExp     
+linkL ids exps (v, k) = undefined
 
 patToId (IdVarPat i _) = i
 patToId _ = error "unexpected pattern"
