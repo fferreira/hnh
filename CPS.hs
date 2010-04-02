@@ -79,18 +79,9 @@ cps (LambdaExp pats e t) (v, k) =
 cps (LetExp decls e t) (v, k) =
   do exit <- newVar 
      ke <- cps e (exit, k)
-     linkL ({-traceP' "ids"-} ids) exps (v, ({-traceP' "ke"-} ke))
+     linkL ids exps (v, ke)
        where
          (ids, exps) = unzip $ map (\(PatBindDcl (IdVarPat i _) e) -> (i, e)) decls
-
-
-  
-  
--- cps (IfExp ec e1 e2 t) (v, k) = 
---   do xc <- newVar
---      k1 <- (cps e1 (v, k))
---      k2 <- (cps e2 (v, k))
---      cps ec (xc, IfK xc k1 k2)
 
 cps (IfExp ec e1 e2 t) (v, k) = 
   do xc <- newVar -- result of the condition
