@@ -21,7 +21,10 @@ module Main where
 
 import qualified Eval as E
 import qualified Compile as C
+
 import System.Environment(getArgs)
+import Text.PrettyPrint.Leijen
+import System.IO
 
 main = do
   args <- getArgs
@@ -31,4 +34,5 @@ main = do
                                     "c"  -> C.loadAndEval file "main" False
                                     "cd" -> C.loadAndEval file "main" True
     _ -> error "Usage: hnh [e|ed|c|cd] program"
-  print p
+  displayIO stdout (renderPretty 0.2 60 p)
+  --print (displayS (renderPretty 0.2 80 p))

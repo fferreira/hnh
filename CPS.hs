@@ -23,11 +23,12 @@ module CPS
   where
 
 import Syntax
+import CpsRep
 import TransformMonad (TransformM, transformOk)
 
 import Control.Monad.State(evalState, State, get, put)
 import Data.List(find)
-import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+
 
 import Tools
 
@@ -46,21 +47,6 @@ getMainK conts  =
     Just (_, f) -> f (Id "end" 42, HaltK) --TODO what id should it be passed?
     Nothing -> error "Unable to find function main"
   
-
-data KExp = IfK Identifier KExp KExp Type
-          | LitK LiteralValue KExp Type
-          | AppK Identifier [Identifier]
--- params, function body, prev res, after definition, type            
-          | FunK [Identifier] KExp Identifier KExp Type
-          | LetK [Identifier] [KExp] KExp
-          | TupleK
-          | ListK
-          | HaltK
-          deriving (Show, Eq)
-                   
-instance Pretty KExp where                   
-  pretty e = pretty (show e) -- TODO improve this!
-
 type CPSSt = Int
 
 cpsConv :: Exp  -> (Identifier, KExp) -> KExp
@@ -74,39 +60,56 @@ newVar = do next <- get
             return (Id "cont" next)
 
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
-cps (LitExp val t) (v, k) = return $ LitK val k t -- TODO is this correct?
-cps (FExp e1 e2 t) (v, k) = return $ k
+cps (LitExp val t) (v, k) = return $ LitK val v k t -- TODO is this correct?
+cps (FExp e1 e2 t) (v, k) = 
+  do xk <- newVar
+     f <- newVar -- the function
+     x <- newVar -- its parameter
+     
+     ek <- link x e2 (v, FunK [v] k xk (AppK f [x,xk]))
+     link f e1 (v, ek) 
      
 cps (LambdaExp pats e t) (v, k) = 
   do xk <- newVar
      res <- newVar
      ke <- cps e (res, AppK xk [res])
-     return (FunK (map patToId pats) ke v k t)
+     return (FunK ((map patToId pats) ++ [xk]) ke v k)
      
      
 cps (LetExp decls e t) (v, k) =
   do exit <- newVar 
      ke <- cps e (exit, k)
-     linkL ids exps (v, ke)
+     linkL ({-traceP' "ids"-} ids) exps (v, ({-traceP' "ke"-} ke))
        where
          (ids, exps) = unzip $ map (\(PatBindDcl (IdVarPat i _) e) -> (i, e)) decls
 
 
   
   
-cps (IfExp ec e1 e2 t) (v, k) =
-  do xc <- newVar
-     k1 <- (cps e1 (v, k))
-     k2 <- (cps e2 (v, k))
-     cps ec (xc, IfK xc k1 k2 t)
+-- cps (IfExp ec e1 e2 t) (v, k) = 
+--   do xc <- newVar
+--      k1 <- (cps e1 (v, k))
+--      k2 <- (cps e2 (v, k))
+--      cps ec (xc, IfK xc k1 k2)
 
-cps (CaseExp es alts t) (v, k) = return $ k
+cps (IfExp ec e1 e2 t) (v, k) = 
+  do xc <- newVar -- result of the condition
+     f <- newVar  -- variable that will hold the continuation function
+     r <- newVar -- result of the if for the rest of the program  
+     e1' <- (cps e1 (r, AppK f [r]))
+     e2' <- (cps e2 (r, AppK f [r]))
+     
+     ec' <- cps ec (xc, IfK xc e1' e2')
+     
+     return $ FunK [v] k f ec'
+
+cps (CaseExp es alts t) (v, k) = return $ k ------
 cps (ParensExp e t) (v, k) = cps e (v,k)
-cps (TupleExp es t) (v, k) = return $ k
-cps (ListExp es t) (v, k) = return $ k
-cps (IdVarExp i t) (v, k) = 
-  do f <- newVar
-     return $ FunK [v] k f (AppK f [i]) t -- TODO WRONG TYPE! --TODO what about VarK?
+cps (TupleExp es t) (v, k) = return $ k -----------
+cps (ListExp es t) (v, k) = return $ k -----------
+cps (IdVarExp i t) (v, k) = return $ VarK i v k t
+  -- do f <- newVar
+  --    return $ FunK [v] k f (AppK f [i]) --TODO what about VarK?
 cps (IdConExp i t) (v, k) = return $ k
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
@@ -123,16 +126,24 @@ cpsL = undefined
  link takes an identifier, a variable and a continuation
  it executes the continuation where the variable is bound to the expresion
 -}
-link :: Identifier -> Exp -> (Identifier, KExp)  -> State CPSSt KExp --TODO add (v, k)
+link :: Identifier -> Exp -> (Identifier, KExp)  -> State CPSSt KExp
 link i e (v, k)=
-  do --fke <- cps e 
-     i' <- newVar
-     f <- newVar
-     x <- newVar
-     cps e (v, (FunK [i'] k f  (AppK f [x]) UnknownType)) --TODO type?
+  do f <- newVar
+     cps e (v, (FunK [i] k f  (AppK f [v])))
      
+{-
+linkL takes a list of identifiers and a list of expressions, and a continuation
+
+it will execute the continuation after having excecuted and linked the exps to the ids
+
+-}
+
 linkL :: [Identifier] -> [Exp] -> (Identifier, KExp) -> State CPSSt KExp     
-linkL ids exps (v, k) = undefined
+linkL [i] [e] (v, k) = link i e (v, k) 
+linkL (i:is) (e:es) (v,k) = 
+  do r <- newVar
+     k'<- linkL is es (v, k)
+     link i e (r, k')
 
 patToId (IdVarPat i _) = i
 patToId _ = error "unexpected pattern"

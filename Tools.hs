@@ -38,10 +38,12 @@ traceVal' s v = D.trace ("\n" ++s
                          ++":\n" 
                          ++ show v ++"\nEnd trace.\n") v
 
+frm = line <> pretty "************************" <> line
+
 traceP :: Pretty a => a -> a
-traceP v = D.trace (show $ line<>pretty v<>line) v
+traceP v = D.trace (show $ frm <>pretty v<> frm) v
 
 traceP' :: Pretty a => String -> a -> a
-traceP' s v = D.trace (show $ line <> pretty s 
+traceP' s v = D.trace (show $ frm <> pretty s <> colon
                        <> line <> pretty v 
-                       <>line) v
+                       <>frm) v
