@@ -153,7 +153,7 @@ instance Pretty Declaration where
   pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
   pretty (FunBindDcl n ps r) = pretty n 
                                <> pretty ps <> equals <> pretty r
-  pretty (PatBindDcl p r) = pretty p <> equals <> pretty r
+  pretty (PatBindDcl p r) = pretty p <> equals <!> pretty r
 
 instance Pretty Type where
     pretty (FunType t1 t2) = parens $ pretty t1 <> pretty "->" <> pretty t2

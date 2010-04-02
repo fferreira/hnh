@@ -25,6 +25,7 @@ import Syntax
 
 import CommonTransforms(commonTransforms)
 import AddIdentifiers(addIdentifiers)
+import LetRemoval(letRemoval)
 import ProgToLet(progToLet)
 import InferTypes(performTypeInference)
 import CPS(cpsTransform)
@@ -40,8 +41,9 @@ import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 compileTransform (Program decls) = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= addIdentifiers
-                                     >>= progToLet
                                      >>= performTypeInference
+                                     >>= letRemoval
+                                     >>= progToLet
                                      >>= cpsTransform
                                      >>= return)
       p = (Program (builtInDecls ++ decls)) 

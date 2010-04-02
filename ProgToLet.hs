@@ -25,7 +25,7 @@ module ProgToLet
 import Syntax
 import TransformMonad(TransformM, transformOk, transformError)
 import ErrorMonad(ErrorM(..))
-import TypeUtils(getType)
+import TypeUtils(getType, isVarDecl)
 
 import Data.List(find, partition)
 
@@ -53,12 +53,9 @@ isMain (PatBindDcl p e) = case p of (IdVarPat (Id "main"_) _) -> True
                                     _ -> False
 isMain d = False
 
-isVarDecl (PatBindDcl _ _) = True
-isVarDecl _ = False
-
 mainToLet :: Declaration -> [Declaration] -> Declaration
 mainToLet d@(PatBindDcl p e) decls = 
-  if length decls > 1 then
+  if length decls > 0 then
     (PatBindDcl p (LetExp decls e (getType e)))
   else
     d

@@ -32,6 +32,7 @@ module TypeUtils
        , DataType
        , getConstType
        , getConstTypeParams
+       , isVarDecl
        )
        where
 
@@ -160,5 +161,6 @@ getConstTypeParams dts n =
       getConType (ConDcl _ ts) = ts
       getConType (IdConDcl _ ts) = ts
     
-
-    
+isVarDecl :: Declaration -> Bool
+isVarDecl (PatBindDcl _ _) = True
+isVarDecl _ = False    
