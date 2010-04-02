@@ -34,10 +34,10 @@ infixr 5 ++,<> -- <> should be :
 
 filter f l =
   let
-    fil l:ls = (if f l then l<>(fil ls) else fil ls); 
-    fil [] = [];
+    filter' l:ls = (if f l then l<>(filter' ls) else filter' ls); 
+    filter' [] = [];
   in
-    fil l;
+    filter' l;
 
 not True = False;
 not False = True;
