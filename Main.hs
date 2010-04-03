@@ -34,5 +34,5 @@ main = do
                                     "c"  -> C.loadAndEval file "main" False
                                     "cd" -> C.loadAndEval file "main" True
     _ -> error "Usage: hnh [e|ed|c|cd] program"
-  displayIO stdout (renderPretty 0.2 60 p)
+  displayIO stdout (renderPretty 0.2 60 (p<> line))
   --print (displayS (renderPretty 0.2 80 p))

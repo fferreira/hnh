@@ -58,6 +58,12 @@ newVar :: State CPSSt Identifier
 newVar = do next <- get
             put (next + 1)
             return (Id "cont" next)
+            
+newVars :: Int -> State CPSSt [Identifier]            
+newVars 1 = do v <- newVar; return [v]
+newVars n = do v <- newVar
+               rest <- newVars (n-1) 
+               return (v:rest)
 
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
 cps (LitExp val t) (v, k) = return $ LitK val v k t -- TODO is this correct?
@@ -94,14 +100,25 @@ cps (IfExp ec e1 e2 t) (v, k) =
      
      return $ FunK [v] k f ec'
 
-cps (CaseExp es alts t) (v, k) = return $ k ------
+cps (CaseExp es alts t) (v, k) = 
+  do ids <- newVars(length es)
+     linkL <- newVars (length es)
+     conds <- mapM (cpsAlt (v,k))  alts
+     return $ SwitchK ids conds
+     
+     
 cps (ParensExp e t) (v, k) = cps e (v,k)
-cps (TupleExp es t) (v, k) = return $ k -----------
-cps (ListExp es t) (v, k) = return $ k -----------
+cps (TupleExp es t) (v, k) = 
+  do ids <- newVars (length es)
+     linkL ids es (v, (TupleK ids v k))
+cps (ListExp es t) (v, k) = 
+  do ids <- newVars (length es)
+     linkL ids es (v, (ListK ids v k))
+  
 cps (IdVarExp i t) (v, k) = return $ VarK i v k t
   -- do f <- newVar
   --    return $ FunK [v] k f (AppK f [i]) --TODO what about VarK?
-cps (IdConExp i t) (v, k) = return $ k
+cps (IdConExp i t) (v, k) = return $ VarK i v k t -- TODO is this correct?
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
 cps (ConExp _ _) (_, _)        = error "Unexpected ConExp"
@@ -111,6 +128,16 @@ cps (MinusExp _ _) (_, _)      = error "Unexpected MinusExp"
 
 cpsL :: [Exp] -> [Identifier]
 cpsL = undefined
+
+cpsAlt :: (Identifier, KExp) -> Alternative -> State CPSSt AltK
+cpsAlt (v,k) (Alternative pats e) = 
+  do e' <- cps e (v, k)
+     return $ AltK (map patToCond pats) e' --TODO add link for the linked vars
+
+patToCond :: Pattern -> CondK
+patToCond (IdVarPat _ _) = WildK
+patToCond (IdTuplePat _ _) = WildK
+patToCond (IdConPat n _ _ _) = ConK n
 
 
 {-

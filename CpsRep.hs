@@ -20,46 +20,89 @@ module CpsRep
        (
          KExp(..)
        , Identifier(..)
+       , AltK(..)
+       , CondK(..)
        )
        where
 import Syntax  
 
 import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+import Control.Monad.State(State, put, get, runState)
 
 data KExp = IfK Identifier KExp KExp
           | LitK LiteralValue Identifier KExp Type
           | VarK Identifier Identifier KExp Type --TODO what is the second identifier
+          -- D for deconstructors
+          | TupDK Identifier Int Identifier KExp Type
+          | ConDK Identifier Int Identifier KExp Type
+          
           | AppK Identifier [Identifier]
 -- params, function body, prev res, after definition, type            
           | FunK [Identifier] KExp Identifier KExp
-          -- | LetK [Identifier] [KExp] KExp -- no used
-          -- | TupleK
-          -- | ListK
+          -- | LetK [Identifier] [KExp] KExp -- unused
+          | TupleK [Identifier] Identifier KExp
+          | ListK [Identifier] Identifier KExp
+            
+          | SwitchK [Identifier] [AltK]
+
           | HaltK
           deriving (Show, Eq)
                    
-instance Pretty KExp where                   
-  pretty (IfK i k1 k2) = parens $ 
-                         pretty "IfK" <+> pid i 
-                         <+> pretty k1 <+> pretty k2
-  pretty (LitK v i k t) = parens $ 
-                          pretty "LitK" <+> pretty v <+> pid i 
-                          <+> pretty k <+> (brackets (pretty t))
-  pretty (VarK i k' k t) = parens $ 
-                        pretty "VarK" <+> pid i <+> pretty k'
-                        <+> pretty k <+> (brackets (pretty t))
-  pretty (AppK i ids) = parens $ 
-                        pretty "Appk" <+> pid i 
-                        <+> sep (map (\i-> pretty i) ids)
-  pretty (FunK params body prev cont) = parens $ pretty "Funk" 
-                                        <!> brackets(sep (map (\i -> pretty i) params))
-                                        <!> pretty body
-                                        <!> pid prev
-                                        <!> pretty cont
-  pretty HaltK = parens $ pretty "***HaltK***"
-  pretty e = pretty (show e) -- TODO improve this!
+data CondK = WildK | ConK Name deriving (Show, Eq)
+data AltK = AltK [CondK] KExp deriving (Show, Eq)
 
+instance Pretty KExp where                   
+  pretty = prettySExp
+  
+instance Pretty AltK where
+  pretty = prettyAltK
+
+instance Pretty CondK where
+  pretty = prettyCondK
+  
+prettySExp (IfK i k1 k2) = parens $ 
+                       pretty "IfK" <+> pid i 
+                       <+> prettySExp k1 <+> prettySExp k2
+prettySExp (LitK v i k t) = parens $ 
+                        pretty "LitK" <+> pretty v <+> pid i 
+                        <+> prettySExp k <+> (brackets (pretty t))
+prettySExp (VarK i i' k t) = parens $ 
+                         pretty "VarK" <+> pid i <+> pretty i'
+                         <+> prettySExp k <+> (brackets (pretty t))
+prettySExp (AppK i ids) = parens $ 
+                      pretty "Appk" <+> pid i 
+                      <+> sep (map pid ids)
+prettySExp (FunK params body prev cont) = parens $ pretty "Funk" 
+                                      <!> brackets(sep (map pid params))
+                                      <!> prettySExp body
+                                      <!> pid prev
+                                      <!> prettySExp cont
+prettySExp (ListK ids i k) = parens $                                      
+                             pretty "ListK" <+> sep (map pid ids)
+                             <+> pid i
+                             <+> prettySExp k
+prettySExp (SwitchK ids alts) = parens $ pretty "SwitchK"
+                                <!> brackets(sep (map pid ids))
+                                <!> (sep (map prettyAltK alts))
+prettySExp (TupDK i n v k t) = parens $ pretty "TupDK"                             
+                               <+> pid i <> colon <> pretty n 
+                               <+> pid v <+> prettySExp k
+                               <+> (brackets (pretty t))
+prettySExp (ConDK i n v k t) = parens $ pretty "ConDK"                             
+                               <+> pid i <> dot <> pretty n 
+                               <+> pid v <+> prettySExp k
+                               <+> (brackets (pretty t))
+
+prettySExp HaltK = parens $ pretty "***HaltK***"
+
+prettyAltK (AltK conds k) = braces $ pretty "AltK"
+                            <+> brackets(sep (map prettyCondK conds))
+                            <+> prettySExp k
+                            
+prettyCondK WildK = pretty "_"                            
+prettyCondK (ConK n) = parens (pretty "ConK" <+> pretty n)
 
 pid (Id n num) = pretty (n++show num)
 
 (<!>) a b = align (a <$> b)
+
