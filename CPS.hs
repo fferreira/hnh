@@ -73,15 +73,12 @@ and returns a KExp' produced from Exp, that will have KExp
 as continuation, and where its value will be 
 -}
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
-cps (LitExp val t) (v, k) = return $ LitK val v k t -- TODO is this correct?
+cps (LitExp val t) (v, k) = return $ LitK val v k t
 cps (FExp e1 e2 t) (v, k) = 
   do xk <- newVar
      f <- newVar -- the function
      x <- newVar -- its parameter
-     
-     --ek <- link x e2 (v, FunK [v] k xk (AppK f [x,xk]))
-     ek <- cps e2 (x, FunK [v] k xk (AppK f [x, xk])) -- TODO put continuation first
---     link f e1 (v, ek) 
+     ek <- cps e2 (x, FunK [v] k xk (AppK f [x, xk]))
      cps e1 (f, ek)
      
 cps (LambdaExp pats e t) (v, k) = 
@@ -101,9 +98,10 @@ cps (LetExp decls e t) (v, k) =
 cps (IfExp ec e1 e2 t) (v, k) = 
   do xc <- newVar -- result of the condition
      f <- newVar  -- variable that will hold the continuation function
-     r <- newVar -- result of the if for the rest of the program  
-     e1' <- (cps e1 (r, AppK f [r]))
-     e2' <- (cps e2 (r, AppK f [r]))
+     r1 <- newVar -- result of the then branch
+     r2 <- newVar -- result of the else branch
+     e1' <- (cps e1 (r1, AppK f [r1]))
+     e2' <- (cps e2 (r2, AppK f [r2]))
      
      ec' <- cps ec (xc, IfK xc e1' e2')
      
