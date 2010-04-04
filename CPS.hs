@@ -60,7 +60,8 @@ newVar = do next <- get
             put (next + 1)
             return (Id "cont" next)
             
-newVars :: Int -> State CPSSt [Identifier]            
+newVars :: Int -> State CPSSt [Identifier]           
+newVars 0 = return []
 newVars 1 = do v <- newVar; return [v]
 newVars n = do v <- newVar
                rest <- newVars (n-1) 
