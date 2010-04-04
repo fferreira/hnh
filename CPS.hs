@@ -195,7 +195,6 @@ linkL (i:is) (e:es) (v,k) =
   do r <- newVar
      k'<- linkL is es (v, k)
      link i e (r, k')
---linkL ids exps (v,k) = error (show (length ids) ++ "<--- \n --->" ++ show (length exps))     
 
 patToId (IdVarPat i _) = i
 patToId _ = error "unexpected pattern"
