@@ -29,6 +29,7 @@ import LetRemoval(letRemoval)
 import ProgToLet(progToLet)
 import InferTypes(performTypeInference)
 import CPS(cpsTransform)
+import Closure(closureConversion)
 import BuiltIn(builtInDecls)
 
 import qualified TransformMonad as T
@@ -45,6 +46,7 @@ compileTransform (Program decls) =
                                      >>= letRemoval
                                      >>= progToLet
                                      >>= cpsTransform
+                                     >>= closureConversion
                                      >>= return)
       p = (Program (builtInDecls ++ decls)) 
   in

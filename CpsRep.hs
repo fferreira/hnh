@@ -72,7 +72,7 @@ prettySExp (VarK i i' k t) = parens $
                          <+> prettySExp k -- <+> (brackets (pretty t))
 prettySExp (AppK i ids) = parens $ 
                       pretty "Appk" <+> pid i 
-                      <+> sep (map pid ids)
+                      <+> brackets (sep (map pid ids))
 prettySExp (FunK params body prev cont) = parens $ pretty "Funk" 
                                       <!> brackets(sep (map pid params))
                                       <!> prettySExp body
