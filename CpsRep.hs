@@ -33,6 +33,7 @@ data KExp = IfK Identifier KExp KExp
           | LitK LiteralValue Identifier KExp Type
           | VarK Identifier Identifier KExp Type --TODO what is the second identifier
           -- D for deconstructors
+            --    tuple      elem variable
           | TupDK Identifier Int Identifier KExp Type
           | ConDK Identifier Int Identifier KExp Type
           
@@ -81,6 +82,11 @@ prettySExp (ListK ids i k) = parens $
                              pretty "ListK" <+> sep (map pid ids)
                              <+> pid i
                              <+> prettySExp k
+prettySExp (TupleK ids i k) = parens $                                      
+                              pretty "TupleK" <+> sep (map pid ids)
+                              <+> pid i
+                              <+> prettySExp k
+                             
 prettySExp (SwitchK ids alts) = parens $ pretty "SwitchK"
                                 <!> brackets(sep (map pid ids))
                                 <!> (sep (map prettyAltK alts))

@@ -33,6 +33,7 @@ module TypeUtils
        , getConstType
        , getConstTypeParams
        , isVarDecl
+       , getTupleType
        )
        where
 
@@ -164,3 +165,7 @@ getConstTypeParams dts n =
 isVarDecl :: Declaration -> Bool
 isVarDecl (PatBindDcl _ _) = True
 isVarDecl _ = False    
+
+getTupleType :: Type -> Int -> Type
+getTupleType (TupleType ts) n = ts!!n
+getTupleType t n = UnknownType

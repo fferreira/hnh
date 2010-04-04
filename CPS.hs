@@ -25,6 +25,7 @@ module CPS
 import Syntax
 import CpsRep
 import TransformMonad (TransformM, transformOk)
+import TypeUtils(getTupleType)
 
 import Control.Monad.State(evalState, State, get, put)
 import Data.List(find)
@@ -65,6 +66,11 @@ newVars n = do v <- newVar
                rest <- newVars (n-1) 
                return (v:rest)
 
+{-
+cps takes an Exp, and id and KExp
+and returns a KExp' produced from Exp, that will have KExp
+as continuation, and where its value will be 
+-}
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
 cps (LitExp val t) (v, k) = return $ LitK val v k t -- TODO is this correct?
 cps (FExp e1 e2 t) (v, k) = 
@@ -102,9 +108,9 @@ cps (IfExp ec e1 e2 t) (v, k) =
 
 cps (CaseExp es alts t) (v, k) = 
   do ids <- newVars(length es)
-     linkL <- newVars (length es)
-     conds <- mapM (cpsAlt (v,k))  alts
-     return $ SwitchK ids conds
+     v' <- newVar
+     conds <- mapM (cpsAlt ids (v,k))  alts
+     linkL ids es (v, SwitchK ids conds)
      
      
 cps (ParensExp e t) (v, k) = cps e (v,k)
@@ -126,19 +132,46 @@ cps (InfixOpExp _ _) (_, _)    = error "Unexpected InfixOpExp"
 cps (MinusFloatExp _ _) (_, _) = error "Unexpected MinusFloatExp"
 cps (MinusExp _ _) (_, _)      = error "Unexpected MinusExp"
 
-cpsL :: [Exp] -> [Identifier]
-cpsL = undefined
-
-cpsAlt :: (Identifier, KExp) -> Alternative -> State CPSSt AltK
-cpsAlt (v,k) (Alternative pats e) = 
-  do e' <- cps e (v, k)
-     return $ AltK (map patToCond pats) e' --TODO add link for the linked vars
+cpsAlt :: [Identifier] -> (Identifier, KExp) -> Alternative -> State CPSSt AltK
+cpsAlt caseIds (v,k) (Alternative pats e) = 
+  do ke <- cps e (v, k)
+     v' <- newVar
+     ke' <- addLinks caseIds pats (v', ke)
+     return $ AltK (map patToCond pats) ke'
 
 patToCond :: Pattern -> CondK
+patToCond (WildcardPat _) = WildK
 patToCond (IdVarPat _ _) = WildK
 patToCond (IdTuplePat _ _) = WildK
 patToCond (IdConPat n _ _ _) = ConK n
 
+addLinks :: [Identifier] -> [Pattern] -> (Identifier, KExp) -> State CPSSt KExp
+addLinks [i] [p] (v, k) = return $ addPatVars i p (v,k)
+addLinks (i:is) (p:ps) (v, k) = 
+  do v' <- newVar
+     k' <- addLinks is ps (v,k)
+     return $ addPatVars i p (v', k')
+
+
+addPatVars :: Identifier -> Pattern -> (Identifier, KExp) -> KExp
+addPatVars i (WildcardPat _) (v, k) = k
+addPatVars i (IdVarPat var t) (v, k) = (VarK i var k t) 
+addPatVars i (IdConPat name [] _ _) (v, k) = k
+addPatVars i (IdConPat name ids types t) (v, k) = conv i idsnum k types
+  where
+    idsnum = zip ids [0..] -- list of pairs (id, num)
+
+    conv :: Identifier -> [(Identifier, Int)] -> KExp -> [Type] -> KExp
+    conv i [(i', n)] k t = ConDK i n i' k (t!!n)
+    conv i ((i', n):is) k t = ConDK i n i' (conv i is k t) (t!!n)
+
+addPatVars i (IdTuplePat ids t) (v, k) = conv i idsnum k t
+  where
+    idsnum = zip ids [0..] -- list of pairs (id, num)
+
+    conv :: Identifier -> [(Identifier, Int)] -> KExp -> Type -> KExp
+    conv i [(i', n)] k t = TupDK i n i' k (getTupleType t n) 
+    conv i ((i', n):is) k t = TupDK i n i' (conv i is k t) (getTupleType t n)
 
 {-
  link takes an identifier, a variable and a continuation
@@ -151,17 +184,17 @@ link i e (v, k)=
      
 {-
 linkL takes a list of identifiers and a list of expressions, and a continuation
-
 it will execute the continuation after having excecuted and linked the exps to the ids
-
 -}
 
 linkL :: [Identifier] -> [Exp] -> (Identifier, KExp) -> State CPSSt KExp     
+linkL  _ []  (v, k) = return k
 linkL [i] [e] (v, k) = link i e (v, k) 
 linkL (i:is) (e:es) (v,k) = 
   do r <- newVar
      k'<- linkL is es (v, k)
      link i e (r, k')
+--linkL ids exps (v,k) = error (show (length ids) ++ "<--- \n --->" ++ show (length exps))     
 
 patToId (IdVarPat i _) = i
 patToId _ = error "unexpected pattern"
