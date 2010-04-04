@@ -79,8 +79,10 @@ cps (FExp e1 e2 t) (v, k) =
      f <- newVar -- the function
      x <- newVar -- its parameter
      
-     ek <- link x e2 (v, FunK [v] k xk (AppK f [x,xk]))
-     link f e1 (v, ek) 
+     --ek <- link x e2 (v, FunK [v] k xk (AppK f [x,xk]))
+     ek <- cps e2 (x, FunK [v] k xk (AppK f [x, xk])) -- TODO put continuation first
+--     link f e1 (v, ek) 
+     cps e1 (f, ek)
      
 cps (LambdaExp pats e t) (v, k) = 
   do xk <- newVar
@@ -90,9 +92,9 @@ cps (LambdaExp pats e t) (v, k) =
      
      
 cps (LetExp decls e t) (v, k) =
-  do exit <- newVar 
-     ke <- cps e (exit, k)
-     linkL ids exps (v, ke)
+  do n <- newVar 
+     ke <- cps e (v, k)
+     linkL ids exps ke
        where
          (ids, exps) = unzip $ map (\(PatBindDcl (IdVarPat i _) e) -> (i, e)) decls
 
@@ -111,20 +113,18 @@ cps (CaseExp es alts t) (v, k) =
   do ids <- newVars(length es)
      v' <- newVar
      conds <- mapM (cpsAlt ids (v,k))  alts
-     linkL ids es (v, SwitchK ids conds)
+     linkL ids es (SwitchK ids conds)
      
      
 cps (ParensExp e t) (v, k) = cps e (v,k)
 cps (TupleExp es t) (v, k) = 
   do ids <- newVars (length es)
-     linkL ids es (v, (TupleK ids v k))
+     linkL ids es (TupleK ids v k)
 cps (ListExp es t) (v, k) = 
   do ids <- newVars (length es)
-     linkL ids es (v, (ListK ids v k))
+     linkL ids es (ListK ids v k)
   
 cps (IdVarExp i t) (v, k) = return $ VarK i v k t
-  -- do f <- newVar
-  --    return $ FunK [v] k f (AppK f [i]) --TODO what about VarK?
 cps (IdConExp i t) (v, k) = return $ VarK i v k t -- TODO is this correct?
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
@@ -175,26 +175,16 @@ addPatVars i (IdTuplePat ids t) (v, k) = conv i idsnum k t
     conv i ((i', n):is) k t = TupDK i n i' (conv i is k t) (getTupleType t n)
 
 {-
- link takes an identifier, a variable and a continuation
- it executes the continuation where the variable is bound to the expresion
--}
-link :: Identifier -> Exp -> (Identifier, KExp)  -> State CPSSt KExp
-link i e (v, k)=
-  do f <- newVar
-     cps e (v, (FunK [i] k f  (AppK f [v])))
-     
-{-
 linkL takes a list of identifiers and a list of expressions, and a continuation
 it will execute the continuation after having excecuted and linked the exps to the ids
 -}
 
-linkL :: [Identifier] -> [Exp] -> (Identifier, KExp) -> State CPSSt KExp     
-linkL  _ []  (v, k) = return k
-linkL [i] [e] (v, k) = link i e (v, k) 
-linkL (i:is) (e:es) (v,k) = 
-  do r <- newVar
-     k'<- linkL is es (v, k)
-     link i e (r, k')
+linkL :: [Identifier] -> [Exp] -> KExp -> State CPSSt KExp     
+linkL  _ []  k = return k
+linkL [i] [e] k = cps e (i, k)
+linkL (i:is) (e:es) k = 
+  do k'<- linkL is es k
+     cps e (i, k')
 
 patToId (IdVarPat i _) = i
 patToId _ = error "unexpected pattern"
