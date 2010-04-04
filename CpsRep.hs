@@ -66,10 +66,10 @@ prettySExp (IfK i k1 k2) = parens $
                        <+> prettySExp k1 <+> prettySExp k2
 prettySExp (LitK v i k t) = parens $ 
                         pretty "LitK" <+> pretty v <+> pid i 
-                        <+> prettySExp k <+> (brackets (pretty t))
+                        <+> prettySExp k -- <+> (brackets (pretty t))
 prettySExp (VarK i i' k t) = parens $ 
                          pretty "VarK" <+> pid i <+> pretty i'
-                         <+> prettySExp k <+> (brackets (pretty t))
+                         <+> prettySExp k -- <+> (brackets (pretty t))
 prettySExp (AppK i ids) = parens $ 
                       pretty "Appk" <+> pid i 
                       <+> sep (map pid ids)
@@ -93,11 +93,11 @@ prettySExp (SwitchK ids alts) = parens $ pretty "SwitchK"
 prettySExp (TupDK i n v k t) = parens $ pretty "TupDK"                             
                                <+> pid i <> colon <> pretty n 
                                <+> pid v <+> prettySExp k
-                               <+> (brackets (pretty t))
+                               -- <+> (brackets (pretty t))
 prettySExp (ConDK i n v k t) = parens $ pretty "ConDK"                             
                                <+> pid i <> dot <> pretty n 
                                <+> pid v <+> prettySExp k
-                               <+> (brackets (pretty t))
+                               -- <+> (brackets (pretty t))
 
 prettySExp HaltK = parens $ pretty "***HaltK***"
 
