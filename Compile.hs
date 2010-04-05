@@ -29,6 +29,7 @@ import LetRemoval(letRemoval)
 import ProgToLet(progToLet)
 import InferTypes(performTypeInference)
 import CPS(cpsTransform)
+import RemoveVarK(removeVarK)
 import Closure(closureConversion)
 import BuiltIn(builtInDecls)
 
@@ -46,6 +47,7 @@ compileTransform (Program decls) =
                                      -- >>= letRemoval
                                      >>= progToLet
                                      >>= cpsTransform
+                                     >>= removeVarK
                                      >>= closureConversion
                                      >>= return)
       p = (Program (builtInDecls ++ decls)) 
