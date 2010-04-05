@@ -48,7 +48,7 @@ freeVars (AppK i params) = i:params
 freeVars (FunK params body v k) = ((freeVars body `subs` params) ++ freeVars k) `subs` [v]
 freeVars (TupleK ids v k) = ids ++ (freeVars k `subs` [v])
 freeVars (ListK ids v k) = ids ++ (freeVars k `subs` [v])
-freeVars (SwitchK ids alts) = ids ++ (nub (concatMap freeAltVars alts)  `subs` ids)
+freeVars (SwitchK ids alts) = ids ++ ((concatMap freeAltVars alts)  `subs` ids)
 freeVars (HaltK) = []
 
 freeAltVars :: AltK -> [Identifier]

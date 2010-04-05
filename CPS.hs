@@ -26,6 +26,7 @@ import Syntax
 import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
+import ProgramUtils(getNextIdNum)
 import BuiltIn(builtInContinuation)
 
 import Control.Monad.State(evalState, State, get, put)
@@ -35,13 +36,14 @@ import Data.List(find)
 import Tools
 
 cpsTransform :: Program -> TransformM KExp
-cpsTransform p@(Program decls) = transformOk "cps" (builtInContinuation (getMainK conts))
+cpsTransform p@(Program decls) = transformOk "cps" 
+                                 (builtInContinuation (getMainK conts))
   where
-    conts = concatMap declToK decls
+    conts = concatMap (declToK (initialSt p)) decls
 
-declToK :: Declaration -> [(Identifier, (Identifier, KExp) -> KExp)]
-declToK (PatBindDcl (IdVarPat i _{-t-}) e) = [(i, cpsConv e)]
-declToK d = []
+declToK :: CPSSt -> Declaration -> [(Identifier, (Identifier, KExp) -> KExp)]
+declToK ini (PatBindDcl (IdVarPat i _{-t-}) e) = [(i, cpsConv ini e)]
+declToK ini d = []
 
 getMainK :: [(Identifier, (Identifier, KExp) -> KExp)] -> KExp
 getMainK conts  = 
@@ -51,10 +53,10 @@ getMainK conts  =
   
 type CPSSt = Int
 
-cpsConv :: Exp  -> (Identifier, KExp) -> KExp
-cpsConv e (v, k) = evalState (cps e (v, k)) initialSt
+cpsConv :: CPSSt -> Exp  -> (Identifier, KExp) -> KExp
+cpsConv ini e (v, k) = evalState (cps e (v, k)) ini
 
-initialSt = 1000 -- TODO put the correct number here
+initialSt prog = getNextIdNum prog
 
 newVar :: State CPSSt Identifier
 newVar = do next <- get
