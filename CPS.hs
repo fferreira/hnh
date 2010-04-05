@@ -26,6 +26,7 @@ import Syntax
 import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
+import BuiltIn(builtInContinuation)
 
 import Control.Monad.State(evalState, State, get, put)
 import Data.List(find)
@@ -34,7 +35,7 @@ import Data.List(find)
 import Tools
 
 cpsTransform :: Program -> TransformM KExp
-cpsTransform p@(Program decls) = transformOk "cps" (getMainK conts)
+cpsTransform p@(Program decls) = transformOk "cps" (builtInContinuation (getMainK conts))
   where
     conts = concatMap declToK decls
 
@@ -74,6 +75,8 @@ as continuation, and where its value will be
 -}
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
 cps (LitExp val t) (v, k) = return $ LitK val v k t
+
+
 cps (FExp e1 e2 t) (v, k) = 
   do xk <- newVar
      f <- newVar -- the function

@@ -25,7 +25,7 @@ module AddIdentifiers
 
 import Syntax
 import TransformMonad(TransformM, transformOk)
-import BuiltIn(env0)
+import BuiltIn(idEnv0)
 
 import Control.Monad.State(evalState, State, put, get)
 
@@ -39,20 +39,11 @@ data IdentSt = IdentSt {
   , currEnv :: [(Name, Identifier)]
   }
 
--- initialSt taking into account the env0 of builtIns --TODO check out this
-initialSt = IdentSt (length env0) (map 
-                                   (\(n,num) -> (n, Id n num)) 
-                                   (zip 
-                                    (fst (unzip env0)) 
-                                    [0..(length env0 - 1)]))
-            
-idEnv0 :: [(Identifier, Type)]
-idEnv0 = map (\(n, t) -> (findId n, t)) env0
-  where
-    findId n = case lookup n (currEnv initialSt) of
-      Just i -> i
-      Nothing -> error "Unexpected"
-                  
+-- initialSt taking into account the idEnv0 of builtIns 
+initialSt = IdentSt (length idEnv0) (map 
+                                     (\i@(Id n num) -> (n, i)) 
+                                     (fst (unzip idEnv0)))
+
 getEnv :: State IdentSt [(Name, Identifier)]                  
 getEnv = get >>= (return. currEnv)
     

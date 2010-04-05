@@ -69,10 +69,15 @@ procK (ConDK i n v k t) =
      k' <- procK k
      return (ConDK i' n v k' t)
      
+procK (PrimK i k t) =
+  do i' <- rep i
+     k' <- procK k
+     return (PrimK i' k' t)
+     
 procK (AppK i ids) =
-  do i' <- rep $ traceP' "i" i
+  do i' <- rep i
      ids' <- mapM rep ids
-     return (AppK (traceP' "i'" i') ids')
+     return (AppK i' ids')
      
 procK (FunK ids body v k) = 
   do ids' <- mapM rep ids

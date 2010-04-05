@@ -22,6 +22,7 @@ module CPSRep
        , Identifier(..)
        , AltK(..)
        , CondK(..)
+       , Type(..)
        )
        where
 import Syntax  
@@ -36,7 +37,8 @@ data KExp = IfK Identifier KExp KExp
             --    tuple      elem variable
           | TupDK Identifier Int Identifier KExp Type
           | ConDK Identifier Int Identifier KExp Type
-          
+            -- primitive operations
+          | PrimK Identifier {-[Identifier]-} KExp Type
           | AppK Identifier [Identifier]
 -- params, function body, prev res, after definition, type            
           | FunK [Identifier] KExp Identifier KExp
@@ -73,6 +75,9 @@ prettySExp (VarK i i' k t) = parens $
 prettySExp (AppK i ids) = parens $ 
                       pretty "Appk" <+> pid i 
                       <+> brackets (sep (map pid ids))
+prettySExp (PrimK i k t) = parens $ pretty "PrimK"                      
+                           <+> pid i <+> prettySExp k
+                           -- <+> (brackets (pretty t))
 prettySExp (FunK params body prev cont) = parens $ pretty "Funk" 
                                       <!> brackets(sep (map pid params))
                                       <!> prettySExp body
