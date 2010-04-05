@@ -40,11 +40,11 @@ convert k = k
 freeVars :: KExp -> [Identifier]            
 freeVars (LitK val v k t) = (freeVars k) `subs` [v]
 freeVars (VarK i v k t) = i:((freeVars k) `subs` [i, v])
-freeVars (IfK i k1 k2) = freeVars k1 ++ freeVars k2
+freeVars (IfK i k1 k2) = i:(freeVars k1 ++ freeVars k2)
 freeVars (TupDK i n v k t) = i:(freeVars k `subs` [i, v]) 
 freeVars (ConDK i n v k t) = i:(freeVars k `subs` [i, v])
 freeVars (AppK i params) = i:params
-freeVars (FunK params body v k) = (freeVars body `subs` params) ++ (freeVars k `subs` [v])
+freeVars (FunK params body v k) = ((freeVars body `subs` params) ++ freeVars k) `subs` [v]
 freeVars (TupleK ids v k) = ids ++ (freeVars k `subs` [v])
 freeVars (ListK ids v k) = ids ++ (freeVars k `subs` [v])
 freeVars (SwitchK ids alts) = ids ++ (nub (concatMap freeAltVars alts)  `subs` ids)
