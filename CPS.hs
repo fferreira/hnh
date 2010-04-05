@@ -23,7 +23,7 @@ module CPS
   where
 
 import Syntax
-import CpsRep
+import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
 

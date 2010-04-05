@@ -22,7 +22,7 @@ module Closure
        )
        where
 
-import CpsRep
+import CPSRep
 import TransformMonad (TransformM, transformOk)
 
 import Data.List(nub)

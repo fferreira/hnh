@@ -16,7 +16,7 @@
     
     Copyright 2010 Francisco Ferreira
 -}
-module CpsRep
+module CPSRep
        (
          KExp(..)
        , Identifier(..)
