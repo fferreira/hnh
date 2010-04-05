@@ -14,7 +14,7 @@ import Control.Monad.State(evalState)
 
 {-
   Type inferences is done in these phases:
-    1- add type variables to all unknown types (adMetaTypes)
+    1- add type variables to all unknown types (addMetaTypes)
     2- generate equations to represent the type of expressions (generateConstraints)
     3- unify all the types (unifyTypes)
     4- perform the replacements indicated by the unification

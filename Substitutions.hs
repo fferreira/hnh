@@ -51,7 +51,7 @@ replaceInExp subs (LetExp decls e t) = (LetExp
 
 replaceInExp subs (IfExp e1 e2 e3 t) = (IfExp
                                         (replaceInExp subs e1)
-                                        (replaceInExp subs e3)
+                                        (replaceInExp subs e2)
                                         (replaceInExp subs e3)                                   
                                         (repType subs t))
 
