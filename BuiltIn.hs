@@ -45,7 +45,7 @@ idEnv0 = zip (map
               (\(n,num) -> (Id n num)) 
               (zip 
                (fst (unzip env0)) 
-               [0..(length env0 - 1)]))
+               [1..(length env0)]))
          (snd (unzip env0))
     
 builtInDecls :: [Declaration]                

@@ -40,9 +40,15 @@ data IdentSt = IdentSt {
   }
 
 -- initialSt taking into account the idEnv0 of builtIns 
-initialSt = IdentSt (length idEnv0) (map 
-                                     (\i@(Id n num) -> (n, i)) 
-                                     (fst (unzip idEnv0)))
+initialSt = IdentSt 
+            (1 + maximum (map 
+                          (\(Id _ num) -> num) 
+                          ids)) 
+            (map 
+             (\i@(Id n num) -> (n, i)) 
+             ids)
+  where
+    ids = fst (unzip idEnv0)
 
 getEnv :: State IdentSt [(Name, Identifier)]                  
 getEnv = get >>= (return. currEnv)
