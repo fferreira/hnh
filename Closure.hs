@@ -23,11 +23,41 @@ module Closure
        where
 
 import CpsRep
-
 import TransformMonad (TransformM, transformOk)
 
+import Data.List(nub)
 
-closureConversion :: KExp -> TransformM KExp
-closureConversion k = transformOk "closureConversion" k
-  
+-- closureConversion :: KExp -> TransformM KExp
+closureConversion k = transformOk "closureConversion" ((nub .freeVars) k)
 
+
+convert :: KExp -> KExp
+convert (LitK val i k t) = (LitK val i (convert k) t)
+convert (VarK i v k t) = (VarK i v (convert k) t)
+convert (TupDK i n v k t) = (TupDK i n v (convert k) t)
+convert k = k
+
+freeVars :: KExp -> [Identifier]            
+freeVars (LitK val v k t) = (freeVars k) `subs` [v]
+freeVars (VarK i v k t) = i:((freeVars k) `subs` [i, v])
+freeVars (IfK i k1 k2) = freeVars k1 ++ freeVars k2
+freeVars (TupDK i n v k t) = i:(freeVars k `subs` [i, v]) 
+freeVars (ConDK i n v k t) = i:(freeVars k `subs` [i, v])
+freeVars (AppK i params) = i:params
+freeVars (FunK params body v k) = (freeVars body `subs` params) ++ (freeVars k `subs` [v])
+freeVars (TupleK ids v k) = ids ++ (freeVars k `subs` [v])
+freeVars (ListK ids v k) = ids ++ (freeVars k `subs` [v])
+freeVars (SwitchK ids alts) = ids ++ (nub (concatMap freeAltVars alts)  `subs` ids)
+freeVars (HaltK) = []
+
+freeAltVars :: AltK -> [Identifier]
+freeAltVars (AltK cond k) = freeVars k
+
+
+
+
+{-
+  subs returns a list of all the elements of a that are not in b
+-}
+subs :: Eq a => [a] -> [a] -> [a]
+subs a b = filter (\e -> e `notElem` b) a
