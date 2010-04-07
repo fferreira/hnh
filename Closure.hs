@@ -37,10 +37,19 @@ closureConversion k = transformOk "closureConversion" (evalState
 
 type CloSt = Int
 
-newVar :: State CloSt Identifier
-newVar = do next <- get
-            put $ next + 1
-            return (Id "clo" next)
+newVarNum :: State CloSt Int
+newVarNum = do next <- get
+               put $ next + 1
+               return next
+               
+newVar :: State CloSt Identifier               
+newVar = do num <- newVarNum
+            return (Id "clo" num)
+            
+newVarFrom :: Identifier -> State CloSt Identifier        
+newVarFrom (Id name _) =
+  do num <- newVarNum
+     return (Id ("c-" ++ name) num)
 
 convert :: KExp -> State CloSt KExp
 convert (LitK val i k t) = 
@@ -59,13 +68,13 @@ convert (PrimK i k t) =
   do k' <- convert k
      return (PrimK i k' t)
 convert (AppK f params) = 
-  do f0 <- newVar
+  do f0 <- newVarFrom f
      return (TupDK f 0 f0 (AppK f0 (f:params)) UnknownType)
 
 convert fun@(FunK f params body k) =
   do body' <- convert body
      k' <- convert k
-     f' <- newVar
+     f' <- newVarFrom f
      cp <- newVar -- closure parameter
      body'' <- convertBody cp (freeFunKVars fun) body'
      return (FunK f' (cp:params) body'' 
