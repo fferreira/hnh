@@ -79,11 +79,11 @@ procK (AppK i ids) =
      ids' <- mapM rep ids
      return (AppK i' ids')
      
-procK (FunK ids body v k) = 
+procK (FunK v ids body k) = 
   do ids' <- mapM rep ids
      body' <- procK body
      k' <- procK k
-     return (FunK ids' body' v k')
+     return (FunK v ids' body' k')
      
 procK (TupleK ids v k) =      
   do ids' <- mapM rep ids

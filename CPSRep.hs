@@ -40,8 +40,8 @@ data KExp = IfK Identifier KExp KExp
             -- primitive operations
           | PrimK Identifier {-[Identifier]-} KExp Type
           | AppK Identifier [Identifier]
--- params, function body, prev res, after definition, type            
-          | FunK [Identifier] KExp Identifier KExp
+            -- fun name, params, function body, after definition
+          | FunK Identifier [Identifier] KExp {-Identifier-} KExp
           -- | LetK [Identifier] [KExp] KExp -- unused
           | TupleK [Identifier] Identifier KExp
           | ListK [Identifier] Identifier KExp
@@ -78,11 +78,11 @@ prettySExp (AppK i ids) = parens $
 prettySExp (PrimK i k t) = parens $ pretty "PrimK"                      
                            <+> pid i <!> prettySExp k
                            -- <+> (brackets (pretty t))
-prettySExp (FunK params body prev cont) = parens $ pretty "Funk" 
-                                      <!> brackets(sep (map pid params))
-                                      <!> prettySExp body
-                                      <!> pid prev
-                                      <!> prettySExp cont
+prettySExp (FunK fun params body cont) = parens $ pretty "Funk" 
+                                         <!> pid fun
+                                         <!> brackets(sep (map pid params))
+                                         <!> prettySExp body
+                                         <!> prettySExp cont
 prettySExp (ListK ids i k) = parens $                                      
                              pretty "ListK" <+> sep (map pid ids)
                              <+> pid i

@@ -18,17 +18,19 @@
 -}
 module ProgramUtils
        (
-         getNextIdNum
+         getNextIdNumExp
+       , getNextIdNumKExp
        )
        where
 
 
 import Syntax
+import CPSRep
 
 import Control.Monad.State(State, get, put, execState)
 
-getNextIdNum :: Program -> Int
-getNextIdNum (Program decls) = execState (mapM procDecl decls) 0
+getNextIdNumExp :: Program -> Int
+getNextIdNumExp (Program decls) = execState (mapM procDecl decls) 0
 
 putId :: Identifier -> State Int ()
 putId (Id _ num) = do st <- get
@@ -63,3 +65,35 @@ procExp (ListExp es _) = mapM procExp es >> return ()
 procExp e = return ()
 
 procAlt (Alternative pats e) = mapM procPat pats >> procExp e
+
+
+getNextIdNumKExp :: KExp -> Int
+getNextIdNumKExp k = execState (procK k) 0
+
+procK :: KExp -> State Int ()
+procK (IfK i k1 k2) =
+  do putId i
+     procK k1
+     procK k2
+     
+procK (LitK _ i k _) =     
+  do putId i
+     procK k
+     
+procK (VarK i i' k _) = putId i >> putId i' >> procK k
+procK (TupDK i _ i' k _) = putId i >> putId i' >> procK k
+procK (ConDK i _ i' k _) = putId i >> putId i' >> procK k
+procK (PrimK i k _) = putId i >> procK k
+procK (AppK i ids) = mapM putId ids >> putId i
+procK (FunK f params body k) = putId f >> mapM putId params
+                               >> procK body >> procK k
+procK (TupleK ids i k) = mapM putId ids >> putId i
+                         >> procK k
+procK (ListK ids i k) = mapM putId ids >> putId i                         
+                        >> procK k
+procK (SwitchK ids alts) = mapM putId ids 
+                           >> mapM procAltK alts                        
+                           >> return ()
+procK HaltK = return ()                          
+
+procAltK (AltK conds k) = procK k

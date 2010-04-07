@@ -26,7 +26,7 @@ import Syntax
 import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
-import ProgramUtils(getNextIdNum)
+import ProgramUtils(getNextIdNumExp)
 import BuiltIn(builtInContinuation)
 
 import Control.Monad.State(evalState, State, get, put)
@@ -56,7 +56,7 @@ type CPSSt = Int
 cpsConv :: CPSSt -> Exp  -> (Identifier, KExp) -> KExp
 cpsConv ini e (v, k) = evalState (cps e (v, k)) ini
 
-initialSt prog = getNextIdNum prog
+initialSt prog = getNextIdNumExp prog
 
 newVar :: State CPSSt Identifier
 newVar = do next <- get
@@ -83,14 +83,14 @@ cps (FExp e1 e2 t) (v, k) =
   do xk <- newVar
      f <- newVar -- the function
      x <- newVar -- its parameter
-     ek <- cps e2 (x, FunK [v] k xk (AppK f [x, xk]))
+     ek <- cps e2 (x, FunK xk [v] k (AppK f [x, xk]))
      cps e1 (f, ek)
      
 cps (LambdaExp pats e t) (v, k) = 
   do xk <- newVar
      res <- newVar
      ke <- cps e (res, AppK xk [res])
-     return (FunK ((map patToId pats) ++ [xk]) ke v k)
+     return (FunK v ((map patToId pats) ++ [xk]) ke k)
      
      
 cps (LetExp decls e t) (v, k) =
@@ -110,7 +110,7 @@ cps (IfExp ec e1 e2 t) (v, k) =
      
      ec' <- cps ec (xc, IfK xc e1' e2')
      
-     return $ FunK [v] k f ec'
+     return $ FunK f [v] k ec'
 
 cps (CaseExp es alts t) (v, k) = 
   do ids <- newVars(length es)

@@ -19,9 +19,9 @@ env0 :: [EnvType] -- the initial environment, containing all the builtin functio
 env0 = 
     [("+", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
     ,("-", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-{-    ,("*", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    ,("*", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
     ,("/", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-    ,("^", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int"))) -}
+{-    ,("^", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int"))) -}
     ,("~", FunType (PrimType "Int") (PrimType "Int"))
 
     ,("==", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
