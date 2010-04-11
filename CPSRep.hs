@@ -23,6 +23,7 @@ module CPSRep
        , AltK(..)
        , CondK(..)
        , Type(..)
+       , LiteralValue(..)
        )
        where
 import Syntax  
@@ -32,7 +33,7 @@ import Control.Monad.State(State, put, get, runState)
 
 data KExp = IfK Identifier KExp KExp
           | LitK LiteralValue Identifier KExp Type
-          | VarK Identifier Identifier KExp Type --TODO what is the second identifier
+          | VarK Identifier Identifier KExp Type -- the second id is a new name
           -- D for deconstructors
             --    tuple      elem variable
           | TupDK Identifier Int Identifier KExp Type

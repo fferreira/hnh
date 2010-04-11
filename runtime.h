@@ -7,7 +7,8 @@ enum types {
   FLOAT_VALUE,
   //  STRING_VALUE, // not supported right now
   TUPLE_VALUE,
-  DATA_VALUE
+  DATA_VALUE,
+  FUNCTION_VALUE
 };
 
 
@@ -28,7 +29,7 @@ typedef struct _value {
       struct _value ** fields;
     } data_value;
     
-    
+    void * function;  //TODO add the correct type
   };
 } value;
 
@@ -38,5 +39,24 @@ typedef struct {
   void * curr;
   void * end;
 } memory_buffer;
+
+// memory management
+
+void init_memory(void);
+void swap_segs(void);
+value * alloc_int(int n);
+value * alloc_tuple(int size);
+value * alloc_data(const char * con, int size);
+
+// tuple and datatyupe access functions
+
+value * tup_get(const value * val, int n);
+void tup_set(value * val, int n, value * v);
+value * data_get(value * val, int n);
+void data_set(value * val, int n, value * v);
+
+// Predefined names
+
+#define RES ("result")
 
 #endif//__RUNTIME_H__

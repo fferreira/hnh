@@ -31,6 +31,7 @@ import InferTypes(performTypeInference)
 import CPS(cpsTransform)
 import RemoveVarK(removeVarK)
 import Closure(closureConversion)
+import CodeGen(codeGen)
 import BuiltIn(builtInDecls)
 
 import qualified TransformMonad as T
@@ -44,11 +45,12 @@ compileTransform (Program decls) =
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= addIdentifiers
                                      >>= performTypeInference
-                                     -- >>= letRemoval
+                                     -- >>= letRemoval -- TODO wrong!
                                      >>= progToLet
                                      >>= cpsTransform
                                      >>= removeVarK
                                      >>= closureConversion
+                                     >>= codeGen
                                      >>= return)
       p = (Program (builtInDecls ++ decls)) 
   in
