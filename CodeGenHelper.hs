@@ -30,7 +30,7 @@ module CodeGenHelper
        , callFun
        , newTuple
        , getTuple
-       , getHalt
+       , genHalt
        , desc
        )
        where
@@ -50,17 +50,12 @@ mainWrapper body = "\n // HNH Main\n"
                    ++ body ++ "\n}\n"
 
 allocInt cvar n = 
-  if cvar /= "RES" then "value * " ++ cvar 
-                        ++ " = alloc_int(" ++ show n ++ ");\n"
-  else cvar ++ " = alloc_int(" ++ show n ++ ");\n"
+  "value * " ++ cvar ++ " = alloc_int(" ++ show n ++ ");\n"
   
 createFun desc name params body = Fun desc name params body
 
 getAssign v ov = 
-  if v /= "RES" then 
     "value * " ++ v ++ " = " ++ ov ++ ";\n"
-  else 
-    v ++ " = " ++ ov ++ ";\n"
 
 callFun :: String -> String
 callFun fun = fun ++ "();\n"
@@ -91,7 +86,7 @@ newTuple name contents =
 getTuple tuple elem var =
   var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
 
-getHalt = "halt_continuation();"
+genHalt v = "halt_continuation(" ++ v ++");\n"
 
 
 
@@ -124,7 +119,7 @@ desc (ListK ids v k) = comment $ pretty "ListK"
                         <+> pretty ids <+> pretty v
                         <+> pretty "k"
 desc (SwitchK ids alts) = comment $ pretty "SwitchK"
-desc HaltK = comment $ pretty "HaltK"
+desc (HaltK i)= comment $ pretty "HaltK" <+> pretty i
 
 comment d = show (enclose 
                   (line <> pretty"/* (")

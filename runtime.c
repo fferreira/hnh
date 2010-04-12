@@ -161,9 +161,9 @@ static value final_result;
 value * RES;
 
 // Final Continuation
-void halt_continuation(void)
+void halt_continuation(value * v)
 {
-  print_value(RES);
+  print_value(v);
   printf ("\n");
 }
 

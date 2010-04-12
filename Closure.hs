@@ -89,7 +89,7 @@ convert (ListK ids v k) =
 convert (SwitchK ids alts) =
   do alts' <- mapM convertAlt alts
      return (SwitchK ids alts')
-convert HaltK = return HaltK
+convert (HaltK i) = return (HaltK i)
 convert k = return k 
 
 convertAlt (AltK conds k) =
@@ -128,7 +128,7 @@ freeVars e = (nub . freeVars') e
     freeVars' (ListK ids v k) = ids ++ (freeVars' k `subs` [v])
     freeVars' (SwitchK ids alts) = 
       ids ++ ((concatMap freeAltVars alts)  `subs` ids)
-    freeVars' (HaltK) = []
+    freeVars' (HaltK i) = [i]
 
     freeAltVars :: AltK -> [Identifier]
     freeAltVars (AltK cond k) = freeVars' k

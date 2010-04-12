@@ -94,6 +94,6 @@ procK (ListK ids i k) = mapM putId ids >> putId i
 procK (SwitchK ids alts) = mapM putId ids 
                            >> mapM procAltK alts                        
                            >> return ()
-procK HaltK = return ()                          
+procK (HaltK i) = putId i
 
 procAltK (AltK conds k) = procK k

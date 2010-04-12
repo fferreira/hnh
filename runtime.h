@@ -69,7 +69,7 @@ extern struct _value * RES;
 
 // Final Continuation
 
-void halt_continuation(void);
+void halt_continuation(value * v);
 
 // Generated Functions
 

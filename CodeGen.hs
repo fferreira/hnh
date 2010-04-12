@@ -113,6 +113,8 @@ procK ke@(TupleK ids v k) =
      return (desc ke ++ newTuple vc idsc  ++ code)
 procK ke@(ListK ids v k) = return (desc ke)
 procK ke@(SwitchK ids alts) = return (desc ke)
-procK ke@(HaltK) = return (desc ke ++ getHalt)
+procK ke@(HaltK i) = 
+  do ic <- getCVar i
+     return (desc ke ++ genHalt ic)
 
 
