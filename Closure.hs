@@ -52,24 +52,24 @@ newVarFrom (Id name _) =
      return (Id ("c-" ++ name) num)
 
 convert :: KExp -> State CloSt KExp
-convert (LitK val i k t) = 
+convert (LitK val i k) = 
   do k' <- convert k
-     return (LitK val i k' t)
-convert (VarK i v k t) = 
+     return (LitK val i k')
+convert (VarK i v k) = 
   do k' <- convert k
-     return (VarK i v k' t)
-convert (TupDK i n v k t) = 
+     return (VarK i v k')
+convert (TupDK i n v k) = 
   do k' <- convert k
-     return (TupDK i n v k' t)
-convert (ConDK i n v k t) =       
+     return (TupDK i n v k')
+convert (ConDK i n v k) =       
   do k' <- convert k
-     return (ConDK i n v k' t)
-convert (PrimK i k t) =     
+     return (ConDK i n v k')
+convert (PrimK i k) =     
   do k' <- convert k
-     return (PrimK i k' t)
+     return (PrimK i k')
 convert (AppK f params) = 
   do f0 <- newVarFrom f
-     return (TupDK f 0 f0 (AppK f0 (f:params)) UnknownType)
+     return (TupDK f 0 f0 (AppK f0 (f:params)))
 
 convert fun@(FunK f params body k) =
   do body' <- convert body
@@ -103,10 +103,10 @@ convertBody closure fvs body = convertBody' closure fvs 1 body
                     Int -> KExp -> State CloSt KExp
     convertBody' closure [] n body = return body
     convertBody' closure [fv] n body =
-      return $ TupDK closure n fv body UnknownType
+      return $ TupDK closure n fv body
     convertBody' closure (fv:fvs) n body =
       do k <- convertBody' closure fvs (n+1) body
-         return $ TupDK closure n fv k UnknownType -- TODO improve typing
+         return $ TupDK closure n fv k
 
 freeFunKVars (FunK v params body k) = freeVars body `subs` (v:params)
 freeFunKVars k = error ("Unexpected, not a function: " ++ show k)
@@ -115,12 +115,12 @@ freeFunKVars k = error ("Unexpected, not a function: " ++ show k)
 freeVars :: KExp -> [Identifier]            
 freeVars e = (nub . freeVars') e
   where
-    freeVars' (LitK val v k t) = (freeVars' k) `subs` [v]
-    freeVars' (VarK i v k t) = i:((freeVars' k) `subs` [i, v])
+    freeVars' (LitK val v k) = (freeVars' k) `subs` [v]
+    freeVars' (VarK i v k) = i:((freeVars' k) `subs` [i, v])
     freeVars' (IfK i k1 k2) = i:(freeVars' k1 ++ freeVars' k2)
-    freeVars' (TupDK i n v k t) = i:(freeVars' k `subs` [i, v]) 
-    freeVars' (ConDK i n v k t) = i:(freeVars' k `subs` [i, v])
-    freeVars' (PrimK i k t) = []
+    freeVars' (TupDK i n v k) = i:(freeVars' k `subs` [i, v]) 
+    freeVars' (ConDK i n v k) = i:(freeVars' k `subs` [i, v])
+    freeVars' (PrimK i k) = []
     freeVars' (AppK i params) = i:params
     freeVars' (FunK v params body k) = 
       ((freeVars' body `subs` params) ++ freeVars' k) `subs` [v]

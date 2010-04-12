@@ -32,17 +32,17 @@ import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cab
 import Control.Monad.State(State, put, get, runState)
 
 data KExp = IfK Identifier KExp KExp
-          | LitK LiteralValue Identifier KExp Type
-          | VarK Identifier Identifier KExp Type -- the second id is a new name
+          | LitK LiteralValue Identifier KExp 
+          | VarK Identifier Identifier KExp -- the second id is a new name
           -- D for deconstructors
             --    tuple      elem variable
-          | TupDK Identifier Int Identifier KExp Type
-          | ConDK Identifier Int Identifier KExp Type
+          | TupDK Identifier Int Identifier KExp
+          | ConDK Identifier Int Identifier KExp
             -- primitive operations
-          | PrimK Identifier {-[Identifier]-} KExp Type
+          | PrimK Identifier {-[Identifier]-} KExp
           | AppK Identifier [Identifier]
             -- fun name, params, function body, after definition
-          | FunK Identifier [Identifier] KExp {-Identifier-} KExp
+          | FunK Identifier [Identifier] KExp KExp
           -- | LetK [Identifier] [KExp] KExp -- unused
           | TupleK [Identifier] Identifier KExp
           | ListK [Identifier] Identifier KExp
@@ -67,18 +67,17 @@ instance Pretty CondK where
 prettySExp (IfK i k1 k2) = parens $ 
                        pretty "IfK" <+> pid i 
                        <+> prettySExp k1 <+> prettySExp k2
-prettySExp (LitK v i k t) = parens $ 
-                        pretty "LitK" <+> pretty v <+> pid i 
-                        <+> prettySExp k -- <+> (brackets (pretty t))
-prettySExp (VarK i i' k t) = parens $ 
-                         pretty "VarK" <+> pid i <+> pretty i'
-                         <+> prettySExp k -- <+> (brackets (pretty t))
+prettySExp (LitK v i k) = parens $ 
+                          pretty "LitK" <+> pretty v <+> pid i 
+                          <+> prettySExp k
+prettySExp (VarK i i' k) = parens $ 
+                           pretty "VarK" <+> pid i <+> pretty i'
+                           <+> prettySExp k 
 prettySExp (AppK i ids) = parens $ 
-                      pretty "Appk" <+> pid i 
-                      <+> brackets (sep (map pid ids))
-prettySExp (PrimK i k t) = parens $ pretty "PrimK"                      
-                           <+> pid i <!> prettySExp k
-                           -- <+> (brackets (pretty t))
+                          pretty "Appk" <+> pid i 
+                          <+> brackets (sep (map pid ids))
+prettySExp (PrimK i k) = parens $ pretty "PrimK"                      
+                         <+> pid i <!> prettySExp k
 prettySExp (FunK fun params body cont) = parens $ pretty "Funk" 
                                          <!> pid fun
                                          <!> brackets(sep (map pid params))
@@ -96,14 +95,12 @@ prettySExp (TupleK ids i k) = parens $
 prettySExp (SwitchK ids alts) = parens $ pretty "SwitchK"
                                 <!> brackets(sep (map pid ids))
                                 <!> (sep (map prettyAltK alts))
-prettySExp (TupDK i n v k t) = parens $ pretty "TupDK"                             
-                               <+> pid i <> colon <> pretty n 
-                               <+> pid v <+> prettySExp k
-                               -- <+> (brackets (pretty t))
-prettySExp (ConDK i n v k t) = parens $ pretty "ConDK"                             
-                               <+> pid i <> dot <> pretty n 
-                               <+> pid v <+> prettySExp k
-                               -- <+> (brackets (pretty t))
+prettySExp (TupDK i n v k) = parens $ pretty "TupDK"                             
+                             <+> pid i <> colon <> pretty n 
+                             <+> pid v <+> prettySExp k
+prettySExp (ConDK i n v k) = parens $ pretty "ConDK"                             
+                             <+> pid i <> dot <> pretty n 
+                             <+> pid v <+> prettySExp k
 
 prettySExp HaltK = parens $ pretty "***HaltK***"
 

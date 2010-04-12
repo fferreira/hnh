@@ -27,6 +27,7 @@ module CodeGenHelper
        , createFun
        , callFun
        , newTuple
+       , getTuple
        , desc
        )
        where
@@ -73,6 +74,8 @@ newTuple name contents =
       assign(n, num) = 
         "tup_set(" ++ name ++ ", " ++ show num ++ ", " ++ n ++ ");\n"
       
+getTuple tuple elem var =
+  var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
 
 
 
@@ -85,15 +88,15 @@ newTuple name contents =
 
 
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
-desc (LitK val v k t) = comment $ pretty "LitK" <+> pretty val 
-                        <+> pretty v <+> pretty "k"
-desc (VarK _ _ _ _) = error "Unexpected VarK"
-desc (TupDK tuple n v k t) = comment $ pretty "TupDK" 
-                             <+> pretty n <+> pretty v <+> pretty "k"
-desc (ConDK const n v k t) = comment $ pretty "ConDK" <+> pretty const
-                             <+> pretty n <+> pretty v <+> pretty "k"
-desc (PrimK v k t) = comment $ pretty "PrimK" <+> pretty v
-                     <+> pretty "k"
+desc (LitK val v k) = comment $ pretty "LitK" <+> pretty val 
+                      <+> pretty v <+> pretty "k"
+desc (VarK _ _ _) = error "Unexpected VarK"
+desc (TupDK tuple n v k) = comment $ pretty "TupDK" 
+                           <+> pretty n <+> pretty v <+> pretty "k"
+desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
+                           <+> pretty n <+> pretty v <+> pretty "k"
+desc (PrimK v k) = comment $ pretty "PrimK" <+> pretty v
+                   <+> pretty "k"
 desc (AppK f params) = comment $ pretty "AppK" 
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"

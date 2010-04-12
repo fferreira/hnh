@@ -76,14 +76,14 @@ procK (IfK i k1 k2) =
      procK k1
      procK k2
      
-procK (LitK _ i k _) =     
+procK (LitK _ i k) =     
   do putId i
      procK k
      
-procK (VarK i i' k _) = putId i >> putId i' >> procK k
-procK (TupDK i _ i' k _) = putId i >> putId i' >> procK k
-procK (ConDK i _ i' k _) = putId i >> putId i' >> procK k
-procK (PrimK i k _) = putId i >> procK k
+procK (VarK i i' k) = putId i >> putId i' >> procK k
+procK (TupDK i _ i' k) = putId i >> putId i' >> procK k
+procK (ConDK i _ i' k) = putId i >> putId i' >> procK k
+procK (PrimK i k) = putId i >> procK k
 procK (AppK i ids) = mapM putId ids >> putId i
 procK (FunK f params body k) = putId f >> mapM putId params
                                >> procK body >> procK k

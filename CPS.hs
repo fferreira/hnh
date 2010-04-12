@@ -76,7 +76,7 @@ and returns a KExp' produced from Exp, that will have KExp
 as continuation, and where its value will be 
 -}
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
-cps (LitExp val t) (v, k) = return $ LitK val v k t
+cps (LitExp val t) (v, k) = return $ LitK val v k
 
 
 cps (FExp e1 e2 t) (v, k) = 
@@ -127,8 +127,8 @@ cps (ListExp es t) (v, k) =
   do ids <- newVars (length es)
      linkL ids es (ListK ids v k)
   
-cps (IdVarExp i t) (v, k) = return $ VarK i v k t
-cps (IdConExp i t) (v, k) = return $ VarK i v k t -- TODO is this correct?
+cps (IdVarExp i t) (v, k) = return $ VarK i v k
+cps (IdConExp i t) (v, k) = return $ VarK i v k -- TODO is this correct?
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
 cps (ConExp _ _) (_, _)        = error "Unexpected ConExp"
@@ -159,23 +159,23 @@ addLinks (i:is) (p:ps) (v, k) =
 
 addPatVars :: Identifier -> Pattern -> (Identifier, KExp) -> KExp
 addPatVars i (WildcardPat _) (v, k) = k
-addPatVars i (IdVarPat var t) (v, k) = (VarK i var k t) 
+addPatVars i (IdVarPat var t) (v, k) = (VarK i var k) 
 addPatVars i (IdConPat name [] _ _) (v, k) = k
-addPatVars i (IdConPat name ids types t) (v, k) = conv i idsnum k types
+addPatVars i (IdConPat name ids types t) (v, k) = conv i idsnum k
   where
     idsnum = zip ids [0..] -- list of pairs (id, num)
 
-    conv :: Identifier -> [(Identifier, Int)] -> KExp -> [Type] -> KExp
-    conv i [(i', n)] k t = ConDK i n i' k (t!!n)
-    conv i ((i', n):is) k t = ConDK i n i' (conv i is k t) (t!!n)
+    conv :: Identifier -> [(Identifier, Int)] -> KExp -> KExp
+    conv i [(i', n)] k = ConDK i n i' k 
+    conv i ((i', n):is) k = ConDK i n i' (conv i is k) 
 
-addPatVars i (IdTuplePat ids t) (v, k) = conv i idsnum k t
+addPatVars i (IdTuplePat ids t) (v, k) = conv i idsnum k
   where
     idsnum = zip ids [0..] -- list of pairs (id, num)
 
-    conv :: Identifier -> [(Identifier, Int)] -> KExp -> Type -> KExp
-    conv i [(i', n)] k t = TupDK i n i' k (getTupleType t n) 
-    conv i ((i', n):is) k t = TupDK i n i' (conv i is k t) (getTupleType t n)
+    conv :: Identifier -> [(Identifier, Int)] -> KExp -> KExp
+    conv i [(i', n)] k = TupDK i n i' k 
+    conv i ((i', n):is) k = TupDK i n i' (conv i is k) 
 
 {-
 linkL takes a list of identifiers and a list of expressions, and a continuation

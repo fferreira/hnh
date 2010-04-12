@@ -45,8 +45,8 @@ rep v = do st <- get
                                Just i -> return i
 
 procK :: KExp -> State [Subst] KExp
-procK (VarK i v k t) = do add v i
-                          procK k
+procK (VarK i v k) = do add v i
+                        procK k
                                 
 procK (IfK i k1 k2) =
   do i' <- rep i
@@ -54,25 +54,25 @@ procK (IfK i k1 k2) =
      k2' <- procK k2
      return (IfK i' k1' k2')
      
-procK (LitK val i k t) = 
+procK (LitK val i k) = 
   do i' <- rep i
      k' <- procK k
-     return (LitK val i' k' t)
+     return (LitK val i' k')
      
-procK (TupDK i n v k t) =     
+procK (TupDK i n v k) =     
   do i' <- rep i
      k' <- procK k
-     return (TupDK i' n v k' t)
+     return (TupDK i' n v k')
      
-procK (ConDK i n v k t) =      
+procK (ConDK i n v k) =      
   do i' <- rep i
      k' <- procK k
-     return (ConDK i' n v k' t)
+     return (ConDK i' n v k')
      
-procK (PrimK i k t) =
+procK (PrimK i k) =
   do i' <- rep i
      k' <- procK k
-     return (PrimK i' k' t)
+     return (PrimK i' k')
      
 procK (AppK i ids) =
   do i' <- rep i

@@ -69,17 +69,23 @@ addFun fun =
 procK :: KExp -> State CodeGenSt String
 procK ke@(IfK i k1 k2) = return (desc ke)
 
-procK ke@(LitK (LiteralInt n) v k t) = 
+procK ke@(LitK (LiteralInt n) v k) = 
   do vc <- newCVar v
-     k' <- procK k
-     return (desc ke ++ allocInt vc n  ++ k')
+     code <- procK k
+     return (desc ke ++ allocInt vc n  ++ code)
            
-procK ke@(LitK val v k t) = error "Unsupported literal" --TODO complete
+procK ke@(LitK val v k) = error "Unsupported literal" --TODO complete
 
-procK ke@(VarK _ _ _ _) = error "Unexpected VarK"
-procK ke@(TupDK tuple n v k t) = return (desc ke)
-procK ke@(ConDK const n v k t) = return (desc ke)
-procK ke@(PrimK v k t) = 
+procK ke@(VarK _ _ _) = error "Unexpected VarK"
+
+procK ke@(TupDK tuple n v k) = 
+  do vc <- newCVar v
+     tuplec <- getCVar tuple
+     code <- procK k
+     return (desc ke ++ getTuple tuplec n vc  ++ code)
+
+procK ke@(ConDK const n v k) = return (desc ke)
+procK ke@(PrimK v k) = 
   do code <- procK k
      return ({-desc ke ++-} code)
 
