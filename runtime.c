@@ -137,12 +137,48 @@ void data_set(value * val, int n, value * v)
   }
 }
 
+// printing function
+
+void print_value(const value * val)
+{
+  switch (val->tag) {
+    case INT_VALUE:
+      printf("%d", val->int_value);
+      break;
+  case CHAR_VALUE:
+  case FLOAT_VALUE:
+  case TUPLE_VALUE:
+  case DATA_VALUE:
+  case FUNCTION_VALUE:
+  default:
+    printf ("uninplemented\n"); 
+  };
+}
+
+// Program Result
+
+static value final_result;
+value * RES;
+
+// Final Continuation
+void halt_continuation(void)
+{
+  print_value(RES);
+  printf ("\n");
+}
 
 // Main function
 
 int main(int argc, char *argv[])
 {
-  
+  init_memory();
+
+  RES = &final_result;
+  RES->tag = INT_VALUE;
+  RES->int_value = 0;
+
+  init_fun();
+  HNH_main();
   return 0;
 }
 

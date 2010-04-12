@@ -24,6 +24,7 @@ module RemoveVarK
        where
 
 import CPSRep
+import BuiltIn(resultId)
 import TransformMonad (TransformM, transformOk)
 
 import Control.Monad.State (State, get, put, evalState)
@@ -45,8 +46,14 @@ rep v = do st <- get
                                Just i -> return i
 
 procK :: KExp -> State [Subst] KExp
-procK (VarK i v k) = do add v i
-                        procK k
+procK (VarK i v k) = 
+  if v /= resultId then
+    do add v i
+       procK k
+  else
+    do i' <- rep i
+       k' <- procK k
+       return (VarK i' v k')
                                 
 procK (IfK i k1 k2) =
   do i' <- rep i

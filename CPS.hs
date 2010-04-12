@@ -27,7 +27,7 @@ import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
 import ProgramUtils(getNextIdNumExp)
-import BuiltIn(builtInContinuation)
+import BuiltIn(builtInContinuation, resultId)
 
 import Control.Monad.State(evalState, State, get, put)
 import Data.List(find)
@@ -48,7 +48,7 @@ declToK ini d = []
 getMainK :: [(Identifier, (Identifier, KExp) -> KExp)] -> KExp
 getMainK conts  = 
   case find (\((Id n _), _) -> n == "main") conts of
-    Just (_, f) -> f (Id "end" 0, HaltK) --id "end" 0 has the result of the program
+    Just (_, f) -> f (resultId, HaltK) --reusltId has the result of the program
     Nothing -> error "Unable to find function main"
   
 type CPSSt = Int
@@ -78,12 +78,11 @@ as continuation, and where its value will be
 cps :: Exp  -> (Identifier, KExp) -> State CPSSt KExp
 cps (LitExp val t) (v, k) = return $ LitK val v k
 
-
 cps (FExp e1 e2 t) (v, k) = 
   do xk <- newVar
      f <- newVar -- the function
      x <- newVar -- its parameter
-     ek <- cps e2 (x, FunK xk [v] k (AppK f [x, xk]))
+     ek <- cps e2 (x, FunK xk [v] k (AppK f [x, xk])) --TODO is this right?
      cps e1 (f, ek)
      
 cps (LambdaExp pats e t) (v, k) = 

@@ -33,7 +33,8 @@ import Control.Monad.State(State, put, get, runState)
 codeGen :: KExp -> TransformM String
 codeGen k = transformOk 
             "codeGen" 
-            (generateFuns funs ++ "\n" ++ mainWrapper main)
+            (fileHeader ++ generateFuns funs ++ "\n" 
+             ++ mainWrapper main)
   where
     (main, CodeGenSt _ _ funs) = (runState (procK k) initialSt)
 
@@ -58,7 +59,7 @@ getCVar :: Identifier -> State CodeGenSt CVar
 getCVar i = 
   do CodeGenSt _ dict _<- get
      case lookup i dict of 
-       Nothing -> error ("Error:" ++ show i ++ "not found!")
+       Nothing -> error ("Error: " ++ show i ++ " not found!")
        Just v -> return v
        
 addFun :: Fun -> State CodeGenSt ()       
@@ -76,7 +77,11 @@ procK ke@(LitK (LiteralInt n) v k) =
            
 procK ke@(LitK val v k) = error "Unsupported literal" --TODO complete
 
-procK ke@(VarK _ _ _) = error "Unexpected VarK"
+procK ke@(VarK old new k) = 
+  do oldc <- getCVar old
+     newc <- newCVar new
+     code <- procK k
+     return (desc ke ++ getAssign newc oldc ++ code)
 
 procK ke@(TupDK tuple n v k) = 
   do vc <- newCVar v
@@ -95,8 +100,9 @@ procK ke@(AppK f params) =
 
 procK ke@(FunK fun params body k) = 
   do cfun <- newCVar fun
+     params' <- mapM (\p -> newCVar p) params
      body' <- procK body
-     addFun (createFun (desc ke) cfun body') --TODO complete use params
+     addFun (createFun (desc ke) cfun params'  body') --TODO complete use params
      code <- procK k
      return code
      
@@ -107,6 +113,6 @@ procK ke@(TupleK ids v k) =
      return (desc ke ++ newTuple vc idsc  ++ code)
 procK ke@(ListK ids v k) = return (desc ke)
 procK ke@(SwitchK ids alts) = return (desc ke)
-procK ke@(HaltK) = return (desc ke)
+procK ke@(HaltK) = return (desc ke ++ getHalt)
 
 

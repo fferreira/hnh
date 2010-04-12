@@ -55,8 +55,25 @@ void tup_set(value * val, int n, value * v);
 value * data_get(value * val, int n);
 void data_set(value * val, int n, value * v);
 
+// printing function
+
+void print_value(const value * val);
+
 // Predefined names
 
-#define RES ("result")
+#define RES (result)
+
+// Program result declaration
+
+extern struct _value * RES;
+
+// Final Continuation
+
+void halt_continuation(void);
+
+// Generated Functions
+
+void init_fun(void);
+void HNH_main(void);
 
 #endif//__RUNTIME_H__

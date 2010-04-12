@@ -1,7 +1,7 @@
 # Simplistic makefile (can easily be improved, but suffices for now.
 complete: compile
 
-runtime: runtime.h runtime.c
+runtime: runtime.h runtime.c code.c
 
 compile: 
 	ghc --make Main -o hnh	

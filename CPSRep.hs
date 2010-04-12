@@ -88,7 +88,7 @@ prettySExp (ListK ids i k) = parens $
                              <+> pid i
                              <+> prettySExp k
 prettySExp (TupleK ids i k) = parens $                                      
-                              pretty "TupleK" <+> sep (map pid ids)
+                              pretty "TupleK" <+> brackets(sep (map pid ids))
                               <+> pid i
                               <+> prettySExp k
                              

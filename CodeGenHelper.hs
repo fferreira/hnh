@@ -21,13 +21,16 @@ module CodeGenHelper
        (
          CVar
        , Fun(..)
+       , fileHeader
        , mainWrapper
        , allocInt
        , generateFuns
        , createFun
+       , getAssign
        , callFun
        , newTuple
        , getTuple
+       , getHalt
        , desc
        )
        where
@@ -37,16 +40,27 @@ import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cab
 
 type CVar = String
 
-data Fun = Fun String CVar String -- desc name body
+data Fun = Fun String CVar [CVar] String -- desc name params body
          deriving Show
+
+fileHeader = "#include \"runtime.h\"\n"
 
 mainWrapper body = "\n // HNH Main\n"
                    ++ "void HNH_main (void)\n{\n"
                    ++ body ++ "\n}\n"
 
-allocInt cvar n = cvar ++ " = alloc_int(" ++ show n ++ ");\n"
+allocInt cvar n = 
+  if cvar /= "RES" then "value * " ++ cvar 
+                        ++ " = alloc_int(" ++ show n ++ ");\n"
+  else cvar ++ " = alloc_int(" ++ show n ++ ");\n"
   
-createFun desc name body = Fun desc name body
+createFun desc name params body = Fun desc name params body
+
+getAssign v ov = 
+  if v /= "RES" then 
+    "value * " ++ v ++ " = " ++ ov ++ ";\n"
+  else 
+    v ++ " = " ++ ov ++ ";\n"
 
 callFun :: String -> String
 callFun fun = fun ++ "();\n"
@@ -57,15 +71,15 @@ generateFuns funs = "\n// Function Declarations\n" ++ decls
                     ++ "\n// Function Value Init\n" ++ initFun
   where
     decls = concatMap genDecls funs
-    genDecls (Fun desc name body) = 
+    genDecls (Fun desc name parms body) =  --TODO use params
       desc ++ "\n"
       ++ "void " ++ name ++ "_f (void)\n"
       ++ "{\n" ++ body ++ "\n}\n"
     globals = concatMap genGlobal funs
-    genGlobal (Fun _ name _) = "value * " ++ name ++ ";\n"
-    initFun = "void initFun(void)\n{\n" ++ concatMap genInit funs ++ "\n}\n"
-    genInit (Fun _ name _) = name ++ "->tag = FUNCTION_VALUE;\n"
-                             ++ name ++ "->function = " ++ name ++ "_f;\n"
+    genGlobal (Fun _ name _  _) = "value * " ++ name ++ ";\n"
+    initFun = "void init_fun(void)\n{\n" ++ concatMap genInit funs ++ "\n}\n"
+    genInit (Fun _ name _ _) = name ++ "->tag = FUNCTION_VALUE;\n"
+                               ++ name ++ "->function = " ++ name ++ "_f;\n"
 
 newTuple name contents = 
   name ++ " = alloc_tuple(" ++ show (length contents) ++ ");\n"
@@ -77,7 +91,7 @@ newTuple name contents =
 getTuple tuple elem var =
   var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
 
-
+getHalt = "halt_continuation();"
 
 
 
@@ -90,8 +104,9 @@ getTuple tuple elem var =
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
 desc (LitK val v k) = comment $ pretty "LitK" <+> pretty val 
                       <+> pretty v <+> pretty "k"
-desc (VarK _ _ _) = error "Unexpected VarK"
-desc (TupDK tuple n v k) = comment $ pretty "TupDK" 
+desc (VarK i i' k) = comment $ pretty "VarK" <+> pretty i
+                     <+> pretty i' <+> pretty "k"
+desc (TupDK tuple n v k) = comment $ pretty "TupDK" <+> pretty tuple 
                            <+> pretty n <+> pretty v <+> pretty "k"
 desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
                            <+> pretty n <+> pretty v <+> pretty "k"
@@ -101,7 +116,7 @@ desc (AppK f params) = comment $ pretty "AppK"
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"
                                 <+> pretty fun <+> pretty params
-                                <+> pretty body <+> pretty "k"
+                                <> line <>  pretty body <+> pretty "k"
 desc (TupleK ids v k) = comment $ pretty "TupleK"
                         <+> pretty ids <+> pretty v
                         <+> pretty "k"

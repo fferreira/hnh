@@ -71,6 +71,7 @@ loadAndEval file main showSteps = do contents <- readFile file
                                      parsed <- return $ parseHNH file contents
                                      (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
                                      program <- return $ checkTransformation programRes 
+                                     writeFile "code.c" program
                                      doc <- return $ if showSteps then
                                                        T.renderSteps docs
                                                      else
