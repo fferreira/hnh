@@ -62,6 +62,11 @@ getCVar i =
        Nothing -> error ("Error: " ++ show i ++ " not found!")
        Just v -> return v
        
+interVar :: State CodeGenSt CVar -- intermediate var       
+interVar = do CodeGenSt n dict funs <- get
+              put (CodeGenSt (n+1) dict funs)
+              return ("inter" ++ show n)
+       
 addFun :: Fun -> State CodeGenSt ()       
 addFun fun = 
   do CodeGenSt n d fs <- get
@@ -74,7 +79,6 @@ procK ke@(LitK (LiteralInt n) v k) =
   do vc <- newCVar v
      code <- procK k
      return (desc ke ++ allocInt vc n  ++ code)
-           
 procK ke@(LitK val v k) = error "Unsupported literal" --TODO complete
 
 procK ke@(VarK old new k) = 
@@ -96,13 +100,15 @@ procK ke@(PrimK v k) =
 
 procK ke@(AppK f params) = 
   do fc <- getCVar f
-     return (desc ke ++ callFun fc) -- TODO complete use params
+     params' <- mapM getCVar params
+     var <- interVar
+     return (desc ke ++ callFun fc params' var)
 
 procK ke@(FunK fun params body k) = 
   do cfun <- newCVar fun
      params' <- mapM (\p -> newCVar p) params
      body' <- procK body
-     addFun (createFun (desc ke) cfun params'  body') --TODO complete use params
+     addFun (createFun (desc ke) cfun params'  body')
      code <- procK k
      return code
      

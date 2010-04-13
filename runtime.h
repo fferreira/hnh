@@ -1,6 +1,8 @@
 #ifndef __RUNTIME_H__
 #define __RUNTIME_H__
 
+#include <stdio.h> // only for NULL //TODO improve
+
 enum types {
   INT_VALUE,
   CHAR_VALUE,
@@ -11,6 +13,9 @@ enum types {
   FUNCTION_VALUE
 };
 
+struct _value;
+
+typedef void (*fun_ptr) (struct _value * val);
 
 typedef struct _value {
   enum types tag; // the type of the vale
@@ -29,7 +34,7 @@ typedef struct _value {
       struct _value ** fields;
     } data_value;
     
-    void * function;  //TODO add the correct type
+    fun_ptr function;  //TODO add the correct type
   };
 } value;
 
@@ -47,6 +52,7 @@ void swap_segs(void);
 value * alloc_int(int n);
 value * alloc_tuple(int size);
 value * alloc_data(const char * con, int size);
+value * alloc_function(fun_ptr fun);
 
 // tuple and datatyupe access functions
 

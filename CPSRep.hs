@@ -49,7 +49,7 @@ data KExp = IfK Identifier KExp KExp
             
           | SwitchK [Identifier] [AltK]
 
-          | HaltK
+          | HaltK Identifier
           deriving (Show, Eq)
                    
 data CondK = WildK | ConK Name deriving (Show, Eq)
@@ -102,7 +102,7 @@ prettySExp (ConDK i n v k) = parens $ pretty "ConDK"
                              <+> pid i <> dot <> pretty n 
                              <+> pid v <+> prettySExp k
 
-prettySExp HaltK = parens $ pretty "***HaltK***"
+prettySExp (HaltK i) = parens $ pretty "***HaltK***" <+> parens (pid i)
 
 prettyAltK (AltK conds k) = braces $ pretty "AltK"
                             <+> brackets(sep (map prettyCondK conds))

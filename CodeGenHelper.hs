@@ -57,34 +57,49 @@ createFun desc name params body = Fun desc name params body
 getAssign v ov = 
     "value * " ++ v ++ " = " ++ ov ++ ";\n"
 
-callFun :: String -> String
-callFun fun = fun ++ "();\n"
+callFun fun params var = 
+  "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
+  ++ pack ++
+  fun ++ "->function(" ++ var ++ ");\n" 
+  where
+    pack = concatMap (\(v, n) -> 
+                       "tup_set(" ++ var 
+                       ++ ", " ++ show n 
+                       ++ ", " ++ v ++ ");\n")
+           (zip params [0..])
+  
+  
+                                           -- TODO add trampoline !!!
 
 generateFuns :: [Fun] -> String
-generateFuns funs = "\n// Function Declarations\n" ++ decls 
-                    ++ "\n// Function Identifiers\n" ++ globals 
+generateFuns funs = "\n// Function Identifiers\n" ++ globals 
+                    ++ "\n// Function Declarations\n" ++ decls 
                     ++ "\n// Function Value Init\n" ++ initFun
   where
     decls = concatMap genDecls funs
-    genDecls (Fun desc name parms body) =  --TODO use params
+    genDecls (Fun desc name params body) =  --TODO use params
       desc ++ "\n"
-      ++ "void " ++ name ++ "_f (void)\n"
-      ++ "{\n" ++ body ++ "\n}\n"
+      ++ "void " ++ name ++ "_f (value * params)\n"
+      ++ "{\n" ++ extractParams params ++ body ++ "\n}\n"
+    extractParams params = concatMap 
+                           (\(p,n) -> 
+                             "value * "++ p 
+                             ++ " = tup_get(params, " ++ show n ++ ");\n")
+                           (zip params [0..])
     globals = concatMap genGlobal funs
     genGlobal (Fun _ name _  _) = "value * " ++ name ++ ";\n"
     initFun = "void init_fun(void)\n{\n" ++ concatMap genInit funs ++ "\n}\n"
-    genInit (Fun _ name _ _) = name ++ "->tag = FUNCTION_VALUE;\n"
-                               ++ name ++ "->function = " ++ name ++ "_f;\n"
+    genInit (Fun _ name _ _) = name ++ " = alloc_function(" ++ name ++ "_f);\n"  
 
 newTuple name contents = 
-  name ++ " = alloc_tuple(" ++ show (length contents) ++ ");\n"
+  "value * "++ name ++ " = alloc_tuple(" ++ show (length contents) ++ ");\n"
   ++ concatMap assign (zip contents [0..])
     where
       assign(n, num) = 
         "tup_set(" ++ name ++ ", " ++ show num ++ ", " ++ n ++ ");\n"
       
 getTuple tuple elem var =
-  var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
+  "value * " ++ var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
 
 genHalt v = "halt_continuation(" ++ v ++");\n"
 
@@ -111,7 +126,7 @@ desc (AppK f params) = comment $ pretty "AppK"
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"
                                 <+> pretty fun <+> pretty params
-                                <> line <>  pretty body <+> pretty "k"
+                                <+>  pretty "body" <+> pretty "k"
 desc (TupleK ids v k) = comment $ pretty "TupleK"
                         <+> pretty ids <+> pretty v
                         <+> pretty "k"

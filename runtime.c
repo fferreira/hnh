@@ -93,7 +93,14 @@ value * alloc_data(const char * con, int size)
   return val;
 }
 
+value * alloc_function(fun_ptr fun)
+{
+  value * val = (value *) alloc_mem(sizeof(value));
+  val->tag = FUNCTION_VALUE;
+  val->function = fun;
 
+  return val;
+}
 
 // Tuple and datatype access functions
 
@@ -137,6 +144,17 @@ void data_set(value * val, int n, value * v)
   }
 }
 
+// Call function or build closure
+
+void call_or_closure(value * fun, value * params)
+{
+  // extract  the cont (in the last param)
+ // count the rest of the params
+//call or closure
+// if closure
+  //do whatever with closure
+}
+
 // printing function
 
 void print_value(const value * val)
@@ -151,7 +169,7 @@ void print_value(const value * val)
   case DATA_VALUE:
   case FUNCTION_VALUE:
   default:
-    printf ("uninplemented\n"); 
+    printf ("unimplemented\n"); 
   };
 }
 

@@ -48,7 +48,7 @@ declToK ini d = []
 getMainK :: [(Identifier, (Identifier, KExp) -> KExp)] -> KExp
 getMainK conts  = 
   case find (\((Id n _), _) -> n == "main") conts of
-    Just (_, f) -> f (resultId, HaltK) --reusltId has the result of the program
+    Just (_, f) -> f (resultId, HaltK resultId) --reusltId has the result of the program
     Nothing -> error "Unable to find function main"
   
 type CPSSt = Int

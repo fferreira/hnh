@@ -24,6 +24,7 @@ import Parser
 import Syntax
 
 import CommonTransforms(commonTransforms)
+import OneVarLambda(oneVarLambda)
 import AddIdentifiers(addIdentifiers)
 import LetRemoval(letRemoval)
 import ProgToLet(progToLet)
@@ -43,6 +44,7 @@ import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 -- compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform (Program decls) = 
   let (res, docs)  = T.runTransform (commonTransforms p
+                                     >>= oneVarLambda
                                      >>= addIdentifiers
                                      >>= performTypeInference
                                      -- >>= letRemoval -- TODO wrong!
