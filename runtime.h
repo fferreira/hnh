@@ -89,7 +89,7 @@ call_k HNH_main(value * param);
 
 // Util functions
 
-static call_k ret_val(value * fun, value * params) {
+static call_k ret_val(fun_ptr fun, value * params) {
   call_k ret;
   ret.fun = fun;
   ret.params = params;
