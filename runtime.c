@@ -144,17 +144,6 @@ void data_set(value * val, int n, value * v)
   }
 }
 
-// Call function or build closure
-
-void call_or_closure(value * fun, value * params)
-{
-  // extract  the cont (in the last param)
- // count the rest of the params
-//call or closure
-// if closure
-  //do whatever with closure
-}
-
 // printing function
 
 void print_value(const value * val)
