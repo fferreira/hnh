@@ -14,8 +14,9 @@ enum types {
 };
 
 struct _value;
+struct _call_k;
 
-typedef void (*fun_ptr) (struct _value * val);
+typedef struct _call_k (*fun_ptr) (struct _value * val);
 
 typedef struct _value {
   enum types tag; // the type of the vale
@@ -38,6 +39,10 @@ typedef struct _value {
   };
 } value;
 
+typedef struct _call_k {
+  fun_ptr fun;
+  value * params;
+} call_k;
 
 typedef struct {
   void * buffer;
@@ -80,6 +85,15 @@ void halt_continuation(value * v);
 // Generated Functions
 
 void init_fun(void);
-void HNH_main(void);
+call_k HNH_main(value * param);
+
+// Util functions
+
+static call_k ret_val(value * fun, value * params) {
+  call_k ret;
+  ret.fun = fun;
+  ret.params = params;
+  return ret;
+}
 
 #endif//__RUNTIME_H__

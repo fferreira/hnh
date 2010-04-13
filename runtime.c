@@ -172,6 +172,7 @@ void halt_continuation(value * v)
 {
   print_value(v);
   printf ("\n");
+  exit(0);
 }
 
 // Main function
@@ -185,7 +186,18 @@ int main(int argc, char *argv[])
   RES->int_value = 0;
 
   init_fun();
-  HNH_main();
+
+  // Trampoline
+
+  call_k next;
+  next.fun = HNH_main;
+  next.params = NULL; //No params for now
+
+  while(1) {
+    next = (next.fun) (next.params);
+    // TODO add memory management here
+  }
+
   return 0;
 }
 

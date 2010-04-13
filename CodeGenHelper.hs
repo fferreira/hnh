@@ -45,8 +45,8 @@ data Fun = Fun String CVar [CVar] String -- desc name params body
 
 fileHeader = "#include \"runtime.h\"\n"
 
-mainWrapper body = "\n // HNH Main\n"
-                   ++ "void HNH_main (void)\n{\n"
+mainWrapper body = "\n // HNH Main (param not used)\n"
+                   ++ "call_k HNH_main (value * param)\n{\n"
                    ++ body ++ "\n}\n"
 
 allocInt cvar n = 
@@ -57,10 +57,11 @@ createFun desc name params body = Fun desc name params body
 getAssign v ov = 
     "value * " ++ v ++ " = " ++ ov ++ ";\n"
 
-callFun fun params var = 
+callFun fun params var =      
   "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
-  ++ pack ++
-  fun ++ "->function(" ++ var ++ ");\n" 
+  ++ pack
+  ++ "return ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
+  -- ++ fun ++ "->function(" ++ var ++ ");\n" 
   where
     pack = concatMap (\(v, n) -> 
                        "tup_set(" ++ var 
@@ -79,7 +80,7 @@ generateFuns funs = "\n// Function Identifiers\n" ++ globals
     decls = concatMap genDecls funs
     genDecls (Fun desc name params body) =  --TODO use params
       desc ++ "\n"
-      ++ "void " ++ name ++ "_f (value * params)\n"
+      ++ "call_k " ++ name ++ "_f (value * params)\n"
       ++ "{\n" ++ extractParams params ++ body ++ "\n}\n"
     extractParams params = concatMap 
                            (\(p,n) -> 
