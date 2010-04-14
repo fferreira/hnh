@@ -26,7 +26,6 @@ import Syntax
 import CommonTransforms(commonTransforms)
 import OneVarLambda(oneVarLambda)
 import AddIdentifiers(addIdentifiers)
-import LetRemoval(letRemoval)
 import ProgToLet(progToLet)
 import InferTypes(performTypeInference)
 import CPS(cpsTransform)
@@ -47,7 +46,6 @@ compileTransform (Program decls) =
                                      >>= oneVarLambda
                                      >>= addIdentifiers
                                      >>= performTypeInference
-                                     -- >>= letRemoval -- TODO wrong!
                                      >>= progToLet
                                      >>= cpsTransform
                                      >>= removeVarK

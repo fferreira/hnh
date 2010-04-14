@@ -19,7 +19,6 @@
 
 module Main where
 
-import qualified Eval as E
 import qualified Compile as C
 
 import System.Environment(getArgs)
@@ -29,9 +28,7 @@ import System.IO
 main = do
   args <- getArgs
   p <- case args of --TODO add support for the extra parameters
-    (cmd:file:extra) -> case cmd of "e"  -> E.loadAndEval file "main" False
-                                    "ed" -> E.loadAndEval file "main" True
-                                    "c"  -> C.loadAndEval file "main" False
+    (cmd:file:extra) -> case cmd of "c"  -> C.loadAndEval file "main" False
                                     "cd" -> C.loadAndEval file "main" True
     _ -> error "Usage: hnh [e|ed|c|cd] program"
   displayIO stdout (renderPretty 0.2 60 (p<> line))
