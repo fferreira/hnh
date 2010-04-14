@@ -61,7 +61,6 @@ callFun fun params var =
   "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
   ++ pack
   ++ "\nreturn ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
-  -- ++ fun ++ "->function(" ++ var ++ ");\n" 
   where
     pack = concatMap (\(v, n) -> 
                        "tup_set(" ++ var 

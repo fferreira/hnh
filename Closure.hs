@@ -119,16 +119,19 @@ closureConvert k = do k' <- convert CAppK k
       do body' <- convert c body
          k' <- convert c k
          f' <- newVarFrom f
+         fBody <- newVarFrom f -- the name of f in its body(for recursive calls)
          cp <- newVar -- closure parameter
      
-         fvs <- return $ traceP' ("fv in:" ++  show f)(freeFunKVars fun) -- free variables
+         fvs <- return (freeFunKVars fun) -- free variables
          newFvs <- mapM (\fv -> newVarFrom fv) fvs -- new name for free vars
-     
-         body'' <- convertBody cp newFvs (cpsRep (zip fvs newFvs)
-                                          body')
-     
-         return (FunK f' (cp:params) body''
-                 (TupleK (f':fvs) f k'))
+         
+         -- TupleK is the closure if there is a recursive call
+         body'' <- convertBody cp newFvs (TupleK (f:newFvs) fBody
+                                          (cpsRep ((f, fBody):(zip fvs newFvs))
+                                           body'))
+         return (FunK f (cp:params)
+                 body''
+                 (TupleK (f:fvs) f' (cpsRep [(f, f')] k'))) 
 
      
     convertBody :: Identifier -> [Identifier] -> KExp -> State CloSt KExp
@@ -142,7 +145,6 @@ closureConvert k = do k' <- convert CAppK k
             return (TupDK closure n fv body)
           convertBody' closure (fv:fvs) n body = 
             do k <- convertBody' closure fvs (n+1) body
-               error "pum"
                return (TupDK closure n fv k)
 
 freeFunKVars (FunK v params body k) = freeVars body `subs` (v:params)
