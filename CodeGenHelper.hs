@@ -60,7 +60,7 @@ getAssign v ov =
 callFun fun params var =      
   "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
   ++ pack
-  ++ "return ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
+  ++ "\nreturn ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
   -- ++ fun ++ "->function(" ++ var ++ ");\n" 
   where
     pack = concatMap (\(v, n) -> 
