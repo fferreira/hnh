@@ -7,7 +7,6 @@ module InferTypes
 import Syntax
 import TransformMonad(TransformM, transformOk)
 import TypeUtils(DataType, getDataTypes)
-import AddIdentifiers(idEnv0)
 import InferDeclaration(inferDeclType)
 
 import Control.Monad.State(evalState)
@@ -29,7 +28,7 @@ performTypeInference p = inferTypesProg dts p
 inferTypesProg :: [DataType] -> Program -> TransformM Program
 inferTypesProg dts (Program decls) = 
   transformOk "inferTypes" (Program 
-                            (evalState (mapM (inferDeclType dts) decls) idEnv0))
+                            (evalState (mapM (inferDeclType dts) decls) []))
 
 
 

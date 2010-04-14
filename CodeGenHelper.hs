@@ -31,19 +31,40 @@ module CodeGenHelper
        , newTuple
        , getTuple
        , genHalt
+       , genPrim
        , desc
        )
        where
 import CPSRep
 
-import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed
+import Data.List(intersperse)
 
 type CVar = String
 
 data Fun = Fun String CVar [CVar] String -- desc name params body
          deriving Show
+                  
+intrinsics :: [(Name, CVar)]                  
+intrinsics = 
+  [
+    ("+", "int_add")
+  , ("-", "int_sub")
+  , ("*", "int_mul")
+  , ("/", "int_div")
+  , ("~", "int_neg")
+  -- , ("==", "int_eq")
+  -- , ("<", "int_lt")
+  -- , (">", "int_gt")
+  ]
 
-fileHeader = "#include \"runtime.h\"\n"
+getIntrinsic :: Name -> CVar
+getIntrinsic n = 
+  case lookup n intrinsics of
+    Nothing -> error ("Unsupported intrinsic function: " ++ n)
+    Just f -> f
+
+fileHeader = "#include \"runtime.h\"\n#include \"intrinsic.h\"\n"
 
 mainWrapper body = "\n // HNH Main (param not used)\n"
                    ++ "call_k HNH_main (value * param)\n{\n"
@@ -69,15 +90,13 @@ callFun fun params var =
            (zip params [0..])
   
   
-                                           -- TODO add trampoline !!!
-
 generateFuns :: [Fun] -> String
 generateFuns funs = "\n// Function Identifiers\n" ++ globals 
                     ++ "\n// Function Declarations\n" ++ decls 
                     ++ "\n// Function Value Init\n" ++ initFun
   where
     decls = concatMap genDecls funs
-    genDecls (Fun desc name params body) =  --TODO use params
+    genDecls (Fun desc name params body) =
       desc ++ "\n"
       ++ "call_k " ++ name ++ "_f (value * params)\n"
       ++ "{\n" ++ extractParams params ++ body ++ "\n}\n"
@@ -103,12 +122,11 @@ getTuple tuple elem var =
 
 genHalt v = "halt_continuation(" ++ v ++");\n"
 
-
-
-
-
-
-
+genPrim n params vc = "value * " ++ vc 
+                      ++ " = " ++ getIntrinsic n
+                      ++ "("
+                      ++ concat (intersperse "," params)
+                      ++ ");"
 
 
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
@@ -120,8 +138,8 @@ desc (TupDK tuple n v k) = comment $ pretty "TupDK" <+> pretty tuple
                            <+> pretty n <+> pretty v <+> pretty "k"
 desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
                            <+> pretty n <+> pretty v <+> pretty "k"
-desc (PrimK v params k) = comment $ pretty "PrimK" <+> pretty v
-                          <+> pretty params <+> pretty "k"
+desc (PrimK n params v k) = comment $ pretty "PrimK" <+> pretty n
+                          <+> pretty params <+> pretty v <+> pretty "k"
 desc (AppK f params) = comment $ pretty "AppK" 
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"

@@ -94,9 +94,11 @@ procK ke@(TupDK tuple n v k) =
      return (desc ke ++ getTuple tuplec n vc  ++ code)
 
 procK ke@(ConDK const n v k) = return (desc ke)
-procK ke@(PrimK v params k) = 
-  do code <- procK k
-     return ({-desc ke ++-} code)
+procK ke@(PrimK n params v k) = 
+  do vc <- newCVar v 
+     params' <- mapM getCVar params
+     code <- procK k
+     return (desc ke ++ genPrim n params' vc ++ code)
 
 procK ke@(AppK f params) = 
   do fc <- getCVar f

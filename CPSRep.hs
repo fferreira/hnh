@@ -20,6 +20,7 @@ module CPSRep
        (
          KExp(..)
        , Identifier(..)
+       , Name
        , AltK(..)
        , CondK(..)
        , Type(..)
@@ -39,7 +40,7 @@ data KExp = IfK Identifier KExp KExp
           | TupDK Identifier Int Identifier KExp
           | ConDK Identifier Int Identifier KExp
             -- primitive operations
-          | PrimK Identifier [Identifier] KExp -- TODO should add a v
+          | PrimK Name [Identifier] Identifier KExp
           | ConK Name [Identifier] Identifier KExp
           | AppK Identifier [Identifier]
             -- fun name, params, function body, after definition
@@ -77,9 +78,9 @@ prettySExp (VarK i i' k) = parens $
 prettySExp (AppK i ids) = parens $ 
                           pretty "Appk" <+> pid i 
                           <+> brackets (sep (map pid ids))
-prettySExp (PrimK i ids k) = parens $ pretty "PrimK"                      
-                             <+> pid i <+> brackets (sep (map pid ids))
-                             <!> prettySExp k
+prettySExp (PrimK n ids i' k) = parens $ pretty "PrimK"                      
+                             <+> pretty n <+> brackets (sep (map pid ids))
+                             <+> pid i' <!> prettySExp k
 prettySExp (ConK n ids i' k) = parens $ pretty "ConK" <+> pretty n
                                <+> brackets (sep (map pid ids))
                                <+> pid i'

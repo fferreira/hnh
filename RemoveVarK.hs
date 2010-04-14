@@ -71,11 +71,10 @@ procK (ConDK i n v k) =
      k' <- procK k
      return (ConDK i' n v k')
      
-procK (PrimK i params k) =
-  do i' <- rep i
-     params' <- mapM rep params
+procK (PrimK n params v k) =
+  do params' <- mapM rep params
      k' <- procK k
-     return (PrimK i' params' k')
+     return (PrimK n params' v k')
      
 procK (AppK i ids) =
   do i' <- rep i

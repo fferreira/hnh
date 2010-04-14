@@ -19,13 +19,11 @@
 module AddIdentifiers
   (
     addIdentifiers,
-    idEnv0
   )
   where
 
 import Syntax
 import TransformMonad(TransformM, transformOk)
-import BuiltIn(idEnv0)
 
 -- TODO change the state monad, and pass an explicit parameter
 -- it will be simpler
@@ -41,21 +39,13 @@ data IdentSt = IdentSt {
   , currEnv :: [(Name, Identifier)]
   }
 
--- initialSt taking into account the idEnv0 of builtIns 
-initialSt = IdentSt 
-            (1 + maximum (map 
-                          (\(Id _ num) -> num) 
-                          ids)) 
-            (map 
-             (\i@(Id n num) -> (n, i)) 
-             ids)
-  where
-    ids = fst (unzip idEnv0)
+initialSt = IdentSt 0 []
 
 getId :: Name -> State IdentSt Identifier
 getId n = 
   do IdentSt _ env <- get
-     case lookup n env of Nothing -> error ("Variable " ++ n ++ " not found")
+     case lookup n env of Nothing -> error ("AddIdentifiers: Variable " 
+                                            ++ n ++ " not found")
                           Just i -> return i
 
 newId :: Name -> State IdentSt Identifier

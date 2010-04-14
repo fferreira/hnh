@@ -27,7 +27,7 @@ import CPSRep
 import TransformMonad (TransformM, transformOk)
 import TypeUtils(getTupleType)
 import ProgramUtils(getNextIdNumExp)
-import BuiltIn(builtInContinuation, resultId)
+import BuiltIn(resultId)
 
 import Control.Monad.State(evalState, State, get, put)
 import Data.List(find)
@@ -37,7 +37,7 @@ import Tools
 
 cpsTransform :: Program -> TransformM KExp
 cpsTransform p@(Program decls) = transformOk "cps" 
-                                 (builtInContinuation (getMainK conts))
+                                 (getMainK conts)
   where
     conts = concatMap (declToK (initialSt p)) decls
 
@@ -48,7 +48,8 @@ declToK ini d = []
 getMainK :: [(Identifier, (Identifier, KExp) -> KExp)] -> KExp
 getMainK conts  = 
   case find (\((Id n _), _) -> n == "main") conts of
-    Just (_, f) -> f (resultId, HaltK resultId) --reusltId has the result of the program
+    -- reusltId has the result of the program
+    Just (_, f) -> f (resultId, HaltK resultId) 
     Nothing -> error "Unable to find function main"
   
 type CPSSt = Int
@@ -82,7 +83,7 @@ cps (FExp e1 e2 t) (v, k) =
   do xk <- newVar
      f <- newVar -- the function
      x <- newVar -- its parameter
-     ek <- cps e2 (x, FunK xk [v] k (AppK f [x, xk])) --TODO is this right?
+     ek <- cps e2 (x, FunK xk [v] k (AppK f [x, xk]))
      cps e1 (f, ek)
      
 cps (LambdaExp pats e t) (v, k) = 
@@ -128,7 +129,7 @@ cps (ListExp es t) (v, k) =
   
 cps (IdVarExp i t) (v, k) = return $ VarK i v k
 cps (IdConExp (Id n _) params t) (v, k) = return $ ConK n params v k
-cps (IdPrim n params t) (v, k) = error "TODO complete" --TODO complete
+cps (IdPrim n params t) (v, k) = return (PrimK n params v k)
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
 cps (ConExp _ _ _) (_, _)      = error "Unexpected ConExp"

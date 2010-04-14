@@ -2,7 +2,7 @@
 CFLAGS = -g 
 complete: compile
 
-runtime: runtime.h runtime.c code.c config.h
+runtime: runtime.h runtime.c code.c config.h intrinsic.h
 
 compile: 
 	ghc --make Main -o hnh	
