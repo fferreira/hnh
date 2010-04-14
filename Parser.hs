@@ -331,7 +331,7 @@ fExp = do es <- many1 aExp
           return $ foldl (\e1 e2 ->FExp e1 e2 ut) (head es) (tail es)
 
 aExp :: Parser Exp
-aExp = try (do n <- conid ; return (ConExp n ut))
+aExp = try (do n <- conid ; return (VarExp n ut))
        <|> try (do l <- literal ; return (litToExp l))
        <|> try listExp
        <|> try parensExp

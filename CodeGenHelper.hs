@@ -120,8 +120,8 @@ desc (TupDK tuple n v k) = comment $ pretty "TupDK" <+> pretty tuple
                            <+> pretty n <+> pretty v <+> pretty "k"
 desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
                            <+> pretty n <+> pretty v <+> pretty "k"
-desc (PrimK v k) = comment $ pretty "PrimK" <+> pretty v
-                   <+> pretty "k"
+desc (PrimK v params k) = comment $ pretty "PrimK" <+> pretty v
+                          <+> pretty params <+> pretty "k"
 desc (AppK f params) = comment $ pretty "AppK" 
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"

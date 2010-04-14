@@ -154,7 +154,7 @@ typePattern _ (IdTuplePat ids t) =
 typeExp :: [DataType] -> Exp -> State MetaSt Exp
 -- TODO improve error handling
 typeExp _ (VarExp _ _) = error "Unexpected VarExp"
-typeExp _ (ConExp _ _) = error "Unexpected ConExp"
+typeExp _ (ConExp _ _ _) = error "Unexpected ConExp"
 typeExp _ (InfixOpExp _ _) = error "Unexpected InfixOpExp"
 typeExp _ (MinusExp _ _) = error "Unexpected MinusExp"
 typeExp _ (MinusFloatExp _ _) = error "Unexpected MinusFloatExp"
@@ -163,10 +163,10 @@ typeExp _ (IdVarExp i t) =
      t' <- polyType (choose t tl)
      return (IdVarExp i t')
 
-typeExp _ (IdConExp i t) =
+typeExp _ (IdConExp i params t) =
   do tl <- lookupId i
      t' <- polyType (choose t tl)
-     return $ IdConExp i t'
+     return $ IdConExp i params t'
 
 typeExp dts (FExp e1 e2 t) = 
   do e1' <- typeExp dts e1

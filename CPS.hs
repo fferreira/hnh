@@ -127,13 +127,15 @@ cps (ListExp es t) (v, k) =
      linkL ids es (ListK ids v k)
   
 cps (IdVarExp i t) (v, k) = return $ VarK i v k
-cps (IdConExp i t) (v, k) = return $ VarK i v k -- TODO is this correct?
+cps (IdConExp (Id n _) params t) (v, k) = return $ ConK n params v k
+cps (IdPrim n params t) (v, k) = error "TODO complete" --TODO complete
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"
-cps (ConExp _ _) (_, _)        = error "Unexpected ConExp"
+cps (ConExp _ _ _) (_, _)      = error "Unexpected ConExp"
 cps (InfixOpExp _ _) (_, _)    = error "Unexpected InfixOpExp"
 cps (MinusFloatExp _ _) (_, _) = error "Unexpected MinusFloatExp"
 cps (MinusExp _ _) (_, _)      = error "Unexpected MinusExp"
+cps (Prim _ _ _) (_, _)        = error "Unexpected MinusExp"
 
 cpsAlt :: [Identifier] -> (Identifier, KExp) -> Alternative -> State CPSSt AltK
 cpsAlt caseIds (v,k) (Alternative pats e) = 
@@ -146,7 +148,7 @@ patToCond :: Pattern -> CondK
 patToCond (WildcardPat _) = WildK
 patToCond (IdVarPat _ _) = WildK
 patToCond (IdTuplePat _ _) = WildK
-patToCond (IdConPat n _ _ _) = ConK n
+patToCond (IdConPat n _ _ _) = CondK n
 
 addLinks :: [Identifier] -> [Pattern] -> (Identifier, KExp) -> State CPSSt KExp
 addLinks [i] [p] (v, k) = return $ addPatVars i p (v,k)

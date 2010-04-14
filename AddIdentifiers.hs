@@ -27,6 +27,8 @@ import Syntax
 import TransformMonad(TransformM, transformOk)
 import BuiltIn(idEnv0)
 
+-- TODO change the state monad, and pass an explicit parameter
+-- it will be simpler
 import Control.Monad.State(evalState, State, put, get)
 
 addIdentifiers :: Program -> TransformM Program
@@ -50,8 +52,17 @@ initialSt = IdentSt
   where
     ids = fst (unzip idEnv0)
 
-getEnv :: State IdentSt [(Name, Identifier)]                  
-getEnv = get >>= (return. currEnv)
+getId :: Name -> State IdentSt Identifier
+getId n = 
+  do IdentSt _ env <- get
+     case lookup n env of Nothing -> error ("Variable " ++ n ++ " not found")
+                          Just i -> return i
+
+newId :: Name -> State IdentSt Identifier
+newId n =
+  do IdentSt next env <- get
+     put (IdentSt (next + 1) ((n, (Id n next)):env))
+     return (Id n next)
     
 processDecls decls = mapM processDecl decls
 
@@ -67,46 +78,37 @@ processDecl d = return d
 
 adaptCons :: Constructor -> State IdentSt Constructor
 adaptCons (ConDcl conName ts) = 
-  do IdentSt next env <- get
-     i <- return $ Id conName next
-     put $ IdentSt (next + 1) ((conName, i):env)
+  do i <- newId conName
      return $ IdConDcl i ts
 
 adaptPattern :: Pattern -> State IdentSt Pattern
 adaptPattern (VarPat n t) =
-  do IdentSt next env <- get
-     put $ IdentSt (next + 1) ((n, Id n next):env)
-     return $ IdVarPat (Id n next) t
+  do i <- newId n
+     return $ IdVarPat i t 
     
 adaptPattern (ConPat n ns t) =
-  do IdentSt next env <- get
-     ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
-     put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
-     return $ IdConPat n ids [] t
+  do ids <- mapM newId ns
+     return (IdConPat n ids [] t)
      
 adaptPattern (TuplePat ns t) =
-  do IdentSt next env <- get
-     ids <- mapM (\(n,num) -> return $ Id n num) (zip ns [next..(next + length ns)])
-     put $ IdentSt (next + (length ns)) ((zip ns ids) ++ env)
-     return $ IdTuplePat ids t
+  do ids <- mapM newId ns
+     return (IdTuplePat ids t)
      
 adaptPattern (WildcardPat t) = return (WildcardPat t)     
 
 adaptExp :: Exp -> State IdentSt Exp
 adaptExp (VarExp n t) = 
-  do env <- getEnv
-     id <- return $ lookup n env
-     case id of
-       (Just id) -> return $ IdVarExp id t
-       Nothing -> error ("Variable " ++ n ++ " not found")
+  do i <- getId n
+     return (IdVarExp i t)
        
-adaptExp (ConExp n t) = 
-  do env <- getEnv
-     id <- return $ lookup n env
-     case id of
-       (Just id) -> return $ IdConExp id t
-       Nothing -> error ("Variable " ++ n ++ " not found")
-       
+adaptExp (ConExp n params t) = 
+  do i <- getId n
+     params' <- mapM getId params
+     return (IdConExp i params' t)
+     
+adaptExp (Prim n params t) =     
+  do params' <- mapM getId params
+     return (IdPrim n params' t)
        
 adaptExp (FExp e1 e2 t) =       
   do e1' <- adaptExp e1
@@ -126,9 +128,10 @@ adaptExp (LambdaExp pats e t) =
   do IdentSt _ env <- get
      pats' <- mapM adaptPattern pats
      e' <- adaptExp e
-     IdentSt next _ <- get
+     IdentSt next _ <- get -- restore old env
      put $ IdentSt next env
      return $ LambdaExp pats' e' t
+
 adaptExp (CaseExp es alts t) = 
   do es' <- mapM adaptExp es
      alts' <- mapM adaptAlt alts

@@ -76,9 +76,9 @@ closureConvert k = do k' <- convert CAppK k
       do k' <- convert c k
          return (ConDK i n v k')
          
-    convert c (PrimK i k) =     
+    convert c (PrimK i params k) =     
       do k' <- convert c k
-         return (PrimK i k')
+         return (PrimK i params k')
          
     convert c k@(AppK f params) = 
       if c == CAppK then convertAppK k else return k
@@ -157,7 +157,7 @@ freeVars e = (nub . freeVars') e
     freeVars' (IfK i k1 k2) = i:(freeVars' k1 ++ freeVars' k2)
     freeVars' (TupDK i n v k) = i:(freeVars' k `subs` [i, v]) 
     freeVars' (ConDK i n v k) = i:(freeVars' k `subs` [i, v])
-    freeVars' (PrimK i k) = freeVars' k
+    freeVars' (PrimK i params k) = params ++ freeVars' k
     freeVars' (AppK i params) = i:params
     freeVars' (FunK v params body k) = 
       ((freeVars' body `subs` params) ++ freeVars' k) `subs` [v]
@@ -185,7 +185,7 @@ cpsRep dict e = cr e
     cr (VarK i i' k) = VarK (rep i) (rep i') (cr k)
     cr (TupDK i n i' k) = TupDK (rep i) n (rep i') (cr k)
     cr (ConDK i n i' k) = ConDK (rep i) n (rep i') (cr k)
-    cr (PrimK i k) = PrimK (rep i) (cr k)
+    cr (PrimK i params k) = PrimK (rep i) (map rep params) (cr k)
     cr (AppK i ids) = AppK (rep i) (map rep ids)
     cr (FunK i ids k1 k2) = FunK i (map rep ids) (cr k1) (cr k2)
     cr (TupleK ids i k) = TupleK (map rep ids) (rep i) (cr k)

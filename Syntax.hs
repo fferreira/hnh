@@ -36,7 +36,7 @@ module Syntax
     )
     where
 
-import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed 
 
 data Program = Program [Declaration] deriving(Show, Eq)
 
@@ -99,7 +99,7 @@ data OpExp
 
 data Exp 
     = VarExp Name Type
-    | ConExp Name Type
+
     | LitExp LiteralValue Type --TODO should this be just a value?
     | InfixOpExp OpExp Type
     | FExp Exp Exp Type -- function application expression          
@@ -112,8 +112,11 @@ data Exp
     | ParensExp Exp Type
     | TupleExp [Exp] Type -- a tuple of expresions
     | ListExp [Exp] Type  -- a list of expresions
-    | IdVarExp Identifier Type -- an identifier, translated from a VarExp
-    | IdConExp Identifier Type
+    | IdVarExp Identifier Type -- an identifier, translated from a VarExp    
+    | ConExp Name [Name] Type -- a data type value expresion
+    | IdConExp Identifier [Identifier] Type --TODO first Id should be a name??
+    | Prim Name [Name] Type -- a primitive operation
+    | IdPrim Name [Identifier] Type
       deriving (Show, Eq)
 
 data Pattern
@@ -145,12 +148,16 @@ instance Pretty LiteralValue where
     pretty (LiteralChar c) = pretty c
 
 instance Pretty Declaration where
-  pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns <> equals <> pretty t
+  pretty (TypeDcl n ns t) = pretty "type " <> pretty n <> pretty ns 
+                            <> equals <> pretty t
   pretty (DataDcl t ts) = pretty "data " <> pretty t <> equals <!> pretty ts
   pretty (TypeSigDcl ns t) = pretty ns <> colon <> colon <> pretty t
-  pretty (FixityDcl NonAssoc p ops) = pretty "infix"<+> pretty p <+> pretty ops
-  pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"<+> pretty p <+> pretty ops
-  pretty (FixityDcl RightAssoc p ops) = pretty "infixr"<+> pretty p <+> pretty ops
+  pretty (FixityDcl NonAssoc p ops) = pretty "infix"
+                                      <+> pretty p <+> pretty ops
+  pretty (FixityDcl LeftAssoc p ops) = pretty "infixl"
+                                       <+> pretty p <+> pretty ops
+  pretty (FixityDcl RightAssoc p ops) = pretty "infixr"
+                                        <+> pretty p <+> pretty ops
   pretty (FunBindDcl n ps r) = pretty n 
                                <> pretty ps <> equals <> pretty r
   pretty (PatBindDcl p r) = pretty p <> equals <!> pretty r
@@ -179,13 +186,14 @@ instance Pretty OpExp where
 instance Pretty Exp where
     pretty (VarExp n t) = parens $ pretty n <> colon <> pretty t
     pretty (IdVarExp i t) = parens $ pretty i <> colon <> pretty t
-    pretty (ConExp n t) = parens $ pretty n <> colon <> pretty t
-    pretty (IdConExp i t) = parens $ pretty i <> colon <> pretty t
     pretty (LitExp v t) = parens $ pretty v <> colon <> pretty t
     pretty (InfixOpExp e t) = parens $ pretty e <> colon <> pretty t
-    pretty (FExp e1 e2 t) = parens $ pretty e1 <!> pretty e2 <> colon <> pretty t
-    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e <> colon <> pretty t
-    pretty (MinusFloatExp e t) = parens $ pretty "~." <> pretty e <> colon <> pretty t
+    pretty (FExp e1 e2 t) = parens $ pretty e1 <!> pretty e2 
+                            <> colon <> pretty t
+    pretty (MinusExp e t) = parens $ pretty "~" <> pretty e 
+                            <> colon <> pretty t
+    pretty (MinusFloatExp e t) = parens $ pretty "~." <> pretty e 
+                                 <> colon <> pretty t
     pretty (LambdaExp p e t) = parens $ 
                             pretty "\\" 
                                        <> pretty p <> pretty "->"
@@ -199,10 +207,18 @@ instance Pretty Exp where
     pretty (CaseExp e alts t) = parens $ pretty "case" <!> pretty e 
                                 <!> pretty "of" <!> pretty alts
                                 <> colon <>  pretty t
-    pretty (ParensExp e t) = pretty e <> colon <> pretty t -- No parens needed here
+    pretty (ParensExp e t) = pretty e <> colon <> pretty t
     pretty (TupleExp e t) = parens $ pretty "#" <> pretty e <> colon <> pretty t
     pretty (ListExp e t) = parens $ pretty e <> colon <> pretty t
-
+    pretty (ConExp n params t) = parens $ pretty n <+> pretty params 
+                                 <> colon <> pretty t
+    pretty (IdConExp i params t) = parens $ pretty i <+> pretty params 
+                                   <> colon <> pretty t
+    pretty (Prim n params t) = parens $ pretty "Prim" <+> pretty n 
+                               <+> pretty params <> colon <+> pretty t
+    pretty (IdPrim n params t) = parens $ pretty "Prim" <+> pretty n 
+                               <+> pretty params <> colon <+> pretty t
+                               
 instance Pretty Pattern where
     pretty (VarPat n t)   = pretty n <> colon <> pretty t
     pretty (ConPat n p t) = pretty n <!> pretty p <> colon <> pretty t

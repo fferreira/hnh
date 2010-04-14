@@ -49,7 +49,7 @@ resultingType _ = UnknownType
 
 getType :: Exp -> Type
 getType (VarExp _ t) = t
-getType (ConExp _ t) = t
+getType (ConExp _ _ t) = t
 getType (LitExp _ t) = t
 getType (InfixOpExp _ t) = t
 getType (FExp _ _ t) = t
@@ -63,7 +63,9 @@ getType (ParensExp _ t) = t
 getType (TupleExp _ t) = t
 getType (ListExp _ t) = t
 getType (IdVarExp _ t) = t
-getType (IdConExp _ t) = t
+getType (IdConExp _ _ t) = t
+getType (Prim _ _ t) = t
+getType (IdPrim _ _ t) = t
 
 getPatType :: Pattern -> Type
 getPatType (VarPat _ t) = t
@@ -83,7 +85,7 @@ getAltPatTypes (Alternative ps _) = map getPatType ps
 -- addType adds type information to an expression
 addType :: Exp -> Type -> Exp
 addType (VarExp n _) t = VarExp n t
-addType (ConExp n _) t = ConExp n t
+addType (ConExp n params _) t = ConExp n params t
 addType (LitExp v _) t = LitExp v t
 addType (InfixOpExp e _) t = InfixOpExp e t
 addType (FExp e e' _) t = FExp e e' t
@@ -97,7 +99,9 @@ addType (ParensExp e _) t = ParensExp e t
 addType (TupleExp e _) t = TupleExp e t
 addType (ListExp e _) t = ListExp e t
 addType (IdVarExp i _) t = IdVarExp i t
-addType (IdConExp i _) t = IdConExp i t
+addType (IdConExp i params _) t = IdConExp i params t
+addType (Prim n params _) t = Prim n params t
+addType (IdPrim n params _) t = IdPrim n params t
 
 addPatType :: Pattern -> Type -> Pattern
 addPatType (VarPat n _ ) t = (VarPat n t)

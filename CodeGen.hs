@@ -94,7 +94,7 @@ procK ke@(TupDK tuple n v k) =
      return (desc ke ++ getTuple tuplec n vc  ++ code)
 
 procK ke@(ConDK const n v k) = return (desc ke)
-procK ke@(PrimK v k) = 
+procK ke@(PrimK v params k) = 
   do code <- procK k
      return ({-desc ke ++-} code)
 

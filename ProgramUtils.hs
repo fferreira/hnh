@@ -52,7 +52,8 @@ procPat (IdTuplePat ids _) = mapM putId ids >> return ()
 procPat p = return ()
 
 procExp (IdVarExp i _) = putId i
-procExp (IdConExp i _) = putId i
+procExp (IdConExp i ids _) = mapM putId ids >> putId i
+procExp (IdPrim _ ids _) = mapM putId ids >> return ()
 procExp (FExp e1 e2 _) = procExp e1 >> procExp e2
 procExp (LambdaExp pats e _) = mapM procPat pats >> procExp e
 procExp (LetExp decls e _) = mapM procDecl decls >> procExp e
@@ -60,7 +61,7 @@ procExp (IfExp e1 e2 e3 _) = procExp e1 >> procExp e2 >> procExp e3
 procExp (CaseExp es alts _) = mapM procExp es
                               >> mapM procAlt alts
                               >> return ()
-procExp (TupleExp es _) = mapM procExp es >> return ()                              
+procExp (TupleExp es _) = mapM procExp es >> return ()
 procExp (ListExp es _) = mapM procExp es >> return ()
 procExp e = return ()
 
@@ -83,7 +84,8 @@ procK (LitK _ i k) =
 procK (VarK i i' k) = putId i >> putId i' >> procK k
 procK (TupDK i _ i' k) = putId i >> putId i' >> procK k
 procK (ConDK i _ i' k) = putId i >> putId i' >> procK k
-procK (PrimK i k) = putId i >> procK k
+procK (PrimK i ids k) = mapM putId ids >> putId i >> procK k
+procK (ConK n ids i' k) = mapM putId ids >> putId i' >> procK k
 procK (AppK i ids) = mapM putId ids >> putId i
 procK (FunK f params body k) = putId f >> mapM putId params
                                >> procK body >> procK k

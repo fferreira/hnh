@@ -28,7 +28,7 @@ module CPSRep
        where
 import Syntax  
 
-import Text.PrettyPrint.Leijen -- requires wl-pprint installed (available in cabal)
+import Text.PrettyPrint.Leijen -- requires wl-pprint installed
 import Control.Monad.State(State, put, get, runState)
 
 data KExp = IfK Identifier KExp KExp
@@ -39,7 +39,8 @@ data KExp = IfK Identifier KExp KExp
           | TupDK Identifier Int Identifier KExp
           | ConDK Identifier Int Identifier KExp
             -- primitive operations
-          | PrimK Identifier {-[Identifier]-} KExp
+          | PrimK Identifier [Identifier] KExp -- TODO should add a v
+          | ConK Name [Identifier] Identifier KExp
           | AppK Identifier [Identifier]
             -- fun name, params, function body, after definition
           | FunK Identifier [Identifier] KExp KExp
@@ -52,7 +53,7 @@ data KExp = IfK Identifier KExp KExp
           | HaltK Identifier
           deriving (Show, Eq)
                    
-data CondK = WildK | ConK Name deriving (Show, Eq)
+data CondK = WildK | CondK Name deriving (Show, Eq)
 data AltK = AltK [CondK] KExp deriving (Show, Eq)
 
 instance Pretty KExp where                   
@@ -71,13 +72,19 @@ prettySExp (LitK v i k) = parens $
                           pretty "LitK" <+> pretty v <+> pid i 
                           <+> prettySExp k
 prettySExp (VarK i i' k) = parens $ 
-                           pretty "VarK" <+> pid i <+> pretty i'
+                           pretty "VarK" <+> pid i <+> pid i'
                            <+> prettySExp k 
 prettySExp (AppK i ids) = parens $ 
                           pretty "Appk" <+> pid i 
                           <+> brackets (sep (map pid ids))
-prettySExp (PrimK i k) = parens $ pretty "PrimK"                      
-                         <+> pid i <!> prettySExp k
+prettySExp (PrimK i ids k) = parens $ pretty "PrimK"                      
+                             <+> pid i <+> brackets (sep (map pid ids))
+                             <!> prettySExp k
+prettySExp (ConK n ids i' k) = parens $ pretty "ConK" <+> pretty n
+                               <+> brackets (sep (map pid ids))
+                               <+> pid i'
+                               <!> prettySExp k
+                            
 prettySExp (FunK fun params body cont) = parens $ pretty "Funk" 
                                          <!> pid fun
                                          <!> brackets(sep (map pid params))
@@ -95,10 +102,10 @@ prettySExp (TupleK ids i k) = parens $
 prettySExp (SwitchK ids alts) = parens $ pretty "SwitchK"
                                 <!> brackets(sep (map pid ids))
                                 <!> (sep (map prettyAltK alts))
-prettySExp (TupDK i n v k) = parens $ pretty "TupDK"                             
+prettySExp (TupDK i n v k) = parens $ pretty "TupDK"                      
                              <+> pid i <> colon <> pretty n 
                              <+> pid v <+> prettySExp k
-prettySExp (ConDK i n v k) = parens $ pretty "ConDK"                             
+prettySExp (ConDK i n v k) = parens $ pretty "ConDK"                          
                              <+> pid i <> dot <> pretty n 
                              <+> pid v <+> prettySExp k
 
@@ -109,7 +116,7 @@ prettyAltK (AltK conds k) = braces $ pretty "AltK"
                             <+> prettySExp k
                             
 prettyCondK WildK = pretty "_"                            
-prettyCondK (ConK n) = parens (pretty "ConK" <+> pretty n)
+prettyCondK (CondK n) = parens (pretty "CondK" <+> pretty n)
 
 pid (Id n num) = pretty (n++show num)
 
