@@ -1,5 +1,5 @@
 # Simplistic makefile (can easily be improved, but suffices for now.
-CFLAGS = -g -Wall
+CFLAGS = -g 
 complete: compile
 
 runtime: runtime.h runtime.c code.c
