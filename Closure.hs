@@ -33,7 +33,7 @@ import Tools
 
 closureConversion :: KExp -> TransformM KExp
 closureConversion k = transformOk "closureConversion" (evalState 
-                                                       (convert k) 
+                                                       (closureConvert k) 
                                                        (getNextIdNumKExp k)
                                                       )
 
@@ -51,72 +51,99 @@ newVar = do num <- newVarNum
 newVarFrom :: Identifier -> State CloSt Identifier        
 newVarFrom (Id name _) =
   do num <- newVarNum
-     return (Id ("c-" ++ name) num)
+     return (Id ("c-" ++ name ++ ".") num)
 
-convert :: KExp -> State CloSt KExp
-convert (LitK val i k) = 
-  do k' <- convert k
-     return (LitK val i k')
-convert (VarK i v k) = 
-  do k' <- convert k
-     return (VarK i v k')
-convert (TupDK i n v k) = 
-  do k' <- convert k
-     return (TupDK i n v k')
-convert (ConDK i n v k) =       
-  do k' <- convert k
-     return (ConDK i n v k')
-convert (PrimK i k) =     
-  do k' <- convert k
-     return (PrimK i k')
-convert (AppK f params) = 
-  do f0 <- newVarFrom f
-     return (TupDK f 0 f0 (AppK f0 (f:params)))
+data Conv = CAppK | CFunK deriving (Show, Eq)
 
-convert fun@(FunK f params body k) =
-  do body' <- convert body
-     k' <- convert k
-     f' <- newVarFrom f
-     cp <- newVar -- closure parameter
-     
-     fvs <- return $ freeFunKVars fun -- free variables
-     newFvs <- mapM (\fv -> newVarFrom fv) fvs -- new name for free vars
-     
-     body'' <- convertBody cp newFvs (cpsRep (zip fvs newFvs)
-                                      (traceP' "body'" body'))
-     
-     return (FunK f' (cp:params) (traceP' "body''" body'')
-             (TupleK (f':fvs) f k'))
+closureConvert :: KExp -> State CloSt KExp
+closureConvert k = do k' <- convert CAppK k
+                      convert CFunK k'
+  where
+    convert :: Conv -> KExp -> State CloSt KExp
+    convert c (LitK val i k) = 
+      do k' <- convert c k
+         return (LitK val i k')
+         
+    convert c (VarK i v k) = 
+      do k' <- convert c k
+         return (VarK i v k')
+         
+    convert c (TupDK i n v k) = 
+      do k' <- convert c k
+         return (TupDK i n v k')
+         
+    convert c (ConDK i n v k) =       
+      do k' <- convert c k
+         return (ConDK i n v k')
+         
+    convert c (PrimK i k) =     
+      do k' <- convert c k
+         return (PrimK i k')
+         
+    convert c k@(AppK f params) = 
+      if c == CAppK then convertAppK k else return k
 
-convert (TupleK ids v k) =
-  do k' <- convert k
-     return (TupleK ids v k')
-convert (ListK ids v k) =
-  do k' <- convert k
-     return (ListK ids v k')
-convert (SwitchK ids alts) =
-  do alts' <- mapM convertAlt alts
-     return (SwitchK ids alts')
-convert (HaltK i) = return (HaltK i)
-convert k = return k 
+    convert c fun@(FunK f params body k) = 
+      if c == CFunK then convertFunK c fun 
+      else
+        do body' <- convert c body
+           k' <- convert c k
+           return (FunK f params body' k')
 
-convertAlt (AltK conds k) =
-  do k' <- convert k
-     return (AltK conds k')
+    convert c (TupleK ids v k) =
+      do k' <- convert c k
+         return (TupleK ids v k')
+         
+    convert c (ListK ids v k) =
+      do k' <- convert c k
+         return (ListK ids v k')
+         
+    convert c (SwitchK ids alts) =
+      do alts' <- mapM (convertAlt c) alts
+         return (SwitchK ids alts')
+         
+    convert c (HaltK i) = return (HaltK i)
+    
+    convert c k = return k 
+
+    convertAlt c (AltK conds k) =
+      do k' <- convert c k
+         return (AltK conds k')
+         
+    convertAppK :: KExp -> State CloSt KExp
+    convertAppK (AppK f params) = 
+      do f0 <- newVarFrom f
+         return (TupDK f 0 f0 (AppK f0 (f:params)))
+    
+    convertFunK c fun@(FunK f params body k) =
+      do body' <- convert c body
+         k' <- convert c k
+         f' <- newVarFrom f
+         cp <- newVar -- closure parameter
      
-convertBody :: Identifier -> [Identifier] -> KExp -> State CloSt KExp
-convertBody closure fvs body = 
-  convertBody' closure fvs 1 body
-    where
-      convertBody' :: Identifier -> [Identifier] 
-                      -> Int -> KExp -> State CloSt KExp
-      convertBody' closure [] n body = return body 
-      convertBody' closure [fv] n body =
-        return (TupDK closure n fv body)
-      convertBody' closure (fv:fvs) n body = 
-        do k <- convertBody' closure fvs (n+1) body
-           error "pum"
-           return (TupDK closure n fv k)
+         fvs <- return $ traceP' ("fv in:" ++  show f)(freeFunKVars fun) -- free variables
+         newFvs <- mapM (\fv -> newVarFrom fv) fvs -- new name for free vars
+     
+         body'' <- convertBody cp newFvs (cpsRep (zip fvs newFvs)
+                                          body')
+     
+         return (FunK f' (cp:params) body''
+                 (TupleK (f':fvs) f k'))
+
+     
+    convertBody :: Identifier -> [Identifier] -> KExp -> State CloSt KExp
+    convertBody closure fvs body = 
+      convertBody' closure fvs 1 body
+        where
+          convertBody' :: Identifier -> [Identifier] 
+                          -> Int -> KExp -> State CloSt KExp
+          convertBody' closure [] n body = return body 
+          convertBody' closure [fv] n body =
+            return (TupDK closure n fv body)
+          convertBody' closure (fv:fvs) n body = 
+            do k <- convertBody' closure fvs (n+1) body
+               error "pum"
+               return (TupDK closure n fv k)
 
 freeFunKVars (FunK v params body k) = freeVars body `subs` (v:params)
 freeFunKVars k = error ("Unexpected, not a function: " ++ show k)
