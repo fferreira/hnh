@@ -119,16 +119,14 @@ closureConvert k = do k' <- convert CAppK k
       do body' <- convert c body
          k' <- convert c k
          f' <- newVarFrom f
-         fBody <- newVarFrom f -- the name of f in its body(for recursive calls)
          cp <- newVar -- closure parameter
      
          fvs <- return (freeFunKVars fun) -- free variables
          newFvs <- mapM (\fv -> newVarFrom fv) fvs -- new name for free vars
          
-         -- TupleK is the closure if there is a recursive call
-         body'' <- convertBody cp newFvs (TupleK (f:newFvs) fBody
-                                          (cpsRep ((f, fBody):(zip fvs newFvs))
-                                           body'))
+         -- cp should be used in recursive calls to f
+         body'' <- convertBody cp newFvs (cpsRep ((f, cp):(zip fvs newFvs))
+                                          body')
          return (FunK f (cp:params)
                  body''
                  (TupleK (f:fvs) f' (cpsRep [(f, f')] k'))) 
