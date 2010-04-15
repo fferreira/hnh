@@ -63,7 +63,7 @@ value * alloc_function(fun_ptr fun);
 
 value * tup_get(const value * val, int n);
 void tup_set(value * val, int n, value * v);
-value * data_get(value * val, int n);
+value * data_get(const value * val, int n);
 void data_set(value * val, int n, value * v);
 
 // printing function

@@ -30,6 +30,7 @@ module CodeGenHelper
        , callFun
        , newTuple
        , getTuple
+       , getData
        , genHalt
        , genPrim
        , genCon
@@ -68,7 +69,6 @@ getIntrinsic n =
 
 fileHeader = "#include \"runtime.h\"\n"
              ++ "#include \"intrinsic.h\"\n"
-             ++ "#include <string.h>\n"
              ++ "#include <assert.h>\n"
 
 
@@ -127,6 +127,9 @@ newTuple name contents =
 getTuple tuple elem var =
   "value * " ++ var ++ " = tup_get(" ++ tuple ++ ", " ++ show elem ++ ");\n"
 
+getData con elem var =
+  "value * " ++ var ++ " = data_get(" ++ con ++ ", " ++ show elem ++ ");\n"
+
 genHalt v = "halt_continuation(" ++ v ++");\n"
 
 genPrim n params var = "value * " ++ var
@@ -145,7 +148,8 @@ genCon n params var = "value * " ++ var
                       (zip params [1..])
 
 genIf cond kthen kelse = 
-  "if (strcmp(" ++ cond ++ "->data_value.constructor, \"True\") == 0){\n"
+  -- "if (strcmp(" ++ cond ++ "->data_value.constructor, \"True\") == 0){\n"
+  "if (is_constructor(" ++ cond ++ ", \"True\")){\n"
   ++ kthen ++ "\n } else {\n"
   ++ kelse ++ "\n}\n"
   

@@ -97,7 +97,12 @@ procK ke@(TupDK tuple n v k) =
      code <- procK k
      return (desc ke ++ getTuple tuplec n vc  ++ code)
 
-procK ke@(ConDK const n v k) = return (desc ke)
+procK ke@(ConDK const n v k) = 
+  do vc <- newCVar v
+     constc <- getCVar const
+     code <- procK k
+     return (desc ke ++ getData constc n vc ++ code)
+     
 procK ke@(PrimK n params v k) = 
   do vc <- newCVar v 
      params' <- mapM getCVar params
@@ -129,8 +134,11 @@ procK ke@(TupleK ids v k) =
      vc <- newCVar v
      code <- procK k
      return (desc ke ++ newTuple vc idsc  ++ code)
+     
 procK ke@(ListK ids v k) = return (desc ke) -- TODO Pending
+
 procK ke@(SwitchK ids alts) = return (desc ke) -- TODO Pending
+
 procK ke@(HaltK i) = 
   do ic <- getCVar i
      return (desc ke ++ genHalt ic)

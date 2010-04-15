@@ -129,7 +129,7 @@ void tup_set(value * val, int n, value * v)
 
 }
 
-value * data_get(value * val, int n)
+value * data_get(const value * val, int n)
 {
   if ((val->tag == DATA_VALUE) && (val->data_value.num_of_fields > n)) {
     return val->data_value.fields[n];
