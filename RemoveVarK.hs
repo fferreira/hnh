@@ -38,7 +38,8 @@ type Subst = (Identifier, Identifier)
 
 add :: Identifier -> Identifier -> State [Subst] ()
 add a b = do st <- get
-             put ((a,b):st)
+             b' <- rep b -- check if b is already replaced
+             put ((a, b'):st)
              
 rep :: Identifier -> State [Subst] Identifier             
 rep v = do st <- get

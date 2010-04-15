@@ -135,8 +135,13 @@ procK ke@(TupleK ids v k) =
      code <- procK k
      return (desc ke ++ newTuple vc idsc  ++ code)
      
-procK ke@(ListK ids v k) = error "pumba" -- return (desc ke) -- TODO Pending
-
+procK ke@(ListK ids v k) = 
+  do idsc <- mapM getCVar ids
+     vc <- newCVar v
+     code <- procK k
+     return (desc ke ++ genList idsc vc  ++ code)
+  
+  
 procK ke@(SwitchK ids alts) = 
   do idsc <- mapM getCVar ids
      altsc <- mapM procAltK alts

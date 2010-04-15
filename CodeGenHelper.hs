@@ -36,6 +36,7 @@ module CodeGenHelper
        , genCon
        , genIf
        , genSwitchK
+       , genList
        , desc
        )
        where
@@ -169,10 +170,16 @@ genAltMatch ids conds =
   concat (intersperse " && " (map (\(i, c) -> gen i c) (zip ids conds)))
     where
       gen :: CVar -> CondK -> String
-      gen i WildK = ""
+      gen i WildK = "1" -- allways true
       gen i (CondK c) = "(is_constructor(" ++ i ++ ", " ++ show c ++ "))"
   
-
+ 
+genList ids v = 
+  "value * " ++ v ++ " = "
+  ++ gen ids ++ ";\n"
+    where
+      gen [] = "list_nil()"
+      gen (id:ids) = "list_cons(" ++ id ++ ", " ++ gen ids ++ ")"
 
 
 
@@ -224,6 +231,8 @@ desc (ListK ids v k) = comment $ pretty "ListK"
                         <+> pretty ids <+> pretty v
                         <+> pretty "k"
 desc (SwitchK ids alts) = comment $ pretty "SwitchK"
+                          <+> pretty ids
+                          <+> pretty (map (\(AltK c _) -> c) alts)
 desc (HaltK i)= comment $ pretty "HaltK" <+> pretty i
 
 comment d = show (enclose 
