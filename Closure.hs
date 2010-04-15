@@ -60,6 +60,11 @@ closureConvert k = do k' <- convert CAppK k
                       convert CFunK k'
   where
     convert :: Conv -> KExp -> State CloSt KExp
+    convert c (IfK i k1 k2) =
+      do k1' <- convert c k1
+         k2' <- convert c k2
+         return (IfK i k1' k2')
+         
     convert c (LitK val i k) = 
       do k' <- convert c k
          return (LitK val i k')
@@ -108,8 +113,6 @@ closureConvert k = do k' <- convert CAppK k
          
     convert c (HaltK i) = return (HaltK i)
     
-    convert c k = return k 
-
     convertAlt c (AltK conds k) =
       do k' <- convert c k
          return (AltK conds k')
