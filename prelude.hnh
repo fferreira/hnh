@@ -15,6 +15,8 @@
     
 --  Copyright 2010 Francisco Ferreira
 
+
+
 infixl 6 +, -, +., -.
 infixl 7 *, /, *., /. 
 --infixr 8 ^,^.
@@ -22,7 +24,8 @@ infix 4 ==, <, >
 
 infixr 5 ++,<> -- <> should be :
 
-{-
+-- infixr 3 &&
+-- infixr 2 ||
 
 (<>) a b = Cons a b ;
 
@@ -31,14 +34,19 @@ infixr 5 ++,<> -- <> should be :
 
 filter f l =
   let
-    fil l:ls = (if f l then l<>(fil ls) else fil ls); 
-    fil [] = [];
+    filter' l:ls = (if f l then l<>(filter' ls) else filter' ls); 
+    filter' [] = [];
   in
-    fil l;
+    filter' l;
 
 not True = False;
 not False = True;
 
-(<=) a b = not (a > b);
+and True True = True;
+and _ _ = False;
 
--}
+or False False = False;
+or _ _ = True;
+
+(<=) a b = not (a > b);
+(<) a b  = (not (a > b)) `and` (not (a == b));
