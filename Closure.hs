@@ -80,6 +80,10 @@ closureConvert k = do k' <- convert CAppK k
       do k' <- convert c k
          return (PrimK i params v k')
          
+    convert c (ConK n params v k) =
+      do k' <- convert c k
+         return (ConK n params v k')
+         
     convert c k@(AppK f params) = 
       if c == CAppK then convertAppK k else return k
 
