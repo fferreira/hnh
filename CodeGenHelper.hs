@@ -35,6 +35,7 @@ module CodeGenHelper
        , genPrim
        , genCon
        , genIf
+       , genSwitchK
        , desc
        )
        where
@@ -138,20 +139,65 @@ genPrim n params var = "value * " ++ var
                        ++ concat (intersperse "," params)
                        ++ ");"
                       
-genCon n params var = "value * " ++ var
-                      ++ " = alloc_data(\"" ++ n ++ "\", " 
-                      ++ show (length var) ++ ");\n"
-                      ++ concatMap 
-                      (\(p, n) -> 
-                        "data_set(" ++ var ++ ", " 
-                        ++ show n ++ ", " ++ p ++");\n") 
-                      (zip params [1..])
+genCon const params var = "value * " ++ var
+                         ++ " = alloc_data(\"" ++ const ++ "\", " 
+                         ++ show (length params) ++ ");\n"
+                         ++ concatMap 
+                         (\(p, n) -> 
+                           "data_set(" ++ var ++ ", " 
+                           ++ show n ++ ", " ++ p ++");\n") 
+                         (zip params [0..])
 
 genIf cond kthen kelse = 
   "if (is_constructor(" ++ cond ++ ", \"True\")){\n"
   ++ kthen ++ "\n } else {\n"
   ++ kelse ++ "\n}\n"
+
+genSwitchK :: [CVar] -> [([CondK], String)] -> String
+genSwitchK ids alts =
+  (concat (intersperse "\nelse\n" ifs))
+    where
+      ifs = map (\(conds, code) -> gen conds code) alts
+      gen :: [CondK] -> String -> String
+      gen conds code = "if (" ++ genAltMatch ids conds ++"){\n"
+                          ++ code ++ "\n}\n"
+       
+
+
+genAltMatch :: [CVar] -> [CondK] -> String
+genAltMatch ids conds =
+  concat (intersperse " && " (map (\(i, c) -> gen i c) (zip ids conds)))
+    where
+      gen :: CVar -> CondK -> String
+      gen i WildK = ""
+      gen i (CondK c) = "(is_constructor(" ++ i ++ ", " ++ show c ++ "))"
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
 desc (LitK val v k) = comment $ pretty "LitK" <+> pretty val 

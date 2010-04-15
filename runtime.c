@@ -89,10 +89,12 @@ value * alloc_data(const char * con, int size)
   strcpy(name, con);
   val->tag = DATA_VALUE;
   val->data_value.constructor = name;
+
   if (size!=0) {
        fields = (value **) alloc_mem(size * sizeof(value *));
   }
-  
+
+  val->data_value.num_of_fields = size;
   val->data_value.fields = fields;  
   return val;
 }
