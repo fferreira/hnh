@@ -19,15 +19,15 @@ resultId = (Id "end" 0)
 env0 :: [EnvType] 
 env0 = 
     [("+", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-    {-,("-", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-    ,("*", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-    ,("/", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
-    ,("^", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int"))) -}
-    ,("~", FunType (PrimType "Int") (PrimType "Int"))
+    -- ,("-", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    -- ,("*", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    -- ,("/", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    -- ,("^", FunType (PrimType "Int") (FunType (PrimType "Int") (PrimType "Int")))
+    -- ,("~", FunType (PrimType "Int") (PrimType "Int"))
 
-    -- ,("==", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
-    -- ,( ">", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
-    -- ,( "<", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
+    ,("==", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
+    ,( ">", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
+    ,( "<", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
     
     -- ,("+.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
     -- ,("-.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))

@@ -33,6 +33,7 @@ module CodeGenHelper
        , genHalt
        , genPrim
        , genCon
+       , genIf
        , desc
        )
        where
@@ -54,9 +55,9 @@ intrinsics =
   , ("*", "int_mul")
   , ("/", "int_div")
   , ("~", "int_neg")
-  -- , ("==", "int_eq")
-  -- , ("<", "int_lt")
-  -- , (">", "int_gt")
+  , ("==", "int_eq")
+  , ("<", "int_lt")
+  , (">", "int_gt")
   ]
 
 getIntrinsic :: Name -> CVar
@@ -65,7 +66,11 @@ getIntrinsic n =
     Nothing -> error ("Unsupported intrinsic function: " ++ n)
     Just f -> f
 
-fileHeader = "#include \"runtime.h\"\n#include \"intrinsic.h\"\n"
+fileHeader = "#include \"runtime.h\"\n"
+             ++ "#include \"intrinsic.h\"\n"
+             ++ "#include <string.h>\n"
+             ++ "#include <assert.h>\n"
+
 
 mainWrapper body = "\n // HNH Main (param not used)\n"
                    ++ "call_k HNH_main (value * param)\n{\n"
@@ -82,6 +87,7 @@ getAssign v ov =
 callFun fun params var =      
   "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
   ++ pack
+  ++ "assert(" ++ fun ++ "->tag == FUNCTION_VALUE);\n"
   ++ "\nreturn ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
   where
     pack = concatMap (\(v, n) -> 
@@ -138,7 +144,11 @@ genCon n params var = "value * " ++ var
                         ++ show n ++ ", " ++ p ++");\n") 
                       (zip params [1..])
 
-
+genIf cond kthen kelse = 
+  "if (strcmp(" ++ cond ++ "->data_value.constructor, \"True\") == 0){\n"
+  ++ kthen ++ "\n } else {\n"
+  ++ kelse ++ "\n}\n"
+  
 
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
 desc (LitK val v k) = comment $ pretty "LitK" <+> pretty val 
@@ -151,7 +161,7 @@ desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
                            <+> pretty n <+> pretty v <+> pretty "k"
 desc (PrimK n params v k) = comment $ pretty "PrimK" <+> pretty n
                           <+> pretty params <+> pretty v <+> pretty "k"
-desc (ConK n params v k) = comment $ pretty "ConK" <+> pretty n                          
+desc (ConK n params v k) = comment $ pretty "ConK" <+> pretty n       
                            <+> pretty params <+> pretty v <+> pretty "k"
 desc (AppK f params) = comment $ pretty "AppK" 
                        <+> pretty f <+> pretty params

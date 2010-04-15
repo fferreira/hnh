@@ -73,7 +73,11 @@ addFun fun =
      put (CodeGenSt n d (fs++[fun]))
                            
 procK :: KExp -> State CodeGenSt String
-procK ke@(IfK i k1 k2) = return (desc ke)
+procK ke@(IfK i k1 k2) = 
+  do ic <- getCVar i
+     kthen <- procK k1
+     kelse <- procK k2
+     return (desc ke ++ genIf ic kthen kelse)
 
 procK ke@(LitK (LiteralInt n) v k) = 
   do vc <- newCVar v
@@ -125,8 +129,8 @@ procK ke@(TupleK ids v k) =
      vc <- newCVar v
      code <- procK k
      return (desc ke ++ newTuple vc idsc  ++ code)
-procK ke@(ListK ids v k) = return (desc ke)
-procK ke@(SwitchK ids alts) = return (desc ke)
+procK ke@(ListK ids v k) = return (desc ke) -- TODO Pending
+procK ke@(SwitchK ids alts) = return (desc ke) -- TODO Pending
 procK ke@(HaltK i) = 
   do ic <- getCVar i
      return (desc ke ++ genHalt ic)

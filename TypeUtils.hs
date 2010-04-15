@@ -173,7 +173,6 @@ getDataTypes (Program decls) = map getDataT (filter isDataT decls)
       
       getDataT (DataDcl t cs) = (t,cs)
     
-      
 getConstType :: [DataType] -> Name -> Maybe Type
 getConstType dts n =
   find isData dts >>= return . fst
