@@ -23,7 +23,7 @@ module InferDeclaration
        where
 
 import Syntax
-import TypeUtils(getType, DataType, getConstTypeParams, getConstType)
+import TypeUtils(getType , DataType, getConstTypeParams, getConstType)
 import PolyType(transformType, initialPoly, getNext)
 import GenerateConstraints(getConstraints)
 import GeneralizeTypes(generalizeTypes)
@@ -96,9 +96,9 @@ lookupId i =
 --- Tree transformation functions
 
 processDecl :: [DataType] -> Declaration -> State MetaSt Declaration  
-processDecl dts d@(DataDcl t cons) =
-  do mapM (typeCons t) cons
-     return d
+-- processDecl dts d@(DataDcl t cons) =
+  -- do mapM (typeCons t) cons
+     -- return d
      
 processDecl dts (PatBindDcl p e) = 
   do p' <- typePattern dts p
@@ -109,14 +109,14 @@ processDecl dts (FunBindDcl _ _ _) = -- TODO Improve error handling
   error "Unexpected function declartion at this point"
 processDecl _ d = return d
 
-typeCons :: Type -> Constructor -> State MetaSt Constructor
-typeCons t c@(IdConDcl i ts) =
-  do MetaSt next env <- get
-     put $ MetaSt next ((i, (toFun (ts ++ [t]))):env)
-     return c
-     where
-       toFun (t:[]) = t
-       toFun (t:ts) = FunType t (toFun ts)
+-- typeCons :: Type -> Constructor -> State MetaSt Constructor
+-- typeCons t c@(IdConDcl i ts) =
+--   do MetaSt next env <- get
+--      put $ MetaSt next ((i, (toFun (ts ++ [t]))):env)
+--      return c
+--      where
+--        toFun (t:[]) = t
+--        toFun (t:ts) = FunType t (toFun ts)
 
 typePattern :: [DataType] -> Pattern -> State MetaSt Pattern
 typePattern _ (VarPat _ _) = error "Error Id??? pattern expected" 
@@ -163,10 +163,10 @@ typeExp _ (IdVarExp i t) =
      t' <- polyType (choose t tl)
      return (IdVarExp i t')
 
-typeExp _ (IdConExp i params t) =
-  do tl <- lookupId i
-     t' <- polyType (choose t tl)
-     return $ IdConExp i params t'
+-- typeExp _ (IdConExp i params t) =
+--   do tl <- lookupId i
+--      t' <- polyType (choose t tl)
+--      return $ IdConExp i params t'
 
 typeExp dts (FExp e1 e2 t) = 
   do e1' <- typeExp dts e1

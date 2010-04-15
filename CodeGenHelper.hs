@@ -32,6 +32,7 @@ module CodeGenHelper
        , getTuple
        , genHalt
        , genPrim
+       , genCon
        , desc
        )
        where
@@ -122,11 +123,21 @@ getTuple tuple elem var =
 
 genHalt v = "halt_continuation(" ++ v ++");\n"
 
-genPrim n params vc = "value * " ++ vc 
-                      ++ " = " ++ getIntrinsic n
-                      ++ "("
-                      ++ concat (intersperse "," params)
-                      ++ ");"
+genPrim n params var = "value * " ++ var
+                       ++ " = " ++ getIntrinsic n
+                       ++ "("
+                       ++ concat (intersperse "," params)
+                       ++ ");"
+                      
+genCon n params var = "value * " ++ var
+                      ++ " = alloc_data(\"" ++ n ++ "\", " 
+                      ++ show (length var) ++ ");\n"
+                      ++ concatMap 
+                      (\(p, n) -> 
+                        "data_set(" ++ var ++ ", " 
+                        ++ show n ++ ", " ++ p ++");\n") 
+                      (zip params [1..])
+
 
 
 desc (IfK i k1 k2) = comment $ pretty "IfK" <+> pretty i <+> pretty "k1 k2"
@@ -140,6 +151,8 @@ desc (ConDK const n v k) = comment $ pretty "ConDK" <+> pretty const
                            <+> pretty n <+> pretty v <+> pretty "k"
 desc (PrimK n params v k) = comment $ pretty "PrimK" <+> pretty n
                           <+> pretty params <+> pretty v <+> pretty "k"
+desc (ConK n params v k) = comment $ pretty "ConK" <+> pretty n                          
+                           <+> pretty params <+> pretty v <+> pretty "k"
 desc (AppK f params) = comment $ pretty "AppK" 
                        <+> pretty f <+> pretty params
 desc (FunK fun params body k) = comment $ pretty "FunK"

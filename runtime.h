@@ -68,7 +68,7 @@ void data_set(value * val, int n, value * v);
 
 // printing function
 
-void print_value(const value * val);
+void print_value(value * val);
 
 // Predefined names
 

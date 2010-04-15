@@ -76,6 +76,11 @@ procK (PrimK n params v k) =
      k' <- procK k
      return (PrimK n params' v k')
      
+procK (ConK n params v k) =     
+  do params' <- mapM rep params
+     k' <- procK k
+     return (ConK n params' v k')
+     
 procK (AppK i ids) =
   do i' <- rep i
      ids' <- mapM rep ids
@@ -105,7 +110,7 @@ procK (SwitchK ids alts) =
 procK (HaltK i) = 
   do i' <- rep i
      return (HaltK i')
-
+     
 procAltK (AltK conds k) =
   do k' <- procK k
      return (AltK conds k')

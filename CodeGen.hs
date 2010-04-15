@@ -59,7 +59,7 @@ getCVar :: Identifier -> State CodeGenSt CVar
 getCVar i = 
   do CodeGenSt _ dict _<- get
      case lookup i dict of 
-       Nothing -> error ("Error: " ++ show i ++ " not found!")
+       Nothing -> error ("CodeGen Error: " ++ show i ++ " not found!")
        Just v -> return v
        
 interVar :: State CodeGenSt CVar -- intermediate var       
@@ -99,6 +99,12 @@ procK ke@(PrimK n params v k) =
      params' <- mapM getCVar params
      code <- procK k
      return (desc ke ++ genPrim n params' vc ++ code)
+     
+procK ke@(ConK n params v k) =
+  do vc <- newCVar v 
+     params' <- mapM getCVar params
+     code <- procK k
+     return (desc ke ++ genCon n params' vc ++ code)
 
 procK ke@(AppK f params) = 
   do fc <- getCVar f

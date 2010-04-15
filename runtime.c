@@ -84,12 +84,16 @@ value * alloc_data(const char * con, int size)
 {
   value * val = (value *) alloc_mem(sizeof(value));
   char * name = (char *) alloc_mem(strlen(con) * sizeof(char));
-  value ** fields = (value **) alloc_mem(size * sizeof(value *));
+  value ** fields = NULL;
 
   strcpy(name, con);
   val->tag = DATA_VALUE;
   val->data_value.constructor = name;
-  val->data_value.fields = fields;
+  if (size!=0) {
+       fields = (value **) alloc_mem(size * sizeof(value *));
+  }
+  
+  val->data_value.fields = fields;  
   return val;
 }
 
@@ -146,19 +150,25 @@ void data_set(value * val, int n, value * v)
 
 // printing function
 
-void print_value(const value * val)
+void print_value(value * val)
 {
+  int i;
   switch (val->tag) {
-    case INT_VALUE:
-      printf("%d", val->int_value);
-      break;
+  case INT_VALUE:
+    printf("%d ", val->int_value);
+    break;
   case CHAR_VALUE:
   case FLOAT_VALUE:
   case TUPLE_VALUE:
   case DATA_VALUE:
+    printf("%s ", val->data_value.constructor);
+    for(i = 0 ; i < val->data_value.num_of_fields ; i++) {
+      print_value(data_get(val, i));
+    }
+    break;
   case FUNCTION_VALUE:
   default:
-    printf ("unimplemented\n"); 
+    printf ("unimplemented "); 
   };
 }
 

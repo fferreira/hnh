@@ -128,7 +128,7 @@ cps (ListExp es t) (v, k) =
      linkL ids es (ListK ids v k)
   
 cps (IdVarExp i t) (v, k) = return $ VarK i v k
-cps (IdConExp (Id n _) params t) (v, k) = return $ ConK n params v k
+cps (IdConExp n params t) (v, k) = return $ ConK n params v k
 cps (IdPrim n params t) (v, k) = return (PrimK n params v k)
 
 cps (VarExp _ _) (_, _)        = error "Unexpected VarExp"

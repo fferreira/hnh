@@ -34,6 +34,7 @@ module TypeUtils
        , getConstTypeParams
        , isVarDecl
        , getTupleType
+       , constToFun
        )
        where
 
@@ -116,14 +117,16 @@ addPatType (IdTuplePat ids _) t = (IdTuplePat ids t)
 litToExp :: LiteralValue -> Exp
 litToExp val@(LiteralInt _) = LitExp val (PrimType "Int")
 litToExp val@(LiteralFloat _) = LitExp val (PrimType "Float")
-litToExp val@(LiteralString _) = LitExp val (PrimType "String") -- TODO perhaps (ConType "List" (ConType "Char" []))
+litToExp val@(LiteralString _) = LitExp val (PrimType "String")
 litToExp val@(LiteralChar _) = LitExp val (PrimType "Char")
 
--- assembleInfixOperator builds an infix operator structure (for fixity adaptation later)
+-- assembleInfixOperator builds an infix operator structure 
+-- (for fixity adaptation later)
 assembleInfixOperator :: Exp -> Operator -> Exp -> Exp
-assembleInfixOperator (InfixOpExp opEx1 _) op (InfixOpExp opEx2 _) = InfixOpExp 
-                                                                     (Op op opEx1 opEx2)
-                                                                     UnknownType
+assembleInfixOperator (InfixOpExp opEx1 _) op (InfixOpExp opEx2 _) = 
+  InfixOpExp 
+  (Op op opEx1 opEx2)
+  UnknownType
 assembleInfixOperator (InfixOpExp opEx _) op e = InfixOpExp
                                                  (Op op opEx (LeafExp e))
                                                  UnknownType
@@ -133,6 +136,31 @@ assembleInfixOperator e op (InfixOpExp opEx _) = InfixOpExp
 assembleInfixOperator e1 op e2 = InfixOpExp
                                  (Op op (LeafExp e1) (LeafExp e2))
                                  UnknownType
+
+
+-- Constructors to Functions
+constToFun :: [Declaration] -> [Declaration]
+constToFun decls = concatMap procDecl decls
+  where
+    procDecl (DataDcl t cons) = map (procCons t) cons
+    procDecl d = []
+    
+    procCons t (ConDcl n []) = (PatBindDcl (VarPat n t) (ConExp n [] t))
+    procCons t (ConDcl n ts) = (PatBindDcl 
+                                (VarPat n (toFun (ts++[t]))) 
+                                (LambdaExp 
+                                 pats 
+                                 (ConExp n params t) 
+                                 UnknownType))
+      where
+        pats = map (\n -> (VarPat n UnknownType)) params
+        params = map (\c->[c]) (take (length ts) varNames)
+    
+    
+    toFun (t:[]) = t
+    toFun (t:ts) = FunType t (toFun ts)
+    varNames = "abcdefghijkalmnopqrstuvwxyz"    
+
 
 
 type DataType = (Type, [Constructor])
@@ -153,8 +181,6 @@ getConstType dts n =
       isData (_, cons) = case find isCon cons of Just _ -> True
                                                  Nothing -> False
       isCon (ConDcl n' _) = n == n'
-      isCon (IdConDcl (Id n' _) _) = n == n'
-
 
 getConstTypeParams :: [DataType] -> Name -> Maybe [Type]
 getConstTypeParams dts n =
@@ -162,9 +188,7 @@ getConstTypeParams dts n =
     where
       cons = concat . snd . unzip $ dts
       isCon (ConDcl n' _) = n == n'
-      isCon (IdConDcl (Id n' _) _) = n == n'
       getConType (ConDcl _ ts) = ts
-      getConType (IdConDcl _ ts) = ts
     
 isVarDecl :: Declaration -> Bool
 isVarDecl (PatBindDcl _ _) = True

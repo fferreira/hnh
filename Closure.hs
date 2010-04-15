@@ -158,6 +158,7 @@ freeVars e = (nub . freeVars') e
     freeVars' (TupDK i n v k) = i:(freeVars' k `subs` [i, v]) 
     freeVars' (ConDK i n v k) = i:(freeVars' k `subs` [i, v])
     freeVars' (PrimK i params v k) = params ++ (freeVars' k `subs` [v])
+    freeVars' (ConK n params v k) = params ++ (freeVars' k `subs` [v])
     freeVars' (AppK i params) = i:params
     freeVars' (FunK v params body k) = 
       ((freeVars' body `subs` params) ++ freeVars' k) `subs` [v]
@@ -186,6 +187,7 @@ cpsRep dict e = cr e
     cr (TupDK i n i' k) = TupDK (rep i) n (rep i') (cr k)
     cr (ConDK i n i' k) = ConDK (rep i) n (rep i') (cr k)
     cr (PrimK n params i' k) = PrimK n (map rep params) (rep i') (cr k)
+    cr (ConK n params v k) = ConK n (map rep params) (rep v) (cr k)
     cr (AppK i ids) = AppK (rep i) (map rep ids)
     cr (FunK i ids k1 k2) = FunK i (map rep ids) (cr k1) (cr k2)
     cr (TupleK ids i k) = TupleK (map rep ids) (rep i) (cr k)

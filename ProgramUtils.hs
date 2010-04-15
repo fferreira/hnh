@@ -38,13 +38,13 @@ putId (Id _ num) = do st <- get
                         put (num + 1) else return ()
 
 procDecl :: Declaration -> State Int ()
-procDecl (DataDcl t cons) = mapM procCons cons >> return ()
+-- procDecl (DataDcl t cons) = mapM procCons cons >> return ()
 procDecl (PatBindDcl p e) = do procPat p
                                procExp e
 procDecl d = return ()                               
 
-procCons (IdConDcl i _) = putId i
-procCons c = return ()
+-- procCons (IdConDcl i _) = putId i
+-- procCons c = return ()
 
 procPat (IdVarPat i _) = putId i
 procPat (IdConPat _ ids _ _) = mapM putId ids >> return ()
@@ -52,7 +52,7 @@ procPat (IdTuplePat ids _) = mapM putId ids >> return ()
 procPat p = return ()
 
 procExp (IdVarExp i _) = putId i
-procExp (IdConExp i ids _) = mapM putId ids >> putId i
+procExp (IdConExp _ ids _) = mapM putId ids >> return ()
 procExp (IdPrim _ ids _) = mapM putId ids >> return ()
 procExp (FExp e1 e2 _) = procExp e1 >> procExp e2
 procExp (LambdaExp pats e _) = mapM procPat pats >> procExp e

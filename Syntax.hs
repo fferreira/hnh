@@ -83,7 +83,6 @@ data Type -- for type declarations
 
 data Constructor 
     = ConDcl Name [Type]
-    | IdConDcl Identifier [Type]
     deriving(Show, Eq)
 
 --- Expressions & Patterns
@@ -114,7 +113,7 @@ data Exp
     | ListExp [Exp] Type  -- a list of expresions
     | IdVarExp Identifier Type -- an identifier, translated from a VarExp    
     | ConExp Name [Name] Type -- a data type value expresion
-    | IdConExp Identifier [Identifier] Type --TODO first Id should be a name??
+    | IdConExp Name [Identifier] Type
     | Prim Name [Name] Type -- a primitive operation
     | IdPrim Name [Identifier] Type
       deriving (Show, Eq)
@@ -174,7 +173,6 @@ instance Pretty Type where
 
 instance Pretty Constructor where
     pretty (ConDcl n ts) = pretty n <!> pretty ts
-    pretty (IdConDcl i ts) = pretty i <!> pretty ts
 
 instance Pretty Identifier where
   pretty (Id n num) = pretty n <> pretty "_" <> pretty num
@@ -212,7 +210,7 @@ instance Pretty Exp where
     pretty (ListExp e t) = parens $ pretty e <> colon <> pretty t
     pretty (ConExp n params t) = parens $ pretty n <+> pretty params 
                                  <> colon <> pretty t
-    pretty (IdConExp i params t) = parens $ pretty i <+> pretty params 
+    pretty (IdConExp n params t) = parens $ pretty n <+> pretty params 
                                    <> colon <> pretty t
     pretty (Prim n params t) = parens $ pretty "Prim" <+> pretty n 
                                <+> pretty params <> colon <+> pretty t

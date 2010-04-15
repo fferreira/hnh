@@ -32,7 +32,7 @@ import CPS(cpsTransform)
 import RemoveVarK(removeVarK)
 import Closure(closureConversion)
 import CodeGen(codeGen)
-import BuiltIn(builtInDecls)
+import InitialProgram(buildInitialProgram)
 
 import qualified TransformMonad as T
 import ErrorMonad
@@ -41,7 +41,7 @@ import Control.Monad.State
 import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 
 -- compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
-compileTransform (Program decls) = 
+compileTransform prog = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= oneVarLambda
                                      >>= addIdentifiers
@@ -52,7 +52,7 @@ compileTransform (Program decls) =
                                      >>= closureConversion
                                      >>= codeGen
                                      >>= return)
-      p = (Program (builtInDecls ++ decls)) 
+      p = buildInitialProgram prog
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list
    
@@ -65,18 +65,20 @@ checkTransformation (Success program) = program
 checkTransformation (Error err) = error err
 
 loadAndEval :: String -> Name -> Bool -> IO Doc
-loadAndEval file main showSteps = do contents <- readFile file
-                                     preludeContents <- readFile "prelude.hnh"
-                                     parsedPrelude <- return $ parseHNH "prelude.hnh" preludeContents
-                                     parsed <- return $ parseHNH file contents
-                                     (programRes, docs) <- return $ runTransformations (merge parsedPrelude parsed)
-                                     program <- return $ checkTransformation programRes 
-                                     writeFile "code.c" program
-                                     doc <- return $ if showSteps then
-                                                       T.renderSteps docs
-                                                     else
-                                                       compile program main
-                                     return doc
+loadAndEval file main showSteps = 
+  do contents <- readFile file
+     preludeContents <- readFile "prelude.hnh"
+     parsedPrelude <- return $ parseHNH "prelude.hnh" preludeContents
+     parsed <- return $ parseHNH file contents
+     (programRes, docs) <- return $ 
+                           runTransformations (merge parsedPrelude parsed)
+     program <- return $ checkTransformation programRes 
+     writeFile "code.c" program
+     doc <- return $ if showSteps then
+                       T.renderSteps docs
+                     else
+                       compile program main
+     return doc
 
 -- merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
 merge (Success (Program d1)) (Success (Program d2)) = Success (Program (d1++d2))
@@ -86,9 +88,7 @@ merge _ e@(Error msg) = e
 
 compile p name = pretty p
 
--- compile p@(Program decls) name = (pretty $ map prettify (generateConstraints p))
---                                  <> line
---                                  <> pretty "number of constraints:"
---                                  <+> pretty (length (generateConstraints p))
-
-prettify (t1, t2, d) = pretty t1 <+> pretty "=" <+> pretty t2 <> line <> pretty d <> line
+prettify (t1, t2, d) = pretty t1 
+                       <+> pretty "=" 
+                       <+> pretty t2 
+                       <> line <> pretty d <> line
