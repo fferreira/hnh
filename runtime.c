@@ -83,7 +83,7 @@ value * alloc_tuple(int size)
 value * alloc_data(const char * con, int size)
 {
   value * val = (value *) alloc_mem(sizeof(value));
-  char * name = (char *) alloc_mem(strlen(con) * sizeof(char));
+  char * name = (char *) alloc_mem((1+strlen(con)) * sizeof(char));
   value ** fields = NULL;
 
   strcpy(name, con);
