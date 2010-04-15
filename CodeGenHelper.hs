@@ -148,7 +148,6 @@ genCon n params var = "value * " ++ var
                       (zip params [1..])
 
 genIf cond kthen kelse = 
-  -- "if (strcmp(" ++ cond ++ "->data_value.constructor, \"True\") == 0){\n"
   "if (is_constructor(" ++ cond ++ ", \"True\")){\n"
   ++ kthen ++ "\n } else {\n"
   ++ kelse ++ "\n}\n"
