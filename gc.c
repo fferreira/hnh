@@ -58,13 +58,22 @@ value * copy(value * val)
   case INT_VALUE:
     ret = alloc_int(val->int_value, &front_seg);
     add_seen(val, ret);
-
     break;
+
+  case CHAR_VALUE:
+    ret = alloc_char(val->char_value, &front_seg);
+    add_seen(val, ret);
+    break;
+
+  case FLOAT_VALUE:
+    ret = alloc_float(val->float_value, &front_seg);
+    add_seen(val, ret);
+    break;
+
 
  case FUNCTION_VALUE:
    ret = alloc_function(val->function, &front_seg);
    add_seen(val, ret); // usually functions are in the perm seg
-  
    break;
 
   case TUPLE_VALUE:
@@ -89,10 +98,11 @@ value * copy(value * val)
  
   case UNINITIALIZED:
     fail ("GC Error: tried to copy an invalid object\n");
-  case CHAR_VALUE:
-  case FLOAT_VALUE:
+    break;
+
   default:
     fail("Unsupported value");
+    break;
   }
 
   assert(is_front_ptr(ret));

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 // Error management
 
@@ -81,6 +82,23 @@ value * alloc_int(int n, memory_buffer * seg)
   val->int_value = n;
   return val;
 }
+
+value * alloc_char(char c, memory_buffer * seg)
+{
+  value * val = (value *) alloc_mem(sizeof(value), seg);
+  val->tag = CHAR_VALUE;
+  val->char_value = c;
+  return val;
+}
+
+value * alloc_float(float f, memory_buffer * seg)
+{
+  value * val = (value *) alloc_mem(sizeof(value), seg);
+  val->tag = FLOAT_VALUE;
+  val->float_value = f;
+  return val;
+}
+
 
 value * alloc_tuple(int size, memory_buffer * seg)
 {
@@ -183,7 +201,39 @@ void data_set(value * val, int n, value * v)
   }
 }
 
-// printing function
+// printing functions
+
+static void print_string(value * val)
+{
+  value * c;
+  assert(val->tag == DATA_VALUE);
+  if(strcmp("Nil", val->data_value.constructor) == 0) {
+    printf (" ");
+    return;
+  }
+  c = data_get(val, 0);
+  assert(c->tag == CHAR_VALUE);
+  printf ("%c",c->char_value);
+  print_string(data_get(val, 1));
+  
+}
+
+static void print_list(value * val)
+{
+  value * head, * tail;
+  assert(val->tag == DATA_VALUE);
+  if(strcmp("Nil", val->data_value.constructor) == 0) {
+      return;
+  }
+  head = data_get(val, 0);
+  tail = data_get(val, 1);
+
+  print_value(head);
+  if(strcmp("Nil", tail->data_value.constructor) != 0)
+    printf (", ");
+  print_list(data_get(val, 1));
+
+}
 
 void print_value(value * val)
 {
@@ -193,9 +243,33 @@ void print_value(value * val)
     printf("%d ", val->int_value);
     break;
   case CHAR_VALUE:
+    printf("'%c' ", val->char_value);
+    break;
   case FLOAT_VALUE:
+    printf("%f", val->float_value);
+    break;
   case TUPLE_VALUE:
+    printf ("(");
+    for(i = 0 ; i < val->tuple_value.num_of_fields ; i++) {
+      print_value(tup_get(val, i));
+      if (i != (val->tuple_value.num_of_fields - 1)) printf(", ");
+    }
+    printf(") ");
+    break;
   case DATA_VALUE:
+    if (strcmp("Cons", val->data_value.constructor) == 0) {
+      // technically not necessary (i == 2 always)
+      if ((i >= 1) && (data_get(val, 0)->tag == CHAR_VALUE)) {
+	print_string(val);
+	break;
+      } else {
+	printf ("[");
+	print_list(val);
+	printf("] ");
+	break;
+      }
+    }
+    // print datatype
     printf("%s ", val->data_value.constructor);
     for(i = 0 ; i < val->data_value.num_of_fields ; i++) {
       print_value(data_get(val, i));

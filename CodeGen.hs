@@ -83,6 +83,16 @@ procK ke@(LitK (LiteralInt n) v k) =
   do vc <- newCVar v
      code <- procK k
      return (desc ke ++ allocInt vc n  ++ code)
+procK ke@(LitK (LiteralChar c) v k) =
+  do vc <- newCVar v
+     code <- procK k
+     return (desc ke ++ allocChar vc c ++ code)
+     
+procK ke@(LitK (LiteralFloat f) v k) =     
+  do vc <- newCVar v
+     code <- procK k
+     return (desc ke ++ allocFloat vc f ++ code)
+     
 procK ke@(LitK val v k) = error "Unsupported literal" --TODO complete
 
 procK ke@(VarK old new k) = 

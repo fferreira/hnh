@@ -60,6 +60,8 @@ void init_memory(void);
 void swap_segs(void);
 void clear_back_seg(void);
 value * alloc_int(int n, memory_buffer * seg);
+value * alloc_char(char c, memory_buffer * seg);
+value * alloc_float(float f, memory_buffer * seg);
 value * alloc_tuple(int size, memory_buffer * seg);
 value * alloc_data(const char * con, int size, memory_buffer * seg);
 value * alloc_function(fun_ptr fun, memory_buffer * seg);

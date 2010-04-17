@@ -24,6 +24,8 @@ module CodeGenHelper
        , fileHeader
        , mainWrapper
        , allocInt
+       , allocFloat
+       , allocChar
        , generateFuns
        , createFun
        , getAssign
@@ -81,6 +83,12 @@ mainWrapper body = "\n // HNH Main (param not used)\n"
 allocInt cvar n = 
   "value * " ++ cvar ++ " = alloc_int(" ++ show n ++ ", &front_seg);\n"
   
+allocChar cvar c = 
+  "value * " ++ cvar ++ " = alloc_char('" ++ c ++ "', &front_seg);\n"
+  
+allocFloat cvar f = 
+  "value * " ++ cvar ++ " = alloc_float(" ++ show f ++ ", &front_seg);\n"
+
 createFun desc name params body = Fun desc name params body
 
 getAssign v ov = 
