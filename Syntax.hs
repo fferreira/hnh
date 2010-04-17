@@ -77,7 +77,7 @@ data Type -- for type declarations
     | VarType Name      -- a polymorphic type parameter
     | DataType Name [Type] -- the datatype declaration
     | MetaType Int -- a meta variable for the unification process
-    | PrimType Name -- a primitive type TODO change String to ?
+    | PrimType Name
     | UnknownType
       deriving(Show, Eq)
 

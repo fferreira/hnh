@@ -102,12 +102,6 @@ literal = try float
 --- Variables and Constructors ---
 
 varid = T.identifier hnh
-{-
-varid = do f <- many1 lower -- TODO should we avoid keywords?
-           r <- many (alphaNum <|> (oneOf "'_"))
-           whiteSpace
-           return $ f ++ r
--}
 
 conid = do f <- many1 upper
            r <- many (alphaNum <|> (oneOf "'_"))
@@ -143,7 +137,7 @@ declaration = try typeDecl
               <|> try fixityDecl
               <|> try varDecl
               <|> try funDecl
---              <?> "declaration"
+              <?> "declaration"
 
 typeDecl = do string "type" ; whiteSpace 
               (n, params) <- simpleType ; whiteSpace
@@ -194,16 +188,24 @@ constrs = chainr1 constr barSep
 barSep = ws (char '|') >> return (++)
 
 constr = do n <- conid ; whiteSpace                
-            params <- many aType
+            params <- many typeD --aType
             whiteSpace
             return $ [ConDcl n params]
             
 --- Types ---                
+isPrim "Int" = True
+isPrim "Char" = True
+isPrim "Float" = True
+isPrim "String" = True
+isPrim _ = False
 
 aConType = do n <- conid
-              whiteSpace
-              params <- many typeD
-              return $ DataType n params
+              if isPrim n then
+                return $ PrimType n
+                else
+                do whiteSpace
+                   params <- many typeD
+                   return (DataType n params)
               
 aVarType = do n <- ws varid ; return $ VarType n              
 
