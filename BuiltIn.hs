@@ -29,15 +29,15 @@ env0 =
     ,( ">", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
     ,( "<", FunType (PrimType "Int") (FunType (PrimType "Int") (DataType "Bool" [])))
     
-    -- ,("+.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
-    -- ,("-.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
-    -- ,("*.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
-    -- ,("/.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("+.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("-.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("*.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("/.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
     -- ,("^.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
 
-    -- ,("==.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
-    -- ,( ">.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
-    -- ,( "<.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+    ,("==.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+    ,( ">.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+    ,( "<.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
     ]
     
 builtInDecls :: [Declaration]                

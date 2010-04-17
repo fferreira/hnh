@@ -63,6 +63,63 @@ static __inline__ value * int_gt(value * a, value * b)
     return alloc_data("False", 0, &front_seg);
 }
 
+// Floating point Functions
+
+// Arithmetic Functions
+
+static __inline__ value * float_add(value * a, value * b)
+{
+  return alloc_float(a->float_value + b->float_value, &front_seg); 
+}
+
+static __inline__ value * float_sub(value * a, value * b)
+{
+  return alloc_float(a->float_value - b->float_value, &front_seg); 
+}
+
+static __inline__ value * float_mul(value * a, value * b)
+{
+  return alloc_float(a->float_value * b->float_value, &front_seg); 
+}
+
+static __inline__ value * float_div(value * a, value * b)
+{
+  return alloc_float(a->float_value / b->float_value, &front_seg); 
+}
+
+static __inline__ value * float_neg(value * a)
+{
+  return alloc_float(-(a->float_value), &front_seg); 
+}
+
+// Comparison Functions
+
+static __inline__ value * float_eq(value * a, value * b)
+{
+  if (a->float_value == b->float_value)
+    return alloc_data("True", 0, &front_seg);
+  else
+    return alloc_data("False", 0, &front_seg);
+}
+
+static __inline__ value * float_lt(value * a, value * b)
+{
+  if (a->float_value < b->float_value)
+    return alloc_data("True", 0, &front_seg);
+  else
+    return alloc_data("False", 0, &front_seg);
+
+  return NULL;
+}
+
+static __inline__ value * float_gt(value * a, value * b)
+{
+  if (a->float_value > b->float_value)
+    return alloc_data("True", 0, &front_seg);
+  else
+    return alloc_data("False", 0, &front_seg);
+}
+
 // Utility functions
 
 static __inline__ int is_constructor(const value *data, char * cons)

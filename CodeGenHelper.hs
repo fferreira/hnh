@@ -55,6 +55,8 @@ data Fun = Fun String CVar [CVar] String -- desc name params body
 intrinsics :: [(Name, CVar)]                  
 intrinsics = 
   [
+    -- Integer functions
+    
     ("+", "int_add")
   , ("-", "int_sub")
   , ("*", "int_mul")
@@ -63,6 +65,18 @@ intrinsics =
   , ("==", "int_eq")
   , ("<", "int_lt")
   , (">", "int_gt")
+    
+    -- floating point functions
+    
+  , ("+.", "float_add")
+  , ("-.", "float_sub")
+  , ("*.", "float_mul")
+  , ("/.", "float_div")
+  , ("~.", "float_neg")
+  , ("==.", "float_eq")
+  , ("<.", "float_lt")
+  , (">.", "float_gt")
+
   ]
 
 getIntrinsic :: Name -> CVar
