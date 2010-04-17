@@ -1,5 +1,6 @@
 #include "runtime.h"
 #include "config.h"
+#include "gc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,8 @@ void fail(char * s)
 }
 
 // Memory management
+
+memory_buffer front_seg, back_seg, perm_seg;
 
 static memory_buffer alloc_memory_seg(void)
 {
@@ -30,60 +33,69 @@ static memory_buffer alloc_memory_seg(void)
   return buff;
 }
 
-static void free_memory_seg(void * ptr)
+static void free_memory_seg(memory_buffer * ptr)
 {
-  if (ptr != NULL) free(ptr);
+  if (ptr->buffer != NULL) {
+    free(ptr->buffer);
+    ptr->buffer = ptr->curr = ptr-> end = NULL;
+  }
 }
 
-memory_buffer current_seg, back_seg;
+void clear_back_seg(void)
+{
+  memset(back_seg.buffer, 0, MAIN_MEMORY_SEGMENT_SIZE);
+  back_seg.curr = back_seg.buffer;
+}
 
 void init_memory(void)
 {
-  current_seg = alloc_memory_seg();
+  front_seg = alloc_memory_seg();
   back_seg = alloc_memory_seg();
+  perm_seg = alloc_memory_seg();
 }
 
 void swap_segs(void)
 {
   memory_buffer bkp = back_seg;
-  back_seg = current_seg;
-  current_seg = bkp;
+  back_seg = front_seg;
+  front_seg = bkp;
+  back_seg.curr = back_seg.buffer;
 }
 
-static void * alloc_mem(size_t size)
+static void * alloc_mem(size_t size, memory_buffer * seg)
 {
-  BYTE * ptr = (BYTE *)current_seg.curr;
+  BYTE * ptr = (BYTE *)seg->curr;
 
-  if ((ptr + size) > (BYTE *)current_seg.end)
+  if ((ptr + size) > (BYTE *)seg->end)
     fail("Out of memory");
   
-  current_seg.curr = (void *)(ptr + size);
+  seg->curr = (void *)(ptr + size);
 
   return ptr;
 }
 
-value * alloc_int(int n)
+value * alloc_int(int n, memory_buffer * seg)
 {
-  value * val = (value *) alloc_mem(sizeof(value));
+  value * val = (value *) alloc_mem(sizeof(value), seg);
   val->tag = INT_VALUE;
   val->int_value = n;
   return val;
 }
 
-value * alloc_tuple(int size)
+value * alloc_tuple(int size, memory_buffer * seg)
 {
-  value * val = (value *) alloc_mem(sizeof(value));
-  value ** fields = (value **) alloc_mem(size * sizeof(value *));
+  value * val = (value *) alloc_mem(sizeof(value), seg);
+  value ** fields = (value **) alloc_mem(size * sizeof(value *), seg);
   val->tag = TUPLE_VALUE;
   val->tuple_value.num_of_fields = size;
   val->tuple_value.fields = fields;
   return val;
 }
 
-value * alloc_data(const char * con, int size)
+value * alloc_data(const char * con, int size, memory_buffer * seg)
 {
-  value * val = (value *) alloc_mem(sizeof(value));
-  char * name = (char *) alloc_mem((1+strlen(con)) * sizeof(char));
+  value * val = (value *) alloc_mem(sizeof(value), seg);
+  char * name = (char *) alloc_mem((1+strlen(con)) * sizeof(char), seg);
   value ** fields = NULL;
 
   strcpy(name, con);
@@ -91,7 +103,7 @@ value * alloc_data(const char * con, int size)
   val->data_value.constructor = name;
 
   if (size!=0) {
-       fields = (value **) alloc_mem(size * sizeof(value *));
+    fields = (value **) alloc_mem(size * sizeof(value *), seg);
   }
 
   val->data_value.num_of_fields = size;
@@ -99,14 +111,35 @@ value * alloc_data(const char * con, int size)
   return val;
 }
 
-value * alloc_function(fun_ptr fun)
+value * alloc_function(fun_ptr fun, memory_buffer * seg)
 {
-  value * val = (value *) alloc_mem(sizeof(value));
+  value * val = (value *) alloc_mem(sizeof(value), seg);
   val->tag = FUNCTION_VALUE;
   val->function = fun;
 
   return val;
 }
+
+static int is_seg_ptr(void * ptr, memory_buffer * seg)
+{
+  return ((ptr >= seg->buffer) && (ptr < seg->end));
+}
+
+int is_perm_ptr(void * ptr)
+{
+  return is_seg_ptr(ptr, &perm_seg);
+}
+
+int is_front_ptr(void * ptr)
+{
+  return is_seg_ptr(ptr, &front_seg);
+}
+
+int is_back_ptr(void * ptr)
+{
+  return is_seg_ptr(ptr, &back_seg);
+}
+
 
 // Tuple and datatype access functions
 
@@ -207,7 +240,8 @@ int main(int argc, char *argv[])
 
   while(1) {
     next = (next.fun) (next.params);
-    // TODO add memory management here
+    
+    next = gc(next);
   }
 
   return 0;

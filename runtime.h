@@ -4,13 +4,14 @@
 #include <stdio.h> // only for NULL //TODO improve
 
 enum types {
+  UNINITIALIZED,
   INT_VALUE,
   CHAR_VALUE,
   FLOAT_VALUE,
-  //  STRING_VALUE, // not supported right now
+  //  STRING_VALUE,
   TUPLE_VALUE,
   DATA_VALUE,
-  FUNCTION_VALUE
+  FUNCTION_VALUE,
 };
 
 struct _value;
@@ -19,7 +20,7 @@ struct _call_k;
 typedef struct _call_k (*fun_ptr) (struct _value * val);
 
 typedef struct _value {
-  enum types tag; // the type of the vale
+  enum types tag; // the type of the value
   union {
     int int_value;
     char char_value;
@@ -35,7 +36,7 @@ typedef struct _value {
       struct _value ** fields;
     } data_value;
     
-    fun_ptr function;  //TODO add the correct type
+    fun_ptr function;
   };
 } value;
 
@@ -52,12 +53,20 @@ typedef struct {
 
 // memory management
 
+extern memory_buffer front_seg, back_seg, perm_seg;
+
+
 void init_memory(void);
 void swap_segs(void);
-value * alloc_int(int n);
-value * alloc_tuple(int size);
-value * alloc_data(const char * con, int size);
-value * alloc_function(fun_ptr fun);
+void clear_back_seg(void);
+value * alloc_int(int n, memory_buffer * seg);
+value * alloc_tuple(int size, memory_buffer * seg);
+value * alloc_data(const char * con, int size, memory_buffer * seg);
+value * alloc_function(fun_ptr fun, memory_buffer * seg);
+
+int is_front_ptr(void * ptr);
+int is_back_ptr(void * ptr);
+int is_perm_ptr(void * ptr);
 
 // tuple and datatyupe access functions
 

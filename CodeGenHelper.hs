@@ -79,7 +79,7 @@ mainWrapper body = "\n // HNH Main (param not used)\n"
                    ++ body ++ "\n}\n"
 
 allocInt cvar n = 
-  "value * " ++ cvar ++ " = alloc_int(" ++ show n ++ ");\n"
+  "value * " ++ cvar ++ " = alloc_int(" ++ show n ++ ", &front_seg);\n"
   
 createFun desc name params body = Fun desc name params body
 
@@ -87,7 +87,7 @@ getAssign v ov =
     "value * " ++ v ++ " = " ++ ov ++ ";\n"
 
 callFun fun params var =      
-  "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ");\n"
+  "value * " ++ var ++ " = alloc_tuple(" ++ show (length params) ++ ", &front_seg);\n"
   ++ pack
   ++ "assert(" ++ fun ++ "->tag == FUNCTION_VALUE);\n"
   ++ "\nreturn ret_val(" ++ fun ++ "->function, " ++ var ++ ");"
@@ -101,8 +101,10 @@ callFun fun params var =
   
 generateFuns :: [Fun] -> String
 generateFuns funs = "\n// Function Identifiers\n" ++ globals 
+                    ++ "\n// Function Roots\n" ++ funRoot                    
                     ++ "\n// Function Declarations\n" ++ decls 
                     ++ "\n// Function Value Init\n" ++ initFun
+
   where
     decls = concatMap genDecls funs
     genDecls (Fun desc name params body) =
@@ -116,11 +118,18 @@ generateFuns funs = "\n// Function Identifiers\n" ++ globals
                            (zip params [0..])
     globals = concatMap genGlobal funs
     genGlobal (Fun _ name _  _) = "value * " ++ name ++ ";\n"
-    initFun = "void init_fun(void)\n{\n" ++ concatMap genInit funs ++ "\n}\n"
-    genInit (Fun _ name _ _) = name ++ " = alloc_function(" ++ name ++ "_f);\n"  
+    initFun = "void init_fun(void)\n{\nint i;\n" ++ concatMap genInit funs 
+              ++ concatMap initFunRoot (zip funs [0..])
+              ++ "\n}\n"
+    genInit (Fun _ name _ _) = name ++ " = alloc_function(" ++ name ++ "_f, &perm_seg);\n"
+    funRoot = "value * fun_root[" ++ show (length funs) ++ "];\n"
+              ++ "int num_fun_root = " ++ show (length funs) ++ ";\n"
+    initFunRoot ((Fun _ name _ _), n) = 
+      "fun_root[" ++ show n ++ "] = " ++ name ++ ";\n" 
+
 
 newTuple name contents = 
-  "value * "++ name ++ " = alloc_tuple(" ++ show (length contents) ++ ");\n"
+  "value * "++ name ++ " = alloc_tuple(" ++ show (length contents) ++ ", &front_seg);\n"
   ++ concatMap assign (zip contents [0..])
     where
       assign(n, num) = 
@@ -142,7 +151,7 @@ genPrim n params var = "value * " ++ var
                       
 genCon const params var = "value * " ++ var
                          ++ " = alloc_data(\"" ++ const ++ "\", " 
-                         ++ show (length params) ++ ");\n"
+                         ++ show (length params) ++ ", &front_seg);\n"
                          ++ concatMap 
                          (\(p, n) -> 
                            "data_set(" ++ var ++ ", " 
