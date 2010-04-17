@@ -6,7 +6,7 @@
 
 #define BYTE uint8_t
 
-#define MAX_GC_OBJS (100)
+#define MAX_GC_OBJS (65536)
 
 #define MB (1024 * 1024)
 
