@@ -123,7 +123,6 @@ callFun fun params var =
   
 generateFuns :: [Fun] -> String
 generateFuns funs = "\n// Function Identifiers\n" ++ globals 
-                    ++ "\n// Function Roots\n" ++ funRoot                    
                     ++ "\n// Function Declarations\n" ++ decls 
                     ++ "\n// Function Value Init\n" ++ initFun
 
@@ -141,13 +140,8 @@ generateFuns funs = "\n// Function Identifiers\n" ++ globals
     globals = concatMap genGlobal funs
     genGlobal (Fun _ name _  _) = "value * " ++ name ++ ";\n"
     initFun = "void init_fun(void)\n{\nint i;\n" ++ concatMap genInit funs 
-              ++ concatMap initFunRoot (zip funs [0..])
               ++ "\n}\n"
     genInit (Fun _ name _ _) = name ++ " = alloc_function(" ++ name ++ "_f, &perm_seg);\n"
-    funRoot = "value * fun_root[" ++ show (length funs) ++ "];\n"
-              ++ "int num_fun_root = " ++ show (length funs) ++ ";\n"
-    initFunRoot ((Fun _ name _ _), n) = 
-      "fun_root[" ++ show n ++ "] = " ++ name ++ ";\n" 
 
 
 newTuple name contents = 
