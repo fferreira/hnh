@@ -40,7 +40,6 @@ import ErrorMonad
 import Control.Monad.State
 import Text.PrettyPrint.Leijen{-(Doc, Pretty, pretty)-}
 
--- compileTransform :: Program -> (ErrorM Program, [(String, Doc)])
 compileTransform prog = 
   let (res, docs)  = T.runTransform (commonTransforms p
                                      >>= oneVarLambda
@@ -56,11 +55,9 @@ compileTransform prog =
   in
    (res, ("original", (pretty p)):docs) -- adding the original to the list
    
--- runTransformations :: ErrorM Program -> (ErrorM Program, [(String, Doc)])
 runTransformations (Success p) = compileTransform p
 runTransformations (Error s) = error $ show (pretty s)
 
--- checkTransformation :: ErrorM Program -> Program
 checkTransformation (Success program) = program
 checkTransformation (Error err) = error err
 
@@ -80,13 +77,13 @@ loadAndEval file main showSteps =
                        compile program main
      return doc
 
--- merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
+merge :: ErrorM Program -> ErrorM Program -> ErrorM Program
 merge (Success (Program d1)) (Success (Program d2)) = Success (Program (d1++d2))
 merge e@(Error msg) _ = e
 merge _ e@(Error msg) = e
 
 
-compile p name = pretty p
+compile p name = pretty "Ok" -- p 
 
 prettify (t1, t2, d) = pretty t1 
                        <+> pretty "=" 
