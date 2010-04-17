@@ -276,6 +276,8 @@ void print_value(value * val)
     }
     break;
   case FUNCTION_VALUE:
+    printf("<function> %p ", val->function);
+    break;
   default:
     printf ("unimplemented "); 
   };
