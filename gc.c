@@ -109,28 +109,31 @@ value * copy(value * val)
   return ret;
 }
 
+int gc_is_needed(void)
+{
+  return ((front_seg.curr - front_seg.buffer) >= (MAIN_MEMORY_SEGMENT_SIZE/2));
+}
+
 call_k gc(call_k roots)
 {
   call_k new;
-  size_t total = front_seg.end - front_seg.buffer;
-  size_t curr = front_seg.curr - front_seg.buffer;
+  int total = front_seg.end - front_seg.buffer;
+  int prev = front_seg.curr - front_seg.buffer;
+  int post;
   int i;
 
 
   init_seen();
-  swap_segs(); printf ("swapped buffers\n");
-
-  /* for( i = 0 ; i < num_fun_root ; i++) { */
-  /*   assert(is_back_ptr(fun_root[i])); */
-  /*   fun_root[i] = copy(fun_root[i]); */
-  /*   assert(is_curr_ptr(fun_root[i])); */
-  /* } */
+  swap_segs();
 
   new.fun = roots.fun;
   new.params = copy(roots.params);
 
-  clear_back_seg(); printf ("cleared old segment\n");
+  post = front_seg.curr - front_seg.buffer;
 
-  printf ("total: %f curr: %f objects copied: %d\n", total/1024., curr/1024., last_seen);
+  // Not really needed but good for error trapping
+  clear_back_seg(); 
+
+  printf ("GC: objects copied: %d, bytes saved: %d\n", last_seen, (prev - post));
   return new;
 }

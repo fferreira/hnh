@@ -4,6 +4,7 @@
 #include "runtime.h"
 
 call_k gc(call_k roots);
+int gc_is_needed(void);
 
 
 

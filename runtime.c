@@ -314,8 +314,9 @@ int main(int argc, char *argv[])
 
   while(1) {
     next = (next.fun) (next.params);
-    
-    next = gc(next);
+
+    if (gc_is_needed())
+      next = gc(next);
   }
 
   return 0;
