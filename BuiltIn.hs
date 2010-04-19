@@ -38,6 +38,10 @@ env0 =
     ,("==.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
     ,( ">.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
     ,( "<.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))
+     
+    ,("ceq", FunType (PrimType "Char") (FunType (PrimType "Char") (DataType "Bool" [])))
+    ,("cgt", FunType (PrimType "Char") (FunType (PrimType "Char") (DataType "Bool" [])))
+    ,("clt", FunType (PrimType "Char") (FunType (PrimType "Char") (DataType "Bool" [])))
     ]
     
 builtInDecls :: [Declaration]                

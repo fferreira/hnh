@@ -76,6 +76,12 @@ intrinsics =
   , ("==.", "float_eq")
   , ("<.", "float_lt")
   , (">.", "float_gt")
+    
+    -- char comparison functions
+    
+  , ("ceq", "char_eq")
+  , ("clt", "char_lt")
+  , ("cgt", "char_gt")
 
   ]
 
