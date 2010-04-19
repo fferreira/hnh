@@ -33,6 +33,7 @@ env0 =
     ,("-.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
     ,("*.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
     ,("/.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
+    ,("~.", (FunType (PrimType "Float") (PrimType "Float")))
     -- ,("^.", FunType (PrimType "Float") (FunType (PrimType "Float") (PrimType "Float")))
 
     ,("==.", FunType (PrimType "Float") (FunType (PrimType "Float") (DataType "Bool" [])))

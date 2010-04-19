@@ -50,3 +50,6 @@ or _ _ = True;
 
 (<=) a b = not (a > b);
 (<) a b  = (not (a > b)) `and` (not (a == b));
+
+nil [] = True;
+nil _ = False;
