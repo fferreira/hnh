@@ -18,23 +18,38 @@
 
 \section {Introduction}
 \subsection{The Name}
-In the grand GNU tradition the HNH name is a recursive acronym. Standing for “HNH’s not Haskell”. More than homage to the Free Software Foundation’s project this is a consequence of the huge task that would be to implement a proper Haskell interpreter/compiler. So if HNH pretended to be the full language implementation the limitations section would certainly exceed the maximum  six pages allocated to it. It is important to notice that the discussions of the limitations of the current implementation will probably take a commanding share of the available space.
+In the grand GNU tradition the HNH name is a recursive acronym. Standing for “HNH’s not Haskell”. More than homage to the Free Software Foundation’s project this is a consequence of the huge task that would be to implement a proper Haskell compiler. So if HNH pretended to be the full language implementation the limitations section would certainly exceed the maximum ten pages allocated to it. It is important to notice that the discussions of the limitations of the current implementation will probably take a commanding share of the available space.
 
-\subsection {Using the interpreter}
+\subsection {Using the compiler}
 After a successful make, the executable hnh is generated. The usage is as follows:
 
-\texttt{ ./hnh <program source> <symbol to evaluate> [show transformations] }
+\texttt{ ./hnh  <cmd> <program source> }
+
+where the supported comands are:
+
+\begin{tabular}{| p{6cm} | p{6cm} | } 
+\hline
+\textbf{Command} & \textbf{Description} \\
+\hline
+\texttt {c} & compile to code.c \\
+\hline
+\texttt {cd} & compile to code.c and print all code transformations\\
+\hline
+\end{tabular}
+
+
 
 In order to execute the included sample one needs to call:
 
-\begin{center} \texttt{./hnh qsort.hnh ord} \end{center}
+\begin{center} \texttt{./hnh c qsort.hnh} \end{center}
 
-The third parameter if it is present triggers the dump of all the code transformations of the source code, and it is used for debugging purposes only, this paremeter can be any string, once present the transformation dump is made (\texttt{./hnh qsort.hnh ord dump }).
+This will print any errors found during the compilation process, or if no errors are found it will compile the code to the file code.c. If the cd command is used, the result of each of the 14 stages of compilation will be printed to the console for debugging purposes.
+
+Finally the command \texttt{ make runtime \&\& ./runtime } is used to produce the final executable and execute it.
 
 \section{The Language}
 
 But even not being Haskell by definition, HNH shares a lot of things with Haskell; the table~\ref{comparison} shows the more important bullet points of the similarities and differences.
-
 
 \begin{table} 
 \begin{tabular}{| p{6cm} | p{6cm} | } 
@@ -52,7 +67,7 @@ Supports user defined operators with specified precedence and associativity & No
 \end{table}
 
 \subsection{The Lexical Structure}
-HNH lexical structure is mainly based in that from the Haskell Report\cite{haskell-report} but some keywords are not part of the language. Additionally block comments are not supported and only line comments are.
+HNH lexical structure is mainly based in that from the Haskell Report\cite{haskell-report} but some keywords are not part of the language. Block and line comments are now supported (only line comments were supported in the interpreter).
 
 \subsubsection{Reserved words}
 
@@ -78,7 +93,7 @@ While Strings and Chars are similar to Haskell's, a String uses double quotes as
 
 \subsection{HNH’s Syntax}
 \subsubsection{Type declarations}
-For user defined types, there is support for two constructs, type synonyms, and algebraic datatypes (\texttt{data} declarations). Type synonyms are declared with the \texttt{type} keyword.
+For user defined types, there is support for two constructs, type synonyms, and algebraic datatypes (\texttt{data} declarations). Type synonyms are declared with the \texttt{type} keyword. Note that in the current version of the compiler type synonyms are parsed but not used by the compiler.
 
 \begin{center}
 	\texttt{ type T $u_{1} \dots u_{k}$ = $t$ }
@@ -99,8 +114,6 @@ For instance the two built in types Bool and List are declared as follows
 \texttt { data Bool = True | False ;}
 
 \texttt { data List a = Cons a List | Nil ;}
-
-Though, these types are declared internally by the interpreter (in the env0 variable declared in EvalEnv.hs), and have no type validation for the parameters in the current interpreter.
 
 \subsubsection{Patterns}\label{patterns}
 
@@ -148,39 +161,60 @@ Expressions are similar to Haskell's
   \item function applications and infix operators are also unchanged, only that currying infix operators require surrounding them with parenthesis
 \end{itemize}
 
+\subsubsection{Type declarations}
+
+Type declarations in symbol declarations are parsed but not used, the only type declarations are done by enclosing an expression in parenthesis and annotating the type. (i.e. \texttt{(exp :: type)}).
+
 \subsubsection{Semicolons everywhere!}
 
 HNH does not support the layout rules of Haskell expressions and declarations have to be separated with a semicolon. $ \{\;\} $ braces are used in \texttt{let} and \texttt{case} expressions too.
 
 \subsection{The Implementation}
-The interpreter implements the following phases:
+The compiler is implemented in 14 phases not counting the integrated lexing and parsing.
 
-program source \textrightarrow threaded lexer and parser \textrightarrow code transformations \textrightarrow interpreter
-\subsubsection{The lexer and parser}
-The lexer is generated with Alex from Lexer.x, and the parser with Happy from Parser.y. HNH uses a monadic parser based in the Happy examples, the current implementation does not take advantage of all the features the parser could offer. Modifications to the parsing code could allow to add better error messages with code locations, and the layout rule.
-The grammar is implemented in a straight-forward way, with no reduce/reduce conflicts as those render the generated parser is unpredictable for the programmer. But there are some/many shift/reduce conflicts that are not as problematic because the parser always does shift instead of reduce, with the help of parenthesis and semicolons the programmer can easily be sure of the resulting parse.
-The lexing and parsing happen as one phase with the lexer doing the work incrementally as the parser demands it.
+The lexing phase and the parsing phase are integrated and implemented using Parsec in the file Parser.hs. The parser is implemented in a rather straightforward (i.e. simplistic) way, this makes it easy to understand, easy to debug and easy to extend. One of the notable limitations of this parser is the cryptic error reports. Better error reports shouldn't be difficult (though time demanding) to implement given the simplicity of the current implementation.
 
 \subsubsection{Code Transformations}
 
-Three simple transformations are currently done to the AST:
+Fourteen simple transformations are currently done to the parsed program:
 \begin{itemize}
-	\item \texttt{toPrefix} which corrects the precedence of the operators and converts infix operations to function calls
+	\item \texttt{correctPrecedence} which corrects the precedence of the operators
+	\item \texttt{toPrefix} which converts infix operations to function calls
 	\item \texttt{funToLambda} which converts all function declarations to lambda expressions
 	\item \texttt{simplifyLambda} which simplifies the patterns in the lambda expressions with the restrictions mentioned in section~\ref{patterns}
+	\item \texttt{oneVarLambda} which transforms all the lambda expressions in one parameter lambda expresions
+	\item \texttt{addIdentifiers} which replaces variable names by unique identifiers
+	\item \texttt{performTypeInference} which, rather obviously, performs type inference
+	\item \texttt{progToLet} which transforms the program to a single expresion (i.e. \texttt{main = let $\ldots$})
+	\item \texttt{cpsTransform} as the name implies performs a CPS transformation
+	\item \texttt{removeVarK} which removes VarK nodes as they are not needed
+	\item \texttt{closureConversion} surprisingly this phase does the Closure Conversion of the code to eliminate free variables in functions
+	\item \texttt{codeGen} this phase performs hoisting and the C code generation
 \end{itemize}
-Current transformation objective is to simplify the language used and to remove special cases for expression evaluation by eliminating infix operation, all functions are lambdas, and all complex pattern are processed in a case expression.
-
-The final phase is the evaluation itself that is simple and straightforward.
 
 To implement the transformations, there is a monad \texttt{TransformM} in TransformMonad.hs that greatly simplifies writing code transformations that don't require keeping track of the environment.
 
-\subsubsection{The pretty printing}
+\subsection{Code Representation}
 
-The pretty printing feature uses a representation of the code different from the source code, that would be difficult to use when writing a program, but it is easy to read when debugging the code transformations. Also minimal effort was required for its implementation as allowed by the use of Haskell's pretty printing libraries (the result from the Show class is way to verbose and hard to follow for big ASTs)
+Two code different types are used. \texttt{Program} from Syntax.hs before the CPS transformation and \texttt{KExp} from CPSRep.hs that is used after CPS conversion. Once the program passes the type inference inference the typing information is no longer used.
+
+One thing that would improve code readability would be to use an extra representation, that would be introduced after oneVarLambda, as at this point the program has been transformed to used a subset of the features of the original, and it would help diminish some boilerplate code afterwards.
+
+Additionally, typing information would be helpful after CPS conversion to help improve the runtime representation of values by eliminating the need for some boxing.
+
+\subsubsection{The Runtime}
+
+The runtime representation is fully boxed, and uses \texttt{value *} to represent a value. A \texttt{value} contains a \texttt{tag} field with the type and a union field with the representation of the stored value.
+The \texttt{main} symbol is evaluated and its result is printed by the the final continuation \texttt{HaltK}, the runtime contains printing facilites that print lists, strings, tuples and values in general, so the result will be the value of the symbol main. If this value is a function, the memory address of the function will be printed.
+The typing information is discarded in the CPS conversion, but as the program was deemed correct then, no type checks are needed (though some asserts are present in the code for debugging purposes).
+
+\subsubsection{The Garbage Collector}
+
+The algorithm used is Stop \& Copy. The garbage collector uses three memory zones, one for global, permanent objects, a front segment and back segment. When a garbage collection is triggered in the trampoline, the segments are swapped and all the alive objects are copied from the from the back page to the front page. Then the back segment is emptied. The objects in the permanent segment are never garbage collected. The roots are the parameters to the function that include the closure, and the continuation.
+Additionally all the configuration parameters for memory management are in the file config.h.
 
 \subsubsection{Odds and Ends}
-The code is also available online at http://www.github.com/fferreira/hnh
+The code is also available online at http://www.github.com/fferreira/hnh under the GPL license.
 
 
 \bibliographystyle{plain}
