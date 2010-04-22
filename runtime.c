@@ -259,6 +259,7 @@ void print_value(value * val)
   case DATA_VALUE:
     if (strcmp("Cons", val->data_value.constructor) == 0) {
       // technically not necessary (i == 2 always)
+      i = val->data_value.num_of_fields;
       if ((i >= 1) && (data_get(val, 0)->tag == CHAR_VALUE)) {
 	print_string(val);
 	break;
