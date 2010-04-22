@@ -45,7 +45,6 @@ data KExp = IfK Identifier KExp KExp
           | AppK Identifier [Identifier]
             -- fun name, params, function body, after definition
           | FunK Identifier [Identifier] KExp KExp
-          -- | LetK [Identifier] [KExp] KExp -- unused
           | TupleK [Identifier] Identifier KExp
           | ListK [Identifier] Identifier KExp
             
