@@ -49,7 +49,7 @@ Finally the command \texttt{ make runtime \&\& ./runtime } is used to produce th
 
 \section{The Language}
 
-But even not being Haskell by definition, HNH shares a lot of things with Haskell; the table~\ref{comparison} shows the more important bullet points of the similarities and differences.
+Even not being Haskell by definition, HNH shares a lot of things with Haskell; the table~\ref{comparison} shows the more important bullet points of the similarities and differences.
 
 \begin{table} 
 \begin{tabular}{| p{6cm} | p{6cm} | } 
@@ -182,10 +182,10 @@ Fourteen simple transformations are currently done to the parsed program:
 	\item \texttt{toPrefix} which converts infix operations to function calls
 	\item \texttt{funToLambda} which converts all function declarations to lambda expressions
 	\item \texttt{simplifyLambda} which simplifies the patterns in the lambda expressions with the restrictions mentioned in section~\ref{patterns}
-	\item \texttt{oneVarLambda} which transforms all the lambda expressions in one parameter lambda expresions
+	\item \texttt{oneVarLambda} which transforms all the lambda expressions in one parameter lambda expressions
 	\item \texttt{addIdentifiers} which replaces variable names by unique identifiers
 	\item \texttt{performTypeInference} which, rather obviously, performs type inference
-	\item \texttt{progToLet} which transforms the program to a single expresion (i.e. \texttt{main = let $\ldots$})
+	\item \texttt{progToLet} which transforms the program to a single expression (i.e. \texttt{main = let $\ldots$})
 	\item \texttt{cpsTransform} as the name implies performs a CPS transformation
 	\item \texttt{removeVarK} which removes VarK nodes as they are not needed
 	\item \texttt{closureConversion} surprisingly this phase does the Closure Conversion of the code to eliminate free variables in functions
@@ -194,7 +194,15 @@ Fourteen simple transformations are currently done to the parsed program:
 
 To implement the transformations, there is a monad \texttt{TransformM} in TransformMonad.hs that greatly simplifies writing code transformations that don't require keeping track of the environment.
 
-\subsection{Code Representation}
+\subsubsection{Code Transformations (The highlights)}
+
+The compilation phases can be grouped according to its purpose. The first 6 phases (including addIdentifiers) prepare and simplify the program, eliminating some syntactic sugar and leaving a simpler program representation though a more verbose one.
+
+PerformTypeInference, will then infer the types supporting polymorphism, without type classes or overloading thus the need for different operators for different types (i.e. + and +.). qsort.hnh contains a simple example of polymorphic functions.
+
+After validating the typing of the program the code is generated in a straightforward way CPS Conversion \textrightarrow Closure Conversion \textrightarrow Code Generation. The almost complete lack of optimizations generates a very na•ve code, the only optimization is the elimination of VarK nodes that only rename variables. Simple optimizations like inlining all functions called only once would improve the quality of the generated code. It's important to notice that even if they are not implemented, the compiler structure is prepared to host those optimizations without having to introduce big changes.
+
+\subsubsection{Code Representation}
 
 Two code different types are used. \texttt{Program} from Syntax.hs before the CPS transformation and \texttt{KExp} from CPSRep.hs that is used after CPS conversion. Once the program passes the type inference inference the typing information is no longer used.
 
@@ -202,18 +210,31 @@ One thing that would improve code readability would be to use an extra represent
 
 Additionally, typing information would be helpful after CPS conversion to help improve the runtime representation of values by eliminating the need for some boxing.
 
-\subsubsection{The Runtime}
+\subsection{The Runtime}
 
-The runtime representation is fully boxed, and uses \texttt{value *} to represent a value. A \texttt{value} contains a \texttt{tag} field with the type and a union field with the representation of the stored value.
+The runtime representation is fully boxed, and uses \texttt{value *} to represent a value. A \texttt{value} contains a \texttt{tag} field with the type and a union field with the representation of the stored value. A better representation with more efficient tagging and less indirections could greatly improve performance, and this would not be difficult to add to the runtime by only modifying the c code.
 The \texttt{main} symbol is evaluated and its result is printed by the the final continuation \texttt{HaltK}, the runtime contains printing facilites that print lists, strings, tuples and values in general, so the result will be the value of the symbol main. If this value is a function, the memory address of the function will be printed.
 The typing information is discarded in the CPS conversion, but as the program was deemed correct then, no type checks are needed (though some asserts are present in the code for debugging purposes).
 
-\subsubsection{The Garbage Collector}
+Each function in the CPS form is compiled to a separate function and in order to avoid the exhaustion of the call stack a trampoline is used in the main function, where each called function never calls another but returns the address of the next.
+
+\subsection{Built-ins and the prelude}
+
+Several low level operations are implemented as intrinsic, all of them can be found in BuiltIn.hs. Here the compiler defines arithmetic and compare operations, are and the List and Bool types. This is intended to be minimal, as the operations could not be implemented in HNH, and the built in types are used by the syntax of the language (i.e. pattern matching, and if expressions). The arithmetic operations is not absolutely minimal for performance purposes as for example defining the multiplication as a sequence of additions would be unnecessarily slow.
+
+The prelude can be found in prelude.hnh and is loaded before the source of the program, and contains several utility functions, in its current form is not very complete, but the current functions suffice for the sample program.
+
+
+\subsection{The Garbage Collector}
 
 The algorithm used is Stop \& Copy. The garbage collector uses three memory zones, one for global, permanent objects, a front segment and back segment. When a garbage collection is triggered in the trampoline, the segments are swapped and all the alive objects are copied from the from the back page to the front page. Then the back segment is emptied. The objects in the permanent segment are never garbage collected. The roots are the parameters to the function that include the closure, and the continuation.
 Additionally all the configuration parameters for memory management are in the file config.h.
 
-\subsubsection{Odds and Ends}
+\subsection{Conclusion}
+
+The idea of sequentially transforming the code, the use of powerful techniques as type inference, and CPS and Closure conversion have made possible this compiler, even if most things were done in a simplistic way. I think that the resulting compiler uses many techniques and has allowed me to learn a lot by implementing the code, and by deciding what to leave out (better error reporting, typed CPS conversion, code optimizations, better closures, a more compact runtime representation, and the list goes on and on). The resulting compiler is simple to understand and simple to extend, and I am very happy with what I learned and with the result (which may be not ready yet to compile code for medical equipment but it was a great vehicle for learning).
+
+\subsection{Odds and Ends}
 The code is also available online at http://www.github.com/fferreira/hnh under the GPL license.
 
 
